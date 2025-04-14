@@ -1,0 +1,153 @@
+풀스택 팀프로젝트
+
+1. 리액트 바이트 사용
+2. 반응형
+3. 한국어/영어 변환 모드
+4. 메인 테마 색상 rgb(25, 72, 144)
+5. 왼쪽 메뉴바에 병실 목록, 그 안에 환자 목록, 그리고 환자를 클릭하면 환자 정보란 표시
+6. 환자, 보호자, 관리자(간호사), 총관리자(병원장) 계정 필요
+    1. 총관리자:
+        1. 서버에서 생성된 유일한 병원장 권한 계정
+        2. 간호사, 환자, 보호자 등 모든 계정 관리 가능
+        3. 병실 설정 가능
+        4. 모든 권한
+    2. 관리자:
+        1. 총관리자 계정에서 생성할 수 있는 간호사 계정
+        2. 환자, 보호자 계정 관리 가능
+        3. 관리자 별 담당 환자 설정 가능 (열람은 모든 환자 가능)
+        4. 환자, 보호자 관리 가능 (병실 옮기기 등)
+        5. 낙상 사고 발생 시 알림 전송 뱓음
+    3. 환자:
+        1. 사용자는 회원가입을 진행할 때 환자/보호자 중 선택하게 됨
+    4. 보호자:
+        1. 낙상 사고 발생 시 알림 전송 받음
+        2. 본인 환자의 상태만 열람 가능
+        3. 담당 간호사와 1:1 컨택 가능
+7. 메인화면
+    1. 모니터링 중인 온습도 표시
+    2. 선택된 병실의 레이아웃 표시
+    3. 낙상 사고 발생률 높은 환자의 비율을 원형 테이블로 표시
+    4. 일일/누적 사고 현황 표시
+    5. 그 외?
+8. 연결된 CCTV 목록과 동시 모니터링이 가능하도록 CCTV 화면을 모아둔 페이지 필요. 각 CCTV화면을 클릭하면 개별 화면으로도 확인 가능하도록
+9. 병실 레이아웃 배치 조작 가능해야함.
+10. 만약 낙상사고 발생 시 화면 하단쪽에 경고 알림 발생
+11. 좌측 메뉴바는 어느 페이지를 들어가던 고정으로 나타나게
+12. 로그인 30일 기억 기능
+13. 
+
+📌 프로젝트 요약 – 병원 낙상 감지 및 환경 모니터링 시스템
+🧾 1. 프로젝트 개요
+이 프로젝트는 병실 내에서 환자의 낙상 상황을 실시간으로 감지하고,
+온습도 센서를 통해 환경 이상을 판단하여 관리자에게 푸시 알림을 전송하는
+AI 기반 스마트 병원 시스템입니다.
+
+영상 분석에는 **Tiny-YOLO + 포즈 추정 + 행동 인식(ST-GCN)**이 사용되며,
+라즈베리파이를 통해 영상/센서 데이터를 전송하고, Spring Boot 백엔드 서버가 처리합니다.
+
+🛠️ 2. 기술 스택
+구성   기술
+📷 라즈베리파이   Pi Camera + DHT22 온습도 센서
+🎥 AI 영상 분석   Python + PyTorch, Tiny-YOLOv3(oneclass), AlphaPose(FastPose), ST-GCN
+🧠 백엔드   Spring Boot 3.x, Spring Web, JPA, MariaDB, Lombok
+🔔 알림 시스템   Firebase FCM (FCM Token 기반 푸시 알림)
+🌐 프론트엔드   React + Vite, Axios, Chart.js
+🗂️ 문서화   Swagger, OpenAPI 3.0 (예정)
+💾 3. 데이터 및 모델
+📁 데이터셋
+YOLO 학습 데이터: COCO 사람 키포인트 데이터셋 (회전 증강 적용)
+
+행동 인식 데이터: Le2i Fall Detection Dataset (Coffee room, Home)
+
+프레임마다 직접 행동 라벨 부여
+
+AlphaPose로 skeleton 추출 후 ST-GCN 학습
+
+🧠 사전 학습 모델 (다운로드 후 /Models 폴더에 배치)
+모델   설명
+Tiny-YOLO oneclass (.pth, .cfg)   사람만 검출하도록 학습된 YOLO
+SPPE FastPose (resnet101, resnet50)   관절 위치 추정용 포즈 추정기
+ST-GCN (tsstg)   30프레임 단위 포즈 시퀀스를 이용한 행동 분류기
+📂 4. ERD 요약 (DB 구조)
+테이블   주요 필드   설명
+patient   name, age, bed_id   환자 정보
+guardian   name, tel   보호자 연락처
+bed   number, room_id   병상 정보
+room   name, temp 기준, humidity 기준   병실 정보
+accident   patient_id, 날짜, 감지여부   낙상 기록
+env_log   room_id, 온도, 습도, 시간   환경 기록
+fcm   token, patient_id, room_id   푸시 알림 토큰
+member   로그인 계정, 역할   관리자/간호사
+
+Table patient {
+  patient_id integer [pk]  // 환자의 고유 ID
+  patient_name string       // 환자의 이름
+  patient_age integer      // 환자의 나이
+  patient_height double    // 환자의 키
+  patient_weight double    // 환자의 몸무게
+  patient_blood string     // 환자의 혈액형
+  guardian_id integer [ref: > guardian.guardian_id]  // 보호자 ID (foreign key)
+  room_id integer [ref: > room.room_id]  // 방 ID (foreign key)
+}
+
+Table guardian {
+  guardian_id integer [pk]  // 보호자의 고유 ID
+  patient_id integer [ref: > patient.patient_id]  // 환자 ID (foreign key)
+  guardian_tel string       // 보호자의 전화번호
+}
+
+Table member {
+  member_id integer [pk]  // 회원의 고유 ID
+  member_name string      // 회원의 이름
+}
+
+Table room {
+  room_id integer [pk]    // 방의 고유 ID
+  room_bed integer        // 방의 침대 수
+  room_temp double        // 방의 온도
+}
+
+Table accident {
+  patient_id integer [ref: > patient.patient_id]  // 환자 ID (foreign key)
+  accident_date date      // 사고 날짜
+  accident_YN bool        // 사고 여부
+  accident_mail bool      // 사고 이메일 발송 여부
+}
+
+Table fcm {
+  fcm_id integer [pk]     // FCM의 고유 ID
+  fcm_date date           // FCM 날짜
+  patient_id integer [ref: > patient.patient_id]  // 환자 ID (foreign key)
+  room_id integer [ref: > room.room_id]  // 방 ID (foreign key)
+}
+
+Table Audit {
+  Audit_id integer [pk]   // Audit의 고유 ID
+  member_id integer [ref: > member.member_id]  // 작업을 수행한 회원 ID (foreign key)
+  audit_date date         // 작업 날짜
+}
+
+📡 5. 주요 기능
+✅ 낙상 감지
+라즈베리파이에서 분석한 낙상 발생 시 서버에 POST
+
+DB 저장 후 관리자에게 FCM 알림 전송
+
+✅ 온습도 모니터링
+DHT22 센서값 주기적으로 서버에 전송
+
+기준 초과 시 알림 및 경고 기록
+
+✅ 관리자 대시보드 API
+API   설명
+/api/rooms/{id}/status   병실 상태(온습도/낙상 여부) 조회
+/api/logs/fall   낙상 이력 조회
+/api/logs/env   온습도 이력 조회
+/api/stats/summary   통계 요약
+/api/stats/heatmap   시간/공간별 낙상 분포
+⚙️ 6. 시스템 요구사항 (분석 파이프라인 기준)
+항목   사양
+Python   3.6 이상
+PyTorch   1.3.1 이상
+CUDA   10.2 이상 권장
+테스트 환경   i7-8750H CPU, RTX 2070 GPU, RAM 16GB 이상
