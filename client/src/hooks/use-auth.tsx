@@ -43,14 +43,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     onSuccess: (user: SelectUser) => {
       queryClient.setQueryData(["/api/user"], user);
       toast({
-        title: "로그인 성공",
-        description: `${user.name}님, 환영합니다.`,
+        title: "Login Success",
+        description: `Welcome, ${user.name}.`,
       });
     },
     onError: (error: Error) => {
       toast({
-        title: "로그인 실패",
-        description: error.message || "사용자 이름 또는 비밀번호가 올바르지 않습니다.",
+        title: "Login Failed",
+        description: error.message || "Username or password is incorrect.",
         variant: "destructive",
       });
     },
@@ -64,14 +64,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     onSuccess: (user: SelectUser) => {
       queryClient.setQueryData(["/api/user"], user);
       toast({
-        title: "회원가입 성공",
-        description: `${user.name}님, 환영합니다.`,
+        title: "Registration Success",
+        description: `Welcome, ${user.name}.`,
       });
     },
     onError: (error: Error) => {
       toast({
-        title: "회원가입 실패",
-        description: error.message || "회원가입 중 오류가 발생했습니다.",
+        title: "Registration Failed",
+        description: error.message || "An error occurred during registration.",
         variant: "destructive",
       });
     },
@@ -84,13 +84,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     onSuccess: () => {
       queryClient.setQueryData(["/api/user"], null);
       toast({
-        title: "로그아웃 성공",
-        description: "안전하게 로그아웃되었습니다.",
+        title: "Logout Success",
+        description: "You have been safely logged out.",
       });
     },
     onError: (error: Error) => {
       toast({
-        title: "로그아웃 실패",
+        title: "Logout Failed",
         description: error.message,
         variant: "destructive",
       });
