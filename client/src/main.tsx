@@ -5,6 +5,7 @@ import { queryClient } from "./lib/queryClient";
 import { Route, Switch, Link } from "wouter";
 import { Toaster } from "@/components/ui/toaster";
 import { useState } from "react";
+import FallDetectionPage from "./pages/fall-detection-page";
 
 // 홈 페이지 컴포넌트
 const HomePage = () => (
@@ -144,6 +145,7 @@ const App = () => (
             <ul className="flex space-x-6">
               <li><Link href="/" className="text-gray-600 hover:text-primary">홈</Link></li>
               <li><Link href="/dashboard" className="text-gray-600 hover:text-primary">대시보드</Link></li>
+              <li><Link href="/fall-detection" className="text-gray-600 hover:text-primary">낙상 감지</Link></li>
               <li><Link href="/login" className="text-gray-600 hover:text-primary">로그인</Link></li>
             </ul>
           </nav>
@@ -155,6 +157,7 @@ const App = () => (
           <Route path="/" component={HomePage} />
           <Route path="/login" component={LoginPage} />
           <Route path="/dashboard" component={DashboardPage} />
+          <Route path="/fall-detection" component={FallDetectionPage} />
           <Route component={NotFoundPage} />
         </Switch>
       </main>

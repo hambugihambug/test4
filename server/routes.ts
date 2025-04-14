@@ -346,6 +346,64 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
   
+  // AI 낙상 감지 엔드포인트
+  app.post('/api/fall-detection', async (req, res) => {
+    try {
+      const { roomId, confidence, timestamp, poseData } = req.body;
+      
+      if (!roomId) {
+        return res.status(400).json({ message: "roomId is required" });
+      }
+      
+      const room = await storage.getRoom(roomId);
+      if (!room) {
+        return res.status(404).json({ message: "Room not found" });
+      }
+      
+      // 해당 병실의 환자들 조회
+      const patients = await storage.getPatientsByRoomId(roomId);
+      
+      if (patients.length === 0) {
+        return res.status(404).json({ message: "No patients found in this room" });
+      }
+      
+      // 첫 번째 환자를 기본값으로 사용 (실제로는 카메라 ID와 환자 매핑 필요)
+      const patientId = patients[0].id;
+      
+      // 낙상 사고 기록
+      const accident = await storage.createAccident({ 
+        patientId, 
+        roomId,
+        date: timestamp ? new Date(timestamp) : new Date()
+      });
+      
+      // 병실 상태 업데이트
+      await storage.updateRoom(roomId, { status: "alert" });
+      
+      // 연결된 모든 클라이언트에게 알림 브로드캐스트
+      broadcast({
+        type: 'AI_FALL_DETECTION',
+        data: {
+          accident,
+          confidence: confidence || 1.0,
+          poseData: poseData || null
+        }
+      });
+      
+      res.status(201).json({
+        success: true,
+        accident,
+        message: "낙상 감지 기록이 생성되었습니다."
+      });
+    } catch (error) {
+      console.error("낙상 감지 처리 중 오류:", error);
+      res.status(500).json({ 
+        success: false,
+        message: "낙상 감지 처리 중 오류가 발생했습니다."
+      });
+    }
+  });
+  
   app.put('/api/accidents/:id/resolve', isAuthenticated, hasRole([UserRole.ADMIN, UserRole.NURSE]), async (req, res) => {
     try {
       const accidentId = parseInt(req.params.id);
