@@ -1,6 +1,7 @@
-import { useAuth } from "@/hooks/use-auth";
 import { Loader2 } from "lucide-react";
 import { Redirect, Route } from "wouter";
+import { useQuery } from "@tanstack/react-query";
+import { User } from "@shared/schema";
 
 export function ProtectedRoute({
   path,
@@ -9,7 +10,10 @@ export function ProtectedRoute({
   path: string;
   component: () => React.JSX.Element;
 }) {
-  const { user, isLoading } = useAuth();
+  // Get user data directly from the query client to avoid circular dependencies
+  const { data: user, isLoading } = useQuery<User>({
+    queryKey: ["/api/user"],
+  });
 
   if (isLoading) {
     return (

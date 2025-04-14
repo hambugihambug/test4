@@ -1,33 +1,24 @@
 import { Switch, Route } from "wouter";
 import { Toaster } from "@/components/ui/toaster";
 import NotFound from "@/pages/not-found";
-import AuthPage from "@/pages/auth-page";
 import { useState } from "react";
-import FallAlert from "./components/ui/fall-alert";
+
+// 간단한 홈 페이지 컴포넌트
+const HomePage = () => (
+  <div className="p-8 text-center">
+    <h1 className="text-2xl font-bold mb-4">병원 모니터링 시스템</h1>
+    <p>환영합니다. 이 시스템은 환자의 낙상 사고를 감지하고 환경을 모니터링합니다.</p>
+  </div>
+);
 
 function App() {
-  const [fallAlert, setFallAlert] = useState<{ patientName: string, roomName: string, time: Date } | null>(null);
-  
   return (
     <>
       <Switch>
-        <Route path="/auth" component={AuthPage} />
-        <Route path="/" component={() => <div>Welcome to Hospital Monitoring System</div>} />
+        <Route path="/" component={HomePage} />
         <Route component={NotFound} />
       </Switch>
       <Toaster />
-      {fallAlert && (
-        <FallAlert 
-          patientName={fallAlert.patientName}
-          roomName={fallAlert.roomName} 
-          time={fallAlert.time}
-          onClose={() => setFallAlert(null)}
-          onAction={() => {
-            // Handle alert action
-            setFallAlert(null);
-          }}
-        />
-      )}
     </>
   );
 }
