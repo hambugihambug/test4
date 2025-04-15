@@ -196,6 +196,11 @@ function Sidebar() {
               label="병실 관리"
               href="/room-management"
               active={location === '/room-management'}
+              onClick={() => {
+                console.log("병실 관리 클릭됨");
+                const token = localStorage.getItem('token');
+                console.log("현재 토큰 상태:", token ? "토큰 있음" : "토큰 없음");
+              }}
             />
             <div className="mt-2">
               <RoomList />

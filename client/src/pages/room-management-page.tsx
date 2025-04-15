@@ -4,6 +4,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { useI18n } from "@/contexts/I18nContext";
+import { useAuth } from "@/hooks/use-auth";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -31,10 +32,18 @@ export default function RoomManagementPage() {
   const [selectedRoomId, setSelectedRoomId] = useState<number | null>(null);
   const [activeTab, setActiveTab] = useState<string>("details");
   
+  // 사용자 정보 가져오기
+  const { user } = useAuth();
+  console.log("RoomManagementPage - 현재 사용자:", user?.username, "역할:", user?.role);
+  
   // Fetch all rooms with patients
-  const { data: roomsWithPatients, isLoading: roomsLoading } = useQuery<RoomWithPatients[]>({
+  const { data: roomsWithPatients, isLoading: roomsLoading, error: roomsError } = useQuery<RoomWithPatients[]>({
     queryKey: ['/api/rooms/with-patients'],
+    enabled: !!user, // 사용자가 인증된 경우에만 쿼리 활성화
   });
+  
+  console.log("RoomManagementPage - 병실 데이터 로딩 상태:", roomsLoading ? "로딩 중" : "완료");
+  console.log("RoomManagementPage - 병실 데이터 오류:", roomsError ? roomsError.message : "없음");
   
   // Get the selected room data
   const selectedRoom = roomsWithPatients?.find(room => room.id === selectedRoomId);

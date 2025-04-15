@@ -103,8 +103,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         title: "로그인 성공",
         description: `${user.name}님 환영합니다!`,
       });
-      // 로그인 성공 시 메인 페이지로 이동 (직접 URL 변경)
-      window.location.href = "/";
+      console.log("로그인 성공 후 사용자 역할:", user.role);
+      console.log("페이지 이동: /");
+      
+      // 토큰이 정상적으로 저장되었는지 확인
+      const savedToken = localStorage.getItem('token');
+      console.log("저장된 토큰 유효: ", savedToken ? "예" : "아니오");
+      
+      setTimeout(() => {
+        // 약간의 지연을 주어 토큰이 확실히 저장되도록 함
+        window.location.href = "/";
+      }, 500);
     },
     onError: (error: Error) => {
       let errorMessage = "로그인에 실패했습니다";
