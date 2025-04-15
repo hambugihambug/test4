@@ -1,4 +1,4 @@
-import { createContext, ReactNode, useContext, useEffect } from "react";
+import { createContext, useState, ReactNode, useContext, useEffect } from "react";
 import {
   useQuery,
   useMutation,
@@ -25,6 +25,7 @@ export const AuthContext = createContext<AuthContextType | null>(null);
 export function AuthProvider({ children }: { children: ReactNode }) {
   const { toast } = useToast();
   const [, setLocation] = useLocation();
+  const [initialChecked, setInitialChecked] = useState(false);
   
   // 페이지 로드 시 필요한 로직
   useEffect(() => {
@@ -51,8 +52,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             }
           }
         }
+        setInitialChecked(true);
       } catch (error) {
         console.error("세션 확인 중 오류 발생:", error);
+        setInitialChecked(true);
       }
     };
     
@@ -66,6 +69,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   } = useQuery<User | undefined, Error>({
     queryKey: ["/api/user"],
     queryFn: getQueryFn({ on401: "returnNull" }),
+    enabled: initialChecked,
   });
 
   const loginMutation = useMutation({
