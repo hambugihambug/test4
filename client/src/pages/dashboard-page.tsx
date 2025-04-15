@@ -1,455 +1,510 @@
-import { useEffect, useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import React from 'react';
+import { Link } from 'wouter';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
+import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
 import { 
-  Users, Building2, AlertTriangle, AlertCircle, 
-  Download, UserPlus
-} from "lucide-react";
-import { useI18n } from "@/contexts/I18nContext";
-import { StatCard } from "@/components/ui/stat-card";
-import { RoomLayout } from "@/components/ui/room-layout";
-import { PatientDetails } from "@/components/ui/patient-details";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Room, Patient, Accident, EnvLog, PatientWithDetails } from "@shared/schema";
-import Chart from 'chart.js/auto';
+  Activity, 
+  AlertCircle, 
+  Bell, 
+  Calendar, 
+  Clock, 
+  Droplets, 
+  FileClock, 
+  Home, 
+  LayoutDashboard, 
+  MapPin, 
+  MessageSquare, 
+  MonitorSmartphone, 
+  Thermometer, 
+  UserRound, 
+  Users 
+} from 'lucide-react';
+import { Progress } from '@/components/ui/progress';
 
-interface DashboardStats {
-  totalRooms: number;
-  totalPatients: number;
-  todayAccidents: number;
-  environmentalAlerts: number;
-  fallRiskDistribution: {
-    low: number;
-    medium: number;
-    high: number;
-  };
-  recentEvents: Accident[];
-}
-
-export default function DashboardPage() {
-  const { t } = useI18n();
-  const [selectedRoom, setSelectedRoom] = useState<Room | null>(null);
-  const [selectedPatient, setSelectedPatient] = useState<PatientWithDetails | null>(null);
-  const [fallIncidentsChart, setFallIncidentsChart] = useState<Chart | null>(null);
-  const [environmentChart, setEnvironmentChart] = useState<Chart | null>(null);
-  const [fallRiskChart, setFallRiskChart] = useState<Chart | null>(null);
-  const [recentAccidents, setRecentAccidents] = useState<Accident[]>([]);
-  
-  // Fetch dashboard statistics
-  const { data: dashboardStats, isLoading: statsLoading } = useQuery<DashboardStats>({
-    queryKey: ['/api/stats/dashboard'],
-  });
-  
-  // Fetch rooms
-  const { data: rooms } = useQuery<Room[]>({
-    queryKey: ['/api/rooms'],
-  });
-  
-  // Fetch weekly fall incidents
-  const { data: fallIncidentsData } = useQuery<{ labels: string[], data: number[] }>({
-    queryKey: ['/api/stats/fall-incidents'],
-  });
-  
-  // Fetch selected room's environment logs
-  const { data: envLogs } = useQuery<EnvLog[]>({
-    queryKey: ['/api/rooms', selectedRoom?.id, 'env-logs'],
-    enabled: !!selectedRoom,
-  });
-  
-  // Set initial selected room
-  useEffect(() => {
-    if (!selectedRoom && rooms && rooms.length > 0) {
-      setSelectedRoom(rooms[0]);
-    }
-  }, [rooms, selectedRoom]);
-  
-  // Initialize charts
-  useEffect(() => {
-    // Initialize fall incidents chart
-    if (fallIncidentsData && !fallIncidentsChart) {
-      const ctx = document.getElementById('fallIncidentsChart') as HTMLCanvasElement;
-      if (ctx) {
-        const chart = new Chart(ctx, {
-          type: 'bar',
-          data: {
-            labels: fallIncidentsData.labels,
-            datasets: [{
-              label: t('dashboard.fallIncidentsChart'),
-              data: fallIncidentsData.data,
-              backgroundColor: 'rgba(239, 68, 68, 0.6)',
-              borderColor: 'rgba(239, 68, 68, 1)',
-              borderWidth: 1
-            }]
-          },
-          options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            scales: {
-              y: {
-                beginAtZero: true,
-                ticks: {
-                  stepSize: 1
-                }
-              }
-            }
-          }
-        });
-        setFallIncidentsChart(chart);
-      }
-    }
-    
-    // Update fall risk distribution chart
-    if (dashboardStats && !fallRiskChart) {
-      const ctx = document.getElementById('fallRiskChart') as HTMLCanvasElement;
-      if (ctx) {
-        const chart = new Chart(ctx, {
-          type: 'doughnut',
-          data: {
-            labels: [
-              t('dashboard.lowRisk'), 
-              t('dashboard.mediumRisk'), 
-              t('dashboard.highRisk')
-            ],
-            datasets: [{
-              data: [
-                dashboardStats.fallRiskDistribution.low, 
-                dashboardStats.fallRiskDistribution.medium, 
-                dashboardStats.fallRiskDistribution.high
-              ],
-              backgroundColor: [
-                'rgba(34, 197, 94, 0.8)',
-                'rgba(234, 179, 8, 0.8)',
-                'rgba(239, 68, 68, 0.8)'
-              ],
-              borderColor: [
-                'rgba(34, 197, 94, 1)',
-                'rgba(234, 179, 8, 1)',
-                'rgba(239, 68, 68, 1)'
-              ],
-              borderWidth: 1
-            }]
-          },
-          options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            plugins: {
-              legend: {
-                position: 'bottom'
-              }
-            }
-          }
-        });
-        setFallRiskChart(chart);
-      }
-    }
-    
-    // Update environment monitoring chart
-    if (envLogs && envLogs.length > 0 && selectedRoom) {
-      // Cleanup previous chart
-      if (environmentChart) {
-        environmentChart.destroy();
-      }
-      
-      const ctx = document.getElementById('environmentChart') as HTMLCanvasElement;
-      if (ctx) {
-        // Get last 8 environment logs for the chart
-        const recentLogs = [...envLogs].slice(-8);
-        
-        const chart = new Chart(ctx, {
-          type: 'line',
-          data: {
-            labels: recentLogs.map(log => {
-              const date = new Date(log.timestamp);
-              return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-            }),
-            datasets: [
-              {
-                label: `${t('rooms.temperature')} (°C)`,
-                data: recentLogs.map(log => log.temperature),
-                borderColor: 'rgba(234, 179, 8, 0.8)',
-                backgroundColor: 'rgba(234, 179, 8, 0.1)',
-                borderWidth: 2,
-                tension: 0.4,
-                fill: true
-              },
-              {
-                label: `${t('rooms.humidity')} (%)`,
-                data: recentLogs.map(log => log.humidity),
-                borderColor: 'rgba(37, 99, 235, 0.8)',
-                backgroundColor: 'rgba(37, 99, 235, 0.1)',
-                borderWidth: 2,
-                tension: 0.4,
-                fill: true
-              }
-            ]
-          },
-          options: {
-            responsive: true,
-            maintainAspectRatio: false
-          }
-        });
-        
-        setEnvironmentChart(chart);
-      }
-    }
-    
-    // Set recent accidents from dashboard stats
-    if (dashboardStats && dashboardStats.recentEvents) {
-      setRecentAccidents(dashboardStats.recentEvents);
-    }
-    
-    // Cleanup charts when component unmounts
-    return () => {
-      if (fallIncidentsChart) fallIncidentsChart.destroy();
-      if (environmentChart) environmentChart.destroy();
-      if (fallRiskChart) fallRiskChart.destroy();
-    };
-  }, [dashboardStats, fallIncidentsData, envLogs, selectedRoom, t]);
-  
-  const handleRoomChange = (roomId: string) => {
-    const room = rooms?.find(r => r.id === parseInt(roomId));
-    if (room) {
-      setSelectedRoom(room);
-    }
-  };
-  
-  const formatEventTime = (timestamp: string | Date) => {
-    const date = new Date(timestamp);
-    const now = new Date();
-    const diffMs = now.getTime() - date.getTime();
-    const diffMins = Math.round(diffMs / 60000);
-    
-    if (diffMins < 60) {
-      return `${diffMins} ${t('minutes ago')}`;
-    } else if (diffMins < 24 * 60) {
-      const hours = Math.floor(diffMins / 60);
-      return `${hours} ${t('hours ago')}`;
-    } else {
-      const days = Math.floor(diffMins / (24 * 60));
-      return `${days} ${t('days ago')}`;
-    }
-  };
-  
-  const getEventTypeIcon = (accident: Accident) => {
-    if (!accident.resolved) {
-      return (
-        <div className="p-1.5 bg-red-100 rounded-full text-red-600 mt-0.5">
-          <AlertTriangle className="h-4 w-4" />
-        </div>
-      );
-    } else {
-      return (
-        <div className="p-1.5 bg-green-100 rounded-full text-green-600 mt-0.5">
-          <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-          </svg>
-        </div>
-      );
-    }
-  };
-  
+const DashboardPage: React.FC = () => {
   return (
-    <div className="p-6">
-      {/* Header */}
-      <div className="flex justify-between items-center mb-6">
-        <div>
-          <h1 className="text-2xl font-bold text-neutral-800">{t('dashboard.title')}</h1>
-          <p className="text-neutral-500">{t('dashboard.subtitle')}</p>
-        </div>
-        <div className="flex space-x-2">
-          <Button variant="outline" className="flex items-center">
-            <Download className="h-4 w-4 mr-1.5" />
-            {t('common.downloadReport')}
-          </Button>
-          <Button className="flex items-center">
-            <UserPlus className="h-4 w-4 mr-1.5" />
-            {t('common.registerNewPatient')}
-          </Button>
-        </div>
-      </div>
+    <div className="p-4 md:p-8">
+      <header className="mb-8">
+        <h1 className="text-3xl font-bold mb-2">스마트 케어 대시보드</h1>
+        <p className="text-gray-500">실시간 병원 모니터링 현황 및 정보를 확인하세요</p>
+      </header>
 
-      {/* Quick Statistics Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-        <StatCard
-          title={t('dashboard.totalPatients')}
-          value={dashboardStats?.totalPatients || 0}
-          icon={<Users className="h-5 w-5" />}
-          iconBgColor="bg-blue-100"
-          iconColor="text-primary"
-          change={{
-            value: "4%",
-            type: "increase"
-          }}
-        />
+      {/* 알림 배너 */}
+      <Alert className="mb-6 border-red-500 bg-red-50 dark:bg-red-950/20">
+        <AlertCircle className="h-5 w-5 text-red-500" />
+        <AlertTitle className="text-red-500 dark:text-red-400">응급 상황 발생</AlertTitle>
+        <AlertDescription>
+          102호실 3번 병상에서 낙상 사고가 감지되었습니다. <Button size="sm" variant="link" className="p-0 h-auto text-red-500">즉시 확인</Button>
+        </AlertDescription>
+      </Alert>
+      
+      {/* 통계 카드 섹션 */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+        <Card>
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-gray-500 mb-1">전체 환자</p>
+                <h3 className="text-2xl font-bold">127명</h3>
+              </div>
+              <div className="h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center">
+                <Users className="h-6 w-6 text-primary" />
+              </div>
+            </div>
+            <div className="mt-4">
+              <Progress value={85} className="h-1" />
+              <p className="text-xs text-gray-500 mt-1">병상 점유율 85%</p>
+            </div>
+          </CardContent>
+        </Card>
         
-        <StatCard
-          title={t('dashboard.totalRooms')}
-          value={dashboardStats?.totalRooms || 0}
-          icon={<Building2 className="h-5 w-5" />}
-          iconBgColor="bg-indigo-100"
-          iconColor="text-indigo-600"
-          subtitle={`${t('dashboard.occupancyRate')} 92%`}
-        />
+        <Card>
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-gray-500 mb-1">오늘 낙상 감지</p>
+                <h3 className="text-2xl font-bold">3건</h3>
+              </div>
+              <div className="h-12 w-12 rounded-full bg-red-100 flex items-center justify-center">
+                <AlertCircle className="h-6 w-6 text-red-500" />
+              </div>
+            </div>
+            <div className="mt-4">
+              <div className="flex justify-between text-xs text-gray-500">
+                <span>전일 대비</span>
+                <span className="text-red-500">+1건</span>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
         
-        <StatCard
-          title={t('dashboard.todayFallsTitle')}
-          value={dashboardStats?.todayAccidents || 0}
-          icon={<AlertTriangle className="h-5 w-5" />}
-          iconBgColor="bg-red-100"
-          iconColor="text-red-600"
-          change={{
-            value: "2건",
-            type: "increase"
-          }}
-        />
+        <Card>
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-gray-500 mb-1">평균 대응 시간</p>
+                <h3 className="text-2xl font-bold">2분 34초</h3>
+              </div>
+              <div className="h-12 w-12 rounded-full bg-green-100 flex items-center justify-center">
+                <Clock className="h-6 w-6 text-green-500" />
+              </div>
+            </div>
+            <div className="mt-4">
+              <div className="flex justify-between text-xs text-gray-500">
+                <span>목표 시간</span>
+                <span className="text-green-500">-28%</span>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
         
-        <StatCard
-          title={t('dashboard.environmentalAlerts')}
-          value={dashboardStats?.environmentalAlerts || 0}
-          icon={<AlertCircle className="h-5 w-5" />}
-          iconBgColor="bg-yellow-100"
-          iconColor="text-yellow-600"
-          subtitle={t('common.temperatureHigh')}
-        />
+        <Card>
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-gray-500 mb-1">환경 알림</p>
+                <h3 className="text-2xl font-bold">2건</h3>
+              </div>
+              <div className="h-12 w-12 rounded-full bg-amber-100 flex items-center justify-center">
+                <Thermometer className="h-6 w-6 text-amber-500" />
+              </div>
+            </div>
+            <div className="mt-4">
+              <div className="flex justify-between text-xs text-gray-500">
+                <span>온도 초과</span>
+                <span>습도 초과</span>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
       </div>
-
-      {/* Main Dashboard Content */}
+      
+      {/* 메인 컨텐츠 */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Left Column - Charts */}
+        {/* 왼쪽 컬럼 - 병실 모니터링 */}
         <div className="lg:col-span-2 space-y-6">
-          {/* Room Layout Section */}
           <Card>
-            <div className="border-b border-neutral-200 px-4 py-3 bg-neutral-50 flex justify-between items-center">
-              <h3 className="font-medium text-neutral-800">{selectedRoom?.name} - {t('dashboard.roomLayout')}</h3>
-              <div className="flex space-x-2">
-                <Button variant="outline" size="sm">{t('common.edit')}</Button>
-                <Select defaultValue={selectedRoom?.id?.toString()} onValueChange={handleRoomChange}>
-                  <SelectTrigger className="h-8 text-xs w-24">
-                    <SelectValue placeholder={selectedRoom?.name} />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {rooms?.map((room) => (
-                      <SelectItem key={room.id} value={room.id.toString()}>
-                        {room.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-            <CardContent className="p-0">
-              {selectedRoom && (
-                <RoomLayout 
-                  roomId={selectedRoom.id} 
-                  layout={selectedRoom.layout ? JSON.parse(selectedRoom.layout) : undefined}
-                  highlightBedId={3} // Example: highlight bed with fall alert
-                />
-              )}
-            </CardContent>
-          </Card>
-
-          {/* Fall Incidents Chart */}
-          <Card>
-            <div className="border-b border-neutral-200 px-4 py-3 bg-neutral-50 flex justify-between items-center">
-              <h3 className="font-medium text-neutral-800">{t('dashboard.fallIncidentsChart')}</h3>
-              <div className="flex space-x-2">
-                <Select defaultValue="weekly">
-                  <SelectTrigger className="h-8 text-xs w-24">
-                    <SelectValue placeholder={t('dashboard.weeklyView')} />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="weekly">{t('dashboard.weeklyView')}</SelectItem>
-                    <SelectItem value="monthly">{t('dashboard.monthlyView')}</SelectItem>
-                    <SelectItem value="yearly">{t('dashboard.yearlyView')}</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-            <CardContent className="p-4">
-              <canvas id="fallIncidentsChart" height="220"></canvas>
-            </CardContent>
-          </Card>
-
-          {/* Environment Monitoring Chart */}
-          <Card>
-            <div className="border-b border-neutral-200 px-4 py-3 bg-neutral-50 flex justify-between items-center">
-              <h3 className="font-medium text-neutral-800">
-                {t('dashboard.environmentMonitoring')} - {selectedRoom?.name}
-              </h3>
-              <div className="flex space-x-2">
-                <Select defaultValue={selectedRoom?.id?.toString()} onValueChange={handleRoomChange}>
-                  <SelectTrigger className="h-8 text-xs w-24">
-                    <SelectValue placeholder={selectedRoom?.name} />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {rooms?.map((room) => (
-                      <SelectItem key={room.id} value={room.id.toString()}>
-                        {room.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-            <CardContent className="p-4">
-              <canvas id="environmentChart" height="200"></canvas>
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* Right Column - Stats and Details */}
-        <div className="space-y-6">
-          {/* Selected Patient Details */}
-          <PatientDetails patientId={selectedPatient?.id} />
-
-          {/* Fall Risk Pie Chart */}
-          <Card>
-            <div className="border-b border-neutral-200 px-4 py-3 bg-neutral-50">
-              <h3 className="font-medium text-neutral-800">{t('dashboard.fallRiskStats')}</h3>
-            </div>
-            <CardContent className="p-4 flex justify-center">
-              <div style={{ width: '220px', height: '220px' }}>
-                <canvas id="fallRiskChart"></canvas>
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Recent Incidents */}
-          <Card>
-            <div className="border-b border-neutral-200 px-4 py-3 bg-neutral-50">
-              <h3 className="font-medium text-neutral-800">{t('dashboard.recentEvents')}</h3>
-            </div>
-            <div className="divide-y divide-neutral-200">
-              {recentAccidents && recentAccidents.length > 0 ? (
-                recentAccidents.map((accident, index) => (
-                  <div key={accident.id || index} className="p-3 flex items-start">
-                    {getEventTypeIcon(accident)}
-                    <div className="ml-3">
-                      <p className="text-sm text-neutral-800 font-medium">
-                        Room {accident.roomId} Patient {accident.patientId} {accident.resolved ? 'Fall resolved' : 'Fall detected'}
-                      </p>
-                      <p className="text-xs text-neutral-500 mt-0.5">
-                        {formatEventTime(accident.date)}
-                      </p>
+            <CardHeader>
+              <CardTitle>실시간 병실 모니터링</CardTitle>
+              <CardDescription>현재 활성화된 모든 병실의 상태를 확인합니다</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {/* 정상 상태 병실 */}
+                <div className="border rounded-lg p-4 bg-gray-50 hover:bg-gray-100 cursor-pointer transition-colors">
+                  <div className="flex justify-between mb-2">
+                    <div className="flex items-center">
+                      <div className="mr-3 p-2 rounded-full bg-green-100">
+                        <Home className="h-5 w-5 text-green-500" />
+                      </div>
+                      <h3 className="font-medium">101호</h3>
+                    </div>
+                    <span className="px-2 py-1 text-xs rounded-full bg-green-100 text-green-600">정상</span>
+                  </div>
+                  <div className="flex justify-between text-sm text-gray-500">
+                    <div>
+                      <p>환자: 3명</p>
+                      <p>담당: 김간호</p>
+                    </div>
+                    <div className="text-right">
+                      <p><Thermometer className="inline h-4 w-4 mb-1 mr-1" /> 24.5°C</p>
+                      <p><Droplets className="inline h-4 w-4 mb-1 mr-1" /> 45%</p>
                     </div>
                   </div>
-                ))
-              ) : (
-                <div className="p-3 text-center text-neutral-500 text-sm">
-                  No recent events
                 </div>
-              )}
-            </div>
-            <div className="p-2 bg-neutral-50 text-center">
-              <button className="text-primary text-sm hover:underline">
-                {t('dashboard.viewAllEvents')}
-              </button>
-            </div>
+                
+                {/* 알림 상태 병실 */}
+                <div className="border rounded-lg p-4 bg-red-50 hover:bg-red-100 cursor-pointer transition-colors">
+                  <div className="flex justify-between mb-2">
+                    <div className="flex items-center">
+                      <div className="mr-3 p-2 rounded-full bg-red-100">
+                        <Home className="h-5 w-5 text-red-500" />
+                      </div>
+                      <h3 className="font-medium">102호</h3>
+                    </div>
+                    <span className="px-2 py-1 text-xs rounded-full bg-red-100 text-red-600">알림</span>
+                  </div>
+                  <div className="flex justify-between text-sm text-gray-500">
+                    <div>
+                      <p>환자: 4명</p>
+                      <p>담당: 박간호</p>
+                    </div>
+                    <div className="text-right">
+                      <p><Thermometer className="inline h-4 w-4 mb-1 mr-1" /> 22.0°C</p>
+                      <p><Droplets className="inline h-4 w-4 mb-1 mr-1" /> 50%</p>
+                    </div>
+                  </div>
+                  <div className="mt-2 pt-2 border-t border-red-200">
+                    <p className="text-xs flex items-center text-red-500">
+                      <AlertCircle className="h-3 w-3 mr-1" /> 3번 병상 낙상 감지 (2분 전)
+                    </p>
+                  </div>
+                </div>
+                
+                {/* 정상 상태 병실 */}
+                <div className="border rounded-lg p-4 bg-gray-50 hover:bg-gray-100 cursor-pointer transition-colors">
+                  <div className="flex justify-between mb-2">
+                    <div className="flex items-center">
+                      <div className="mr-3 p-2 rounded-full bg-green-100">
+                        <Home className="h-5 w-5 text-green-500" />
+                      </div>
+                      <h3 className="font-medium">103호</h3>
+                    </div>
+                    <span className="px-2 py-1 text-xs rounded-full bg-green-100 text-green-600">정상</span>
+                  </div>
+                  <div className="flex justify-between text-sm text-gray-500">
+                    <div>
+                      <p>환자: 4명</p>
+                      <p>담당: 이간호</p>
+                    </div>
+                    <div className="text-right">
+                      <p><Thermometer className="inline h-4 w-4 mb-1 mr-1" /> 23.0°C</p>
+                      <p><Droplets className="inline h-4 w-4 mb-1 mr-1" /> 48%</p>
+                    </div>
+                  </div>
+                </div>
+                
+                {/* 주의 상태 병실 */}
+                <div className="border rounded-lg p-4 bg-amber-50 hover:bg-amber-100 cursor-pointer transition-colors">
+                  <div className="flex justify-between mb-2">
+                    <div className="flex items-center">
+                      <div className="mr-3 p-2 rounded-full bg-amber-100">
+                        <Home className="h-5 w-5 text-amber-500" />
+                      </div>
+                      <h3 className="font-medium">104호</h3>
+                    </div>
+                    <span className="px-2 py-1 text-xs rounded-full bg-amber-100 text-amber-600">주의</span>
+                  </div>
+                  <div className="flex justify-between text-sm text-gray-500">
+                    <div>
+                      <p>환자: 2명</p>
+                      <p>담당: 최간호</p>
+                    </div>
+                    <div className="text-right">
+                      <p><Thermometer className="inline h-4 w-4 mb-1 mr-1 text-amber-500" /> 27.5°C</p>
+                      <p><Droplets className="inline h-4 w-4 mb-1 mr-1" /> 40%</p>
+                    </div>
+                  </div>
+                  <div className="mt-2 pt-2 border-t border-amber-200">
+                    <p className="text-xs flex items-center text-amber-500">
+                      <Thermometer className="h-3 w-3 mr-1" /> 실내 온도 임계값 초과
+                    </p>
+                  </div>
+                </div>
+              </div>
+              
+              <div className="flex justify-center mt-4">
+                <Link href="/room-management">
+                  <Button variant="outline">
+                    전체 병실 보기
+                  </Button>
+                </Link>
+              </div>
+            </CardContent>
+          </Card>
+          
+          <Card>
+            <CardHeader className="pb-3">
+              <CardTitle>낙상 감지 통계</CardTitle>
+              <CardDescription>주간 및 월간 낙상 감지 통계를 확인합니다</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Tabs defaultValue="daily" className="w-full">
+                <TabsList className="mb-4">
+                  <TabsTrigger value="daily">일간</TabsTrigger>
+                  <TabsTrigger value="weekly">주간</TabsTrigger>
+                  <TabsTrigger value="monthly">월간</TabsTrigger>
+                </TabsList>
+                
+                <TabsContent value="daily">
+                  <div className="relative h-[250px] border-b border-l p-4">
+                    {/* 차트 영역 - 실제 차트 구현은 Chart.js나 recharts 등 필요 */}
+                    <div className="flex items-end h-full">
+                      <div className="w-1/7 px-2">
+                        <div className="h-[20%] bg-primary/70 rounded-t-md w-full"></div>
+                        <div className="text-xs text-center mt-2">월</div>
+                      </div>
+                      <div className="w-1/7 px-2">
+                        <div className="h-[40%] bg-primary/70 rounded-t-md w-full"></div>
+                        <div className="text-xs text-center mt-2">화</div>
+                      </div>
+                      <div className="w-1/7 px-2">
+                        <div className="h-[10%] bg-primary/70 rounded-t-md w-full"></div>
+                        <div className="text-xs text-center mt-2">수</div>
+                      </div>
+                      <div className="w-1/7 px-2">
+                        <div className="h-[30%] bg-primary/70 rounded-t-md w-full"></div>
+                        <div className="text-xs text-center mt-2">목</div>
+                      </div>
+                      <div className="w-1/7 px-2">
+                        <div className="h-[50%] bg-primary/70 rounded-t-md w-full"></div>
+                        <div className="text-xs text-center mt-2">금</div>
+                      </div>
+                      <div className="w-1/7 px-2">
+                        <div className="h-[20%] bg-primary/70 rounded-t-md w-full"></div>
+                        <div className="text-xs text-center mt-2">토</div>
+                      </div>
+                      <div className="w-1/7 px-2">
+                        <div className="h-[60%] bg-primary/70 rounded-t-md w-full"></div>
+                        <div className="text-xs text-center mt-2">일</div>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4">
+                    <div className="bg-gray-50 p-4 rounded border">
+                      <h3 className="text-sm font-medium text-gray-500 mb-1">이번주 낙상 사고</h3>
+                      <p className="text-2xl font-bold">12건</p>
+                      <p className="text-xs text-gray-500 mt-1">전주 대비 <span className="text-red-500">+2건</span></p>
+                    </div>
+                    
+                    <div className="bg-gray-50 p-4 rounded border">
+                      <h3 className="text-sm font-medium text-gray-500 mb-1">낙상 위험 환자</h3>
+                      <p className="text-2xl font-bold">24명</p>
+                      <p className="text-xs text-gray-500 mt-1">전체 환자의 <span className="text-amber-500">18.9%</span></p>
+                    </div>
+                    
+                    <div className="bg-gray-50 p-4 rounded border">
+                      <h3 className="text-sm font-medium text-gray-500 mb-1">예방 조치 이행률</h3>
+                      <p className="text-2xl font-bold">92.4%</p>
+                      <p className="text-xs text-gray-500 mt-1">목표 대비 <span className="text-green-500">+7.4%</span></p>
+                    </div>
+                  </div>
+                </TabsContent>
+                
+                <TabsContent value="weekly">
+                  <div className="flex items-center justify-center h-[300px] bg-gray-50 p-4 rounded">
+                    <p className="text-gray-500 text-center">주간 차트 데이터는 개발 중입니다.</p>
+                  </div>
+                </TabsContent>
+                
+                <TabsContent value="monthly">
+                  <div className="flex items-center justify-center h-[300px] bg-gray-50 p-4 rounded">
+                    <p className="text-gray-500 text-center">월간 차트 데이터는 개발 중입니다.</p>
+                  </div>
+                </TabsContent>
+              </Tabs>
+            </CardContent>
+          </Card>
+        </div>
+        
+        {/* 오른쪽 컬럼 - 알림 및 이벤트 */}
+        <div className="space-y-6">
+          <Card>
+            <CardHeader>
+              <CardTitle>최근 이벤트</CardTitle>
+              <CardDescription>지난 24시간 이내의 감지된 이벤트입니다</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                <div className="flex items-start space-x-3">
+                  <div className="p-2 rounded-full bg-red-100 flex-shrink-0">
+                    <AlertCircle className="h-4 w-4 text-red-500" />
+                  </div>
+                  <div>
+                    <div className="flex items-center justify-between">
+                      <h4 className="text-sm font-medium">낙상 감지</h4>
+                      <span className="text-xs text-gray-500">24분 전</span>
+                    </div>
+                    <p className="text-sm text-gray-500">102호 3번 병상 (홍길동)</p>
+                    <div className="flex items-center mt-1">
+                      <Button size="sm" variant="outline" className="h-7 text-xs mr-1">조치 완료</Button>
+                      <Button size="sm" variant="ghost" className="h-7 text-xs">상세 보기</Button>
+                    </div>
+                  </div>
+                </div>
+                
+                <div className="flex items-start space-x-3">
+                  <div className="p-2 rounded-full bg-amber-100 flex-shrink-0">
+                    <Thermometer className="h-4 w-4 text-amber-500" />
+                  </div>
+                  <div>
+                    <div className="flex items-center justify-between">
+                      <h4 className="text-sm font-medium">온도 경고</h4>
+                      <span className="text-xs text-gray-500">2시간 전</span>
+                    </div>
+                    <p className="text-sm text-gray-500">104호 (27.5°C, 임계값: 26°C)</p>
+                    <div className="flex items-center mt-1">
+                      <Button size="sm" variant="ghost" className="h-7 text-xs">상세 보기</Button>
+                    </div>
+                  </div>
+                </div>
+                
+                <div className="flex items-start space-x-3">
+                  <div className="p-2 rounded-full bg-red-100 flex-shrink-0">
+                    <AlertCircle className="h-4 w-4 text-red-500" />
+                  </div>
+                  <div>
+                    <div className="flex items-center justify-between">
+                      <h4 className="text-sm font-medium">낙상 감지</h4>
+                      <span className="text-xs text-gray-500">5시간 전</span>
+                    </div>
+                    <p className="text-sm text-gray-500">105호 2번 병상 (김철수)</p>
+                    <div className="flex items-center mt-1">
+                      <Button size="sm" variant="outline" className="h-7 text-xs mr-1">조치 완료</Button>
+                      <Button size="sm" variant="ghost" className="h-7 text-xs">상세 보기</Button>
+                    </div>
+                  </div>
+                </div>
+                
+                <div className="flex items-start space-x-3">
+                  <div className="p-2 rounded-full bg-blue-100 flex-shrink-0">
+                    <Droplets className="h-4 w-4 text-blue-500" />
+                  </div>
+                  <div>
+                    <div className="flex items-center justify-between">
+                      <h4 className="text-sm font-medium">습도 경고</h4>
+                      <span className="text-xs text-gray-500">8시간 전</span>
+                    </div>
+                    <p className="text-sm text-gray-500">106호 (32%, 임계값: 35%)</p>
+                    <div className="flex items-center mt-1">
+                      <Button size="sm" variant="ghost" className="h-7 text-xs">상세 보기</Button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              
+              <div className="mt-4">
+                <Link href="/reports">
+                  <Button variant="link" size="sm" className="w-full">
+                    모든 이벤트 보기
+                  </Button>
+                </Link>
+              </div>
+            </CardContent>
+          </Card>
+          
+          <Card>
+            <CardHeader>
+              <CardTitle>오늘의 활동</CardTitle>
+              <CardDescription>오늘의 일정과 작업 목록입니다</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                <div className="flex items-start space-x-3">
+                  <div className="p-2 rounded-full bg-primary/10 flex-shrink-0">
+                    <Calendar className="h-4 w-4 text-primary" />
+                  </div>
+                  <div>
+                    <h4 className="text-sm font-medium">간호사 회의</h4>
+                    <p className="text-xs text-gray-500">오전 9:00 - 10:00</p>
+                  </div>
+                </div>
+                
+                <div className="flex items-start space-x-3">
+                  <div className="p-2 rounded-full bg-primary/10 flex-shrink-0">
+                    <FileClock className="h-4 w-4 text-primary" />
+                  </div>
+                  <div>
+                    <h4 className="text-sm font-medium">환자 상태 보고서 제출</h4>
+                    <p className="text-xs text-gray-500">오후 3:00 마감</p>
+                  </div>
+                </div>
+                
+                <div className="flex items-start space-x-3">
+                  <div className="p-2 rounded-full bg-primary/10 flex-shrink-0">
+                    <Activity className="h-4 w-4 text-primary" />
+                  </div>
+                  <div>
+                    <h4 className="text-sm font-medium">낙상 위험 환자 점검</h4>
+                    <p className="text-xs text-gray-500">오후 4:30 - 5:30</p>
+                  </div>
+                </div>
+              </div>
+              
+              <div className="border-t mt-4 pt-4">
+                <Link href="/calendar">
+                  <Button variant="outline" size="sm" className="w-full">
+                    <Calendar className="h-4 w-4 mr-2" />
+                    일정 관리
+                  </Button>
+                </Link>
+              </div>
+            </CardContent>
+          </Card>
+          
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex justify-between items-center">
+                <span>바로가기</span>
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="grid grid-cols-2 gap-3">
+              <Link href="/fall-detection">
+                <Button variant="outline" className="w-full flex flex-col h-auto py-4">
+                  <MonitorSmartphone className="h-6 w-6 mb-2" />
+                  <span>낙상 감지</span>
+                </Button>
+              </Link>
+              
+              <Link href="/cctv">
+                <Button variant="outline" className="w-full flex flex-col h-auto py-4">
+                  <MonitorSmartphone className="h-6 w-6 mb-2" />
+                  <span>CCTV</span>
+                </Button>
+              </Link>
+              
+              <Link href="/user-management">
+                <Button variant="outline" className="w-full flex flex-col h-auto py-4">
+                  <UserRound className="h-6 w-6 mb-2" />
+                  <span>사용자 관리</span>
+                </Button>
+              </Link>
+              
+              <Link href="/settings">
+                <Button variant="outline" className="w-full flex flex-col h-auto py-4">
+                  <LayoutDashboard className="h-6 w-6 mb-2" />
+                  <span>설정</span>
+                </Button>
+              </Link>
+            </CardContent>
           </Card>
         </div>
       </div>
     </div>
   );
-}
+};
+
+export default DashboardPage;
