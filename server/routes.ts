@@ -1,12 +1,15 @@
 import type { Express, Request, Response, NextFunction } from "express";
 import { createServer, type Server } from "http";
-import { setupAuth } from "./auth";
+import { setupAuth, authenticateJWT } from "./auth";
 import { storage } from "./storage";
 import { WebSocketServer } from "ws";
 import { z } from "zod";
-import { insertRoomSchema, insertPatientSchema, insertGuardianSchema, insertCameraSchema, insertMessageSchema, UserRole } from "@shared/schema";
+import { scrypt, randomBytes, timingSafeEqual } from "crypto";
+import { promisify } from "util";
+import { insertRoomSchema, insertPatientSchema, insertGuardianSchema, insertAccidentSchema, insertCameraSchema, insertMessageSchema, UserRole, User } from "@shared/schema";
 
-import { authenticateJWT } from "./auth";
+// scrypt 비동기 버전
+const scryptAsync = promisify(scrypt);
 
 // Middleware to check user roles
 const hasRole = (roles: UserRole[]) => (req: Request, res: Response, next: NextFunction) => {
@@ -60,10 +63,65 @@ export async function registerRoutes(app: Express): Promise<Server> {
     });
   };
   
+  // 해시 비밀번호 함수 가져오기 - auth.ts에서 사용하는 것과 동일한 함수
+  async function hashPassword(password: string) {
+    const salt = randomBytes(16).toString("hex");
+    const buf = (await scryptAsync(password, salt, 64)) as Buffer;
+    return `${buf.toString("hex")}.${salt}`;
+  }
+  
+  // 비밀번호 비교 함수
+  async function comparePasswords(supplied: string, stored: string) {
+    const [hashed, salt] = stored.split(".");
+    const hashedBuf = Buffer.from(hashed, "hex");
+    const suppliedBuf = (await scryptAsync(supplied, salt, 64)) as Buffer;
+    return timingSafeEqual(hashedBuf, suppliedBuf);
+  }
+  
   // User Routes
+  // 모든 사용자 조회 API (역할 필터링 지원)
   app.get('/api/users', authenticateJWT, hasRole([UserRole.DIRECTOR, UserRole.NURSE]), async (req, res) => {
-    const users = await storage.getUsersByRole(req.query.role as UserRole);
-    res.json(users);
+    try {
+      const requestUser = (req as any).user;
+      let users = [];
+      
+      // 역할 기반 필터링
+      const roleParam = req.query.role as string | undefined;
+      
+      // 병원장은 모든 사용자 볼 수 있음
+      if (requestUser.role === UserRole.DIRECTOR) {
+        if (roleParam && Object.values(UserRole).includes(roleParam as UserRole)) {
+          users = await storage.getUsersByRole(roleParam as UserRole);
+        } else {
+          // 모든 사용자 가져오기
+          users = await storage.getUsersByRole();
+        }
+      } 
+      // 간호사는 환자와 보호자만 볼 수 있음
+      else if (requestUser.role === UserRole.NURSE) {
+        if (roleParam === UserRole.PATIENT) {
+          users = await storage.getUsersByRole(UserRole.PATIENT);
+        } else if (roleParam === UserRole.GUARDIAN) {
+          users = await storage.getUsersByRole(UserRole.GUARDIAN);
+        } else {
+          // 기본적으로 환자와 보호자 모두 가져오기
+          const patients = await storage.getUsersByRole(UserRole.PATIENT);
+          const guardians = await storage.getUsersByRole(UserRole.GUARDIAN);
+          users = [...patients, ...guardians];
+        }
+      }
+      
+      // 비밀번호 필드 제외하고 반환
+      const safeUsers = users.map(user => {
+        const { password, ...userWithoutPassword } = user;
+        return userWithoutPassword;
+      });
+      
+      res.status(200).json(safeUsers);
+    } catch (error) {
+      console.error('사용자 조회 오류:', error);
+      res.status(500).json({ message: '서버 오류가 발생했습니다' });
+    }
   });
   
   // Check if username or email exists
