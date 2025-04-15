@@ -117,7 +117,14 @@ export default function AuthPage() {
     }
     
     const { confirmPassword, ...registerData } = values;
-    registerMutation.mutate(registerData);
+    registerMutation.mutate(registerData, {
+      onSuccess: () => {
+        // 회원가입 성공 시 로그인 탭으로 전환
+        setActiveTab("login");
+        // 사용자명 정보를 로그인 폼에 자동으로 채우기
+        loginForm.setValue("username", values.username);
+      }
+    });
   }
 
   return (
@@ -198,14 +205,25 @@ export default function AuthPage() {
                       <FormItem>
                         <FormLabel>{t("아이디")}</FormLabel>
                         <FormControl>
-                          <Input 
-                            placeholder={t("아이디를 입력하세요")} 
-                            {...field} 
-                            onBlur={(e) => {
-                              field.onBlur();
-                              if (e.target.value) checkExistingUsername(e.target.value);
-                            }}
-                          />
+                          <div className="flex gap-2">
+                            <Input 
+                              placeholder={t("아이디를 입력하세요")} 
+                              {...field} 
+                              onBlur={(e) => {
+                                field.onBlur();
+                              }}
+                            />
+                            <Button 
+                              type="button" 
+                              variant="outline" 
+                              className="whitespace-nowrap"
+                              onClick={() => {
+                                if (field.value) checkExistingUsername(field.value);
+                              }}
+                            >
+                              중복확인
+                            </Button>
+                          </div>
                         </FormControl>
                         {usernameExists && (
                           <p className="text-sm font-medium text-destructive">이미 사용 중인 아이디입니다</p>
@@ -222,15 +240,26 @@ export default function AuthPage() {
                       <FormItem>
                         <FormLabel>{t("이메일")}</FormLabel>
                         <FormControl>
-                          <Input 
-                            placeholder={t("이메일을 입력하세요")} 
-                            type="email" 
-                            {...field} 
-                            onBlur={(e) => {
-                              field.onBlur();
-                              if (e.target.value) checkExistingEmail(e.target.value);
-                            }}
-                          />
+                          <div className="flex gap-2">
+                            <Input 
+                              placeholder={t("이메일을 입력하세요")} 
+                              type="email" 
+                              {...field} 
+                              onBlur={(e) => {
+                                field.onBlur();
+                              }}
+                            />
+                            <Button 
+                              type="button" 
+                              variant="outline" 
+                              className="whitespace-nowrap"
+                              onClick={() => {
+                                if (field.value) checkExistingEmail(field.value);
+                              }}
+                            >
+                              중복확인
+                            </Button>
+                          </div>
                         </FormControl>
                         {emailExists && (
                           <p className="text-sm font-medium text-destructive">이미 사용 중인 이메일입니다</p>
