@@ -1,10 +1,39 @@
 import express, { type Request, Response, NextFunction } from "express";
 import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
+import cookieParser from "cookie-parser";
+import session from "express-session";
+import { storage } from "./storage";
+import passport from "passport";
 
 const app = express();
+// JSON과 URL 인코딩을 가장 먼저 처리
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
+
+// 쿠키와 세션 처리를 JSON 처리 후에 설정
+app.use(cookieParser(process.env.SESSION_SECRET || "dev-session-secret"));
+
+// 세션 설정
+const sessionSettings: session.SessionOptions = {
+  secret: process.env.SESSION_SECRET || "dev-session-secret",
+  resave: true,
+  saveUninitialized: true,
+  cookie: {
+    maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+    httpOnly: true,
+    sameSite: 'lax' as const,
+    secure: false
+  },
+  store: storage.sessionStore
+};
+
+app.set("trust proxy", 1);
+app.use(session(sessionSettings));
+
+// 패스포트 초기화
+app.use(passport.initialize());
+app.use(passport.session());
 
 app.use((req, res, next) => {
   const start = Date.now();

@@ -1,4 +1,4 @@
-import { createContext, ReactNode, useContext } from "react";
+import { createContext, ReactNode, useContext, useEffect } from "react";
 import {
   useQuery,
   useMutation,
@@ -25,6 +25,26 @@ export const AuthContext = createContext<AuthContextType | null>(null);
 export function AuthProvider({ children }: { children: ReactNode }) {
   const { toast } = useToast();
   const [, setLocation] = useLocation();
+  
+  // 페이지 로드 시 필요한 로직
+  useEffect(() => {
+    const checkLoggedInStatus = async () => {
+      try {
+        const response = await fetch('/api/user', {
+          credentials: 'include'
+        });
+        
+        if (response.ok) {
+          const userData = await response.json();
+          queryClient.setQueryData(["/api/user"], userData);
+        }
+      } catch (error) {
+        console.error("세션 확인 중 오류 발생:", error);
+      }
+    };
+    
+    checkLoggedInStatus();
+  }, []);
   
   const {
     data: user,
