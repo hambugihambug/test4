@@ -4,10 +4,10 @@ import { z } from "zod";
 
 // Role enum for user types
 export const UserRole = {
-  ADMIN: "admin",         // Hospital administrator
-  NURSE: "nurse",         // Nurse
-  PATIENT: "patient",     // Patient
-  GUARDIAN: "guardian",   // Guardian
+  DIRECTOR: "director",   // Hospital director (총관리자/병원장)
+  NURSE: "nurse",         // Nurse (관리자/간호사)
+  PATIENT: "patient",     // Patient (환자)
+  GUARDIAN: "guardian",   // Guardian (보호자)
 } as const;
 
 export type UserRole = typeof UserRole[keyof typeof UserRole];
