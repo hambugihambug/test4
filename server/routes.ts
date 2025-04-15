@@ -6,10 +6,136 @@ import { WebSocketServer } from "ws";
 import { z } from "zod";
 import { scrypt, randomBytes, timingSafeEqual } from "crypto";
 import { promisify } from "util";
-import { insertRoomSchema, insertPatientSchema, insertGuardianSchema, insertAccidentSchema, insertCameraSchema, insertMessageSchema, UserRole, User } from "@shared/schema";
+import { insertRoomSchema, insertPatientSchema, insertGuardianSchema, insertAccidentSchema, insertCameraSchema, insertMessageSchema, insertUserSchema, UserRole, User } from "@shared/schema";
 
 // scrypt 비동기 버전
 const scryptAsync = promisify(scrypt);
+
+// 사용자 관리 API 함수
+function registerUserManagementRoutes(app: Express) {
+  // 사용자 생성 API (병원장 전용)
+  app.post('/api/users/create', authenticateJWT, hasRole([UserRole.DIRECTOR]), async (req, res) => {
+    try {
+      // 요청 데이터 유효성 검사
+      const userData = insertUserSchema.parse(req.body);
+      
+      // 사용자 이름 중복 확인
+      const existingUser = await storage.getUserByUsername(userData.username);
+      if (existingUser) {
+        return res.status(400).json({ message: "이미 사용 중인 아이디입니다" });
+      }
+      
+      // 이메일 중복 확인
+      const existingEmail = await storage.getUserByEmail(userData.email);
+      if (existingEmail) {
+        return res.status(400).json({ message: "이미 사용 중인 이메일입니다" });
+      }
+      
+      // 비밀번호 해싱
+      const hashedPassword = await hashPassword(userData.password);
+      
+      // 사용자 생성
+      const user = await storage.createUser({
+        ...userData,
+        password: hashedPassword
+      });
+      
+      // 비밀번호 제외하고 반환
+      const { password, ...userWithoutPassword } = user;
+      res.status(201).json(userWithoutPassword);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ message: "유효하지 않은 데이터입니다", errors: error.errors });
+      }
+      console.error('사용자 생성 오류:', error);
+      res.status(500).json({ message: '서버 오류가 발생했습니다' });
+    }
+  });
+  
+  // 사용자 정보 업데이트 API
+  app.put('/api/users/:id', authenticateJWT, async (req, res) => {
+    try {
+      const userId = parseInt(req.params.id);
+      const requestUser = (req as any).user;
+      
+      // 권한 확인 - 자신의 정보 또는 병원장은 모든 사용자, 간호사는 환자와 보호자만
+      if (requestUser.id !== userId) {
+        if (requestUser.role === UserRole.DIRECTOR) {
+          // 병원장은 모든 사용자 수정 가능
+        } else if (requestUser.role === UserRole.NURSE) {
+          // 간호사는 환자와 보호자만 수정 가능
+          const user = await storage.getUser(userId);
+          if (!user || (user.role !== UserRole.PATIENT && user.role !== UserRole.GUARDIAN)) {
+            return res.status(403).json({ message: "권한이 없습니다" });
+          }
+        } else {
+          // 다른 사용자는 자신의 정보만 수정 가능
+          return res.status(403).json({ message: "권한이 없습니다" });
+        }
+      }
+      
+      // 사용자 존재 확인
+      const user = await storage.getUser(userId);
+      if (!user) {
+        return res.status(404).json({ message: "사용자를 찾을 수 없습니다" });
+      }
+      
+      // 역할 변경 권한 확인 (병원장만 가능)
+      if (req.body.role && req.body.role !== user.role && requestUser.role !== UserRole.DIRECTOR) {
+        return res.status(403).json({ message: "역할 변경 권한이 없습니다" });
+      }
+      
+      // 비밀번호 필드가 있으면 해싱
+      let updateData = { ...req.body };
+      if (updateData.password) {
+        updateData.password = await hashPassword(updateData.password);
+      }
+      
+      // 사용자 정보 업데이트
+      const updatedUser = await storage.updateUser(userId, updateData);
+      if (!updatedUser) {
+        return res.status(500).json({ message: "사용자 정보 업데이트에 실패했습니다" });
+      }
+      
+      // 비밀번호 제외하고 반환
+      const { password, ...userWithoutPassword } = updatedUser;
+      res.status(200).json(userWithoutPassword);
+    } catch (error) {
+      console.error('사용자 업데이트 오류:', error);
+      res.status(500).json({ message: '서버 오류가 발생했습니다' });
+    }
+  });
+  
+  // 사용자 삭제 API (병원장만 가능)
+  app.delete('/api/users/:id', authenticateJWT, hasRole([UserRole.DIRECTOR]), async (req, res) => {
+    try {
+      const userId = parseInt(req.params.id);
+      const requestUser = (req as any).user;
+      
+      // 자기 자신은 삭제할 수 없음
+      if (requestUser.id === userId) {
+        return res.status(400).json({ message: "자기 자신은 삭제할 수 없습니다" });
+      }
+      
+      // 사용자 존재 확인
+      const user = await storage.getUser(userId);
+      if (!user) {
+        return res.status(404).json({ message: "사용자를 찾을 수 없습니다" });
+      }
+      
+      // 사용자 삭제
+      const success = await storage.deleteUser(userId);
+      if (!success) {
+        return res.status(500).json({ message: "사용자 삭제에 실패했습니다" });
+      }
+      
+      res.status(200).json({ success: true, message: "사용자가 삭제되었습니다" });
+    } catch (error) {
+      console.error('사용자 삭제 오류:', error);
+      res.status(500).json({ message: '서버 오류가 발생했습니다' });
+    }
+  });
+}
 
 // Middleware to check user roles
 const hasRole = (roles: UserRole[]) => (req: Request, res: Response, next: NextFunction) => {
@@ -30,6 +156,9 @@ const hasRole = (roles: UserRole[]) => (req: Request, res: Response, next: NextF
 export async function registerRoutes(app: Express): Promise<Server> {
   // Set up authentication routes
   setupAuth(app);
+
+  // 사용자 관리 API 추가
+  registerUserManagementRoutes(app);
   
   // Initialize HTTP server
   const httpServer = createServer(app);

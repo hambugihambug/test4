@@ -152,7 +152,7 @@ export default function AccountsManagementPage() {
   // 사용자 생성 mutation
   const createMutation = useMutation({
     mutationFn: async (data: z.infer<typeof userFormSchema>) => {
-      const res = await apiRequest("POST", "/api/users", data);
+      const res = await apiRequest("POST", "/api/users/create", data);
       return await res.json();
     },
     onSuccess: () => {
@@ -177,7 +177,7 @@ export default function AccountsManagementPage() {
   const updateMutation = useMutation({
     mutationFn: async (data: z.infer<typeof userUpdateSchema> & { id: number }) => {
       const { id, ...updateData } = data;
-      const res = await apiRequest("PATCH", `/api/users/${id}`, updateData);
+      const res = await apiRequest("PUT", `/api/users/${id}`, updateData);
       return await res.json();
     },
     onSuccess: () => {
