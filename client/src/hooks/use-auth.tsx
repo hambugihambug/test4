@@ -7,6 +7,7 @@ import {
 import { InsertUser, User } from "@shared/schema";
 import { getQueryFn, apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
+import { useLocation } from "wouter";
 
 type AuthContextType = {
   user: User | null;
@@ -23,6 +24,7 @@ export const AuthContext = createContext<AuthContextType | null>(null);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const { toast } = useToast();
+  const [, setLocation] = useLocation();
   
   const {
     data: user,
@@ -44,6 +46,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         title: "로그인 성공",
         description: `${user.name}님 환영합니다!`,
       });
+      // 로그인 성공 시 메인 페이지로 이동
+      setLocation("/");
     },
     onError: (error: Error) => {
       let errorMessage = "로그인에 실패했습니다";
@@ -71,6 +75,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         title: "회원가입 성공",
         description: "계정이 성공적으로 생성되었습니다.",
       });
+      // 회원가입 성공 시 메인 페이지로 이동
+      setLocation("/");
     },
     onError: (error: Error) => {
       toast({

@@ -28,10 +28,14 @@ const loginSchema = insertUserSchema.pick({
 const registerSchema = insertUserSchema.pick({
   username: true,
   email: true,
-  password: true,
   name: true,
   role: true,
 }).extend({
+  password: z.string()
+    .min(8, "비밀번호는 최소 8자 이상이어야 합니다")
+    .max(16, "비밀번호는 최대 16자까지 가능합니다")
+    .regex(/^(?=.*[A-Za-z])(?=.*\d)(?=.*[@$!%*#?&])[A-Za-z\d@$!%*#?&]{8,16}$/, 
+      "비밀번호는 영문, 숫자, 특수문자를 모두 포함해야 합니다"),
   confirmPassword: z.string(),
 }).refine((data) => data.password === data.confirmPassword, {
   message: "비밀번호가 일치하지 않습니다",
