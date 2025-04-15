@@ -27,13 +27,48 @@ const roomSchema = z.object({
 
 export default function RoomManagementPage() {
   const { t } = useI18n();
+  const { user } = useAuth();
   const [isAddingRoom, setIsAddingRoom] = useState(false);
+  
+  // 디버깅: 페이지 로드 시 인증 정보 확인
+  useEffect(() => {
+    console.log("병실 관리 페이지 - 인증 상태:", !!user);
+    if (user) {
+      console.log("병실 관리 페이지 - 사용자 역할:", user.role);
+    } else {
+      console.log("병실 관리 페이지 - 사용자 인증 안 됨");
+    }
+    
+    // 토큰 확인
+    const token = localStorage.getItem('token');
+    console.log("병실 관리 페이지 - 토큰 상태:", token ? "토큰 있음" : "토큰 없음");
+    
+    // 수동으로 인증 확인
+    const checkAuth = async () => {
+      try {
+        if (!token) return;
+        
+        const response = await fetch('/api/user', {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
+        
+        console.log("병실 관리 페이지 - 인증 확인 응답:", response.status);
+        const data = await response.json();
+        console.log("병실 관리 페이지 - 인증 데이터:", data);
+      } catch (error) {
+        console.error("병실 관리 페이지 - 인증 확인 오류:", error);
+      }
+    };
+    
+    checkAuth();
+  }, [user]);
   const [editingRoom, setEditingRoom] = useState<Room | null>(null);
   const [selectedRoomId, setSelectedRoomId] = useState<number | null>(null);
   const [activeTab, setActiveTab] = useState<string>("details");
   
-  // 사용자 정보 가져오기
-  const { user } = useAuth();
+  // 사용자 정보는 위에서 이미 가져옴
   console.log("RoomManagementPage - 현재 사용자:", user?.username, "역할:", user?.role);
   
   // Fetch all rooms with patients
