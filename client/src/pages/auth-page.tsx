@@ -79,8 +79,37 @@ export default function AuthPage() {
     },
   });
 
-  function onLoginSubmit(values: z.infer<typeof loginSchema>) {
-    loginMutation.mutate(values);
+  async function onLoginSubmit(values: z.infer<typeof loginSchema>) {
+    try {
+      // 로그인 API 직접 호출
+      const response = await fetch('/api/login', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(values),
+      });
+      
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || '로그인에 실패했습니다');
+      }
+      
+      const userData = await response.json();
+      
+      // 토큰 저장
+      if (userData.token) {
+        localStorage.setItem('token', userData.token);
+      }
+      
+      // 로그인 성공 메시지 표시
+      alert(`${userData.name}님 환영합니다!`);
+      
+      // 홈 페이지로 강제 이동
+      window.location.href = '/';
+    } catch (error) {
+      alert(error instanceof Error ? error.message : '로그인에 실패했습니다');
+    }
   }
 
   async function checkExistingUsername(username: string) {
