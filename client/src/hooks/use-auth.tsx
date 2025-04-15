@@ -112,7 +112,38 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     isLoading,
   } = useQuery<User | undefined, Error>({
     queryKey: ["/api/user"],
-    queryFn: getQueryFn({ on401: "returnNull" }),
+    queryFn: async ({ queryKey }) => {
+      try {
+        // 직접 fetch 호출을 통한 사용자 정보 획득
+        const token = localStorage.getItem('token');
+        if (!token) {
+          console.log("토큰 없음, null 반환");
+          return null;
+        }
+        
+        const response = await fetch('/api/user', {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          },
+          credentials: 'include'
+        });
+        
+        if (!response.ok) {
+          console.log("사용자 정보 로드 실패:", response.status);
+          if (response.status === 401) {
+            localStorage.removeItem('token');
+          }
+          return null;
+        }
+        
+        const userData = await response.json();
+        console.log("사용자 정보 로드 성공:", userData.username, userData.role);
+        return userData;
+      } catch (error) {
+        console.error("사용자 정보 로드 오류:", error);
+        return null;
+      }
+    },
     enabled: initialChecked,
   });
 

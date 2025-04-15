@@ -27,6 +27,33 @@ export function ProtectedRoute({
     userRole: user?.role,
     tokenExists: !!token
   });
+  
+  // 토큰이 있지만 user가 없는 경우 토큰 유효성 명시적 확인 및 페이지 새로고침
+  if (token && !user && !isLoading) {
+    console.log("토큰은 있지만 user 객체가 없음. 토큰 유효성 확인 필요");
+    
+    // 토큰 유효성 검사를 위한 비동기 함수
+    (async () => {
+      try {
+        const response = await fetch('/api/user', {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
+        
+        if (response.ok) {
+          console.log("토큰이 유효함, 페이지 새로고침");
+          window.location.reload(); // 페이지 새로고침으로 user 객체 갱신
+        } else {
+          console.log("토큰이 유효하지 않음, 토큰 제거");
+          localStorage.removeItem('token');
+          window.location.href = '/auth';
+        }
+      } catch (error) {
+        console.error("토큰 유효성 확인 중 오류:", error);
+      }
+    })();
+  }
 
   if (isLoading) {
     return (
