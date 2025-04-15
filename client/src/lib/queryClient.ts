@@ -29,8 +29,19 @@ export async function apiRequest(
   if (token) {
     headers["Authorization"] = `Bearer ${token}`;
     console.log("요청에 인증 헤더 추가됨:", url);
+  } else {
+    console.log("요청에 인증 헤더 없음:", url);
+    
+    // 디버깅: 토큰 직접 가져오기 시도
+    const directToken = localStorage.getItem('token');
+    if (directToken) {
+      console.log("localStorage에서 직접 토큰 가져옴");
+      headers["Authorization"] = `Bearer ${directToken}`;
+    }
   }
 
+  console.log(`API 요청 (${method} ${url})`, { 헤더포함여부: Object.keys(headers).length > 0 });
+  
   const res = await fetch(url, {
     method,
     headers,
@@ -47,6 +58,7 @@ export async function apiRequest(
 }
 
 type UnauthorizedBehavior = "returnNull" | "throw";
+
 export const getQueryFn: <T>(options: {
   on401: UnauthorizedBehavior;
 }) => QueryFunction<T> =
@@ -63,7 +75,16 @@ export const getQueryFn: <T>(options: {
       console.log("쿼리 요청에 인증 헤더 추가됨:", url);
     } else {
       console.log("쿼리 요청에 인증 헤더 없음:", url);
+      
+      // 디버깅: 토큰 직접 가져오기 시도
+      const directToken = localStorage.getItem('token');
+      if (directToken) {
+        console.log("localStorage에서 직접 토큰 가져옴");
+        headers["Authorization"] = `Bearer ${directToken}`;
+      }
     }
+    
+    console.log(`쿼리 요청 시작: ${url}`, { 헤더포함여부: Object.keys(headers).length > 0 });
     
     const res = await fetch(url, {
       headers,

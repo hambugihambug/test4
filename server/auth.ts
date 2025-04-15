@@ -54,24 +54,32 @@ function generateToken(user: User) {
 
 // JWT 인증 미들웨어
 export const authenticateJWT = (req: Request, res: Response, next: NextFunction) => {
+  // 디버깅용: 전체 헤더 출력
+  console.log('요청 경로:', req.path);
+  console.log('요청 헤더:', JSON.stringify(req.headers, null, 2));
+  
   // Authorization 헤더에서 토큰 확인 (Bearer 형식)
   const authHeader = req.headers.authorization;
   console.log('Authorization 헤더:', authHeader); // 디버깅용 로그
   
   if (!authHeader) {
+    console.log('인증 실패: Authorization 헤더 없음');
     return res.status(401).json({ message: '인증이 필요합니다' });
   }
   
   // Bearer 토큰 형식인지 확인
   const parts = authHeader.split(' ');
   if (parts.length !== 2 || parts[0] !== 'Bearer') {
+    console.log('인증 실패: 잘못된 토큰 형식', parts);
     return res.status(401).json({ message: '잘못된 인증 형식입니다' });
   }
   
   const token = parts[1];
+  console.log('토큰 검증 시작:', token.substring(0, 20) + '...');
   
   try {
     const decoded = jwt.verify(token, JWT_SECRET) as any;
+    console.log('토큰 검증 성공:', decoded);
     (req as any).user = decoded;
     next();
   } catch (error) {

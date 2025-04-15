@@ -36,29 +36,62 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         
         if (token) {
           console.log("토큰 발견:", token.substring(0, 20) + "...");
-          const response = await fetch('/api/user', {
-            headers: {
-              'Authorization': `Bearer ${token}`
-            },
-            credentials: 'include'
-          });
           
-          if (response.ok) {
-            const userData = await response.json();
-            console.log("사용자 데이터 로드됨:", userData.username);
-            queryClient.setQueryData(["/api/user"], userData);
+          // 최신 토큰으로 다시 로그인 시도
+          try {
+            // 새로운 토큰으로 인증 확인
+            const response = await fetch('/api/user', {
+              headers: {
+                'Authorization': `Bearer ${token}`
+              },
+              credentials: 'include'
+            });
             
-            // 인증 페이지에 있다면 홈으로 리디렉트
-            if (window.location.pathname === '/auth') {
-              setLocation('/');
+            if (response.ok) {
+              const userData = await response.json();
+              console.log("사용자 데이터 로드됨:", userData.username, userData.role);
+              queryClient.setQueryData(["/api/user"], userData);
+              
+              // JWT 디코딩 및 만료 시간 확인 (간단한 방법)
+              const parts = token.split('.');
+              if (parts.length === 3) {
+                try {
+                  const payload = JSON.parse(atob(parts[1]));
+                  const expiry = payload.exp * 1000; // 초를 밀리초로 변환
+                  const now = Date.now();
+                  console.log("토큰 만료까지 남은 시간:", Math.round((expiry - now) / (1000 * 60 * 60 * 24)), "일");
+                } catch (e) {
+                  console.error("토큰 디코딩 오류:", e);
+                }
+              }
+              
+              // 인증 페이지에 있다면 홈으로 리디렉트
+              if (window.location.pathname === '/auth') {
+                setLocation('/');
+              }
+            } else {
+              console.error("사용자 데이터 로드 실패:", response.status);
+              // 토큰이 유효하지 않으면 삭제
+              localStorage.removeItem('token');
+              
+              if (window.location.pathname !== '/auth') {
+                console.log("토큰 만료로 인한 리디렉션");
+                setLocation('/auth');
+              }
             }
-          } else {
-            console.error("사용자 데이터 로드 실패:", response.status);
-            // 토큰이 유효하지 않으면 삭제
+          } catch (error) {
+            console.error("인증 확인 중 오류:", error);
             localStorage.removeItem('token');
+            setLocation('/auth');
           }
         } else {
           console.log("저장된 토큰 없음");
+          
+          // 로그인 페이지가 아니면서 토큰이 없는 경우 로그인 페이지로 리디렉션
+          if (window.location.pathname !== '/auth') {
+            console.log("토큰 없음으로 인한 리디렉션");
+            setLocation('/auth');
+          }
         }
         setInitialChecked(true);
       } catch (error) {
@@ -66,6 +99,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         // 오류 발생 시 토큰 삭제
         localStorage.removeItem('token');
         setInitialChecked(true);
+        setLocation('/auth');
       }
     };
     
