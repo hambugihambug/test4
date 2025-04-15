@@ -4,33 +4,31 @@ import {
   useMutation,
   UseMutationResult,
 } from "@tanstack/react-query";
-import { insertUserSchema, User as SelectUser, UserRole } from "@shared/schema";
-import { getQueryFn, apiRequest, queryClient } from "../lib/queryClient";
+import { InsertUser, User } from "@shared/schema";
+import { getQueryFn, apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
-import { z } from "zod";
 
 type AuthContextType = {
-  user: SelectUser | null;
+  user: User | null;
   isLoading: boolean;
   error: Error | null;
-  loginMutation: UseMutationResult<SelectUser, Error, LoginData>;
+  loginMutation: UseMutationResult<User, Error, LoginData>;
   logoutMutation: UseMutationResult<void, Error, void>;
-  registerMutation: UseMutationResult<SelectUser, Error, RegisterData>;
+  registerMutation: UseMutationResult<User, Error, InsertUser>;
 };
 
-type LoginData = Pick<z.infer<typeof insertUserSchema>, "username" | "password">;
-
-type RegisterData = z.infer<typeof insertUserSchema> & { role: UserRole };
+type LoginData = Pick<InsertUser, "username" | "password">;
 
 export const AuthContext = createContext<AuthContextType | null>(null);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const { toast } = useToast();
+  
   const {
     data: user,
     error,
     isLoading,
-  } = useQuery<SelectUser | undefined, Error>({
+  } = useQuery<User | undefined, Error>({
     queryKey: ["/api/user"],
     queryFn: getQueryFn({ on401: "returnNull" }),
   });
@@ -40,38 +38,38 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const res = await apiRequest("POST", "/api/login", credentials);
       return await res.json();
     },
-    onSuccess: (user: SelectUser) => {
+    onSuccess: (user: User) => {
       queryClient.setQueryData(["/api/user"], user);
       toast({
-        title: "Login Success",
-        description: `Welcome, ${user.name}.`,
+        title: "로그인 성공",
+        description: `${user.name}님 환영합니다!`,
       });
     },
     onError: (error: Error) => {
       toast({
-        title: "Login Failed",
-        description: error.message || "Username or password is incorrect.",
+        title: "로그인 실패",
+        description: error.message,
         variant: "destructive",
       });
     },
   });
 
   const registerMutation = useMutation({
-    mutationFn: async (userData: RegisterData) => {
-      const res = await apiRequest("POST", "/api/register", userData);
+    mutationFn: async (credentials: InsertUser) => {
+      const res = await apiRequest("POST", "/api/register", credentials);
       return await res.json();
     },
-    onSuccess: (user: SelectUser) => {
+    onSuccess: (user: User) => {
       queryClient.setQueryData(["/api/user"], user);
       toast({
-        title: "Registration Success",
-        description: `Welcome, ${user.name}.`,
+        title: "회원가입 성공",
+        description: "계정이 성공적으로 생성되었습니다.",
       });
     },
     onError: (error: Error) => {
       toast({
-        title: "Registration Failed",
-        description: error.message || "An error occurred during registration.",
+        title: "회원가입 실패",
+        description: error.message,
         variant: "destructive",
       });
     },
@@ -84,13 +82,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     onSuccess: () => {
       queryClient.setQueryData(["/api/user"], null);
       toast({
-        title: "Logout Success",
-        description: "You have been safely logged out.",
+        title: "로그아웃 되었습니다",
       });
     },
     onError: (error: Error) => {
       toast({
-        title: "Logout Failed",
+        title: "로그아웃 실패",
         description: error.message,
         variant: "destructive",
       });

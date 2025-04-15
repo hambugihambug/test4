@@ -4,6 +4,10 @@ import NotFound from "@/pages/not-found";
 import FallDetectionPage from "@/pages/fall-detection-page";
 import DashboardPage from "@/pages/dashboard-page";
 import PatientDetailPage from "@/pages/patient-detail-page";
+import AuthPage from "@/pages/auth-page";
+import { AuthProvider, useAuth } from "@/hooks/use-auth";
+import { ProtectedRoute } from "@/lib/protected-route";
+import { UserRole } from "@shared/schema";
 import { 
   Home, 
   LayoutDashboard, 
@@ -134,6 +138,17 @@ function RoomList() {
 
 function Sidebar() {
   const [location] = useLocation();
+  const { user, logoutMutation } = useAuth();
+  
+  const handleLogout = () => {
+    logoutMutation.mutate();
+  };
+  
+  if (!user) return null;
+  
+  // 역할에 따른 메뉴 권한 설정
+  const canAccessUserManagement = user.role === UserRole.DIRECTOR || user.role === UserRole.NURSE;
+  const canAccessRoomManagement = user.role === UserRole.DIRECTOR || user.role === UserRole.NURSE;
   
   return (
     <div className="hidden md:flex h-full w-60 flex-col bg-white border-r border-gray-200">
@@ -168,20 +183,24 @@ function Sidebar() {
           active={location === '/environment'} 
         />
         
-        <div className="mt-6 pt-4 border-t">
-          <div className="px-2 mb-2 text-xs font-semibold text-gray-500 uppercase tracking-wider">
-            병실 및 환자 관리
+        {canAccessRoomManagement && (
+          <div className="mt-6 pt-4 border-t">
+            <div className="px-2 mb-2 text-xs font-semibold text-gray-500 uppercase tracking-wider">
+              병실 및 환자 관리
+            </div>
+            <RoomList />
           </div>
-          <RoomList />
-        </div>
+        )}
         
         <div className="mt-6 pt-4 border-t">
-          <SidebarMenuItem 
-            icon={Users} 
-            label="계정 관리" 
-            href="/accounts" 
-            active={location === '/accounts'} 
-          />
+          {canAccessUserManagement && (
+            <SidebarMenuItem 
+              icon={Users} 
+              label="계정 관리" 
+              href="/accounts" 
+              active={location === '/accounts'} 
+            />
+          )}
           <SidebarMenuItem 
             icon={MessageCircle} 
             label="메시지" 
@@ -198,9 +217,25 @@ function Sidebar() {
       </div>
       
       <div className="p-3 border-t">
-        <Button variant="outline" className="w-full justify-start text-gray-700">
+        <div className="px-3 py-2 mb-2 flex items-center">
+          <UserRound className="h-5 w-5 mr-2 text-gray-500" />
+          <div>
+            <p className="text-sm font-medium">{user.name}</p>
+            <p className="text-xs text-gray-500">
+              {user.role === UserRole.DIRECTOR ? "병원장" : 
+               user.role === UserRole.NURSE ? "간호사" : 
+               user.role === UserRole.PATIENT ? "환자" : "보호자"}
+            </p>
+          </div>
+        </div>
+        <Button 
+          variant="outline" 
+          className="w-full justify-start text-gray-700"
+          onClick={handleLogout}
+          disabled={logoutMutation.isPending}
+        >
           <LogOut className="mr-2 h-4 w-4" />
-          로그아웃
+          {logoutMutation.isPending ? "로그아웃 중..." : "로그아웃"}
         </Button>
       </div>
     </div>
@@ -208,86 +243,109 @@ function Sidebar() {
 }
 
 function MobileSidebar() {
+  const [isOpen, setIsOpen] = useState(false);
+  
   return (
-    <button className="md:hidden p-2 mr-2 rounded-md hover:bg-gray-100">
+    <button 
+      className="md:hidden p-2 mr-2 rounded-md hover:bg-gray-100"
+      onClick={() => setIsOpen(!isOpen)}
+    >
       <Menu className="h-5 w-5" />
     </button>
   );
 }
 
+function Header() {
+  const { user } = useAuth();
+  const [, setLocation] = useLocation();
+  
+  return (
+    <header className="bg-white border-b shadow-sm p-4">
+      <div className="container mx-auto flex justify-between items-center">
+        <div className="flex items-center">
+          <MobileSidebar />
+          <span className="text-xl font-bold text-primary md:hidden">스마트 케어</span>
+        </div>
+        <nav className="hidden md:flex space-x-2">
+          <a href="/" className="px-3 py-2 rounded hover:bg-gray-100">홈</a>
+          <a href="/dashboard" className="px-3 py-2 rounded hover:bg-gray-100">대시보드</a>
+          <a href="/fall-detection" className="px-3 py-2 rounded hover:bg-gray-100">낙상 감지</a>
+        </nav>
+        <div>
+          {!user ? (
+            <Button 
+              variant="outline" 
+              size="sm"
+              onClick={() => setLocation("/auth")}
+            >
+              로그인
+            </Button>
+          ) : (
+            <div className="flex items-center gap-2">
+              <span className="text-sm font-medium">{user.name}</span>
+            </div>
+          )}
+        </div>
+      </div>
+    </header>
+  );
+}
+
+function HomePage() {
+  return (
+    <div className="p-8 max-w-screen-lg mx-auto">
+      <h1 className="text-2xl font-bold mb-4">병원 모니터링 시스템</h1>
+      <p className="mb-6">환영합니다. 이 시스템은 환자의 낙상 사고를 감지하고 환경을 모니터링합니다.</p>
+      
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+        <div className="bg-white p-4 rounded shadow-sm border">
+          <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center mb-3">
+            <MonitorSmartphone className="h-5 w-5 text-blue-600" />
+          </div>
+          <h2 className="font-bold mb-2">낙상 감지</h2>
+          <p className="text-sm text-gray-600 mb-4">AI 기술을 활용한 실시간 환자 낙상 감지 시스템입니다.</p>
+          <a href="/fall-detection" className="text-sm text-primary font-medium">낙상 감지 페이지 &rarr;</a>
+        </div>
+        
+        <div className="bg-white p-4 rounded shadow-sm border">
+          <div className="w-10 h-10 bg-indigo-100 rounded-full flex items-center justify-center mb-3">
+            <LayoutDashboard className="h-5 w-5 text-indigo-600" />
+          </div>
+          <h2 className="font-bold mb-2">대시보드</h2>
+          <p className="text-sm text-gray-600 mb-4">병원 전체 현황과 환자 상태를 모니터링하는 대시보드입니다.</p>
+          <a href="/dashboard" className="text-sm text-primary font-medium">대시보드 확인 &rarr;</a>
+        </div>
+        
+        <div className="bg-white p-4 rounded shadow-sm border">
+          <div className="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center mb-3">
+            <Home className="h-5 w-5 text-green-600" />
+          </div>
+          <h2 className="font-bold mb-2">환경 모니터링</h2>
+          <p className="text-sm text-gray-600 mb-4">병실 환경을 모니터링하고 이상 상황을 감지합니다.</p>
+          <a href="/environment" className="text-sm text-primary font-medium">환경 모니터링 &rarr;</a>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function App() {
   return (
-    <>
+    <AuthProvider>
       <div className="min-h-screen bg-gray-50 flex">
         <Sidebar />
         
         <div className="flex-1 flex flex-col">
-          <header className="bg-white border-b shadow-sm p-4">
-            <div className="container mx-auto flex justify-between items-center">
-              <div className="flex items-center">
-                <MobileSidebar />
-                <span className="text-xl font-bold text-primary md:hidden">스마트 케어</span>
-              </div>
-              <nav className="hidden md:flex space-x-2">
-                <a href="/" className="px-3 py-2 rounded hover:bg-gray-100">홈</a>
-                <a href="/dashboard" className="px-3 py-2 rounded hover:bg-gray-100">대시보드</a>
-                <a href="/fall-detection" className="px-3 py-2 rounded hover:bg-gray-100">낙상 감지</a>
-              </nav>
-              <div>
-                <Button variant="outline" size="sm">로그인</Button>
-              </div>
-            </div>
-          </header>
+          <Header />
           
           <main className="flex-1 overflow-auto">
             <Switch>
-              <Route path="/">
-                <div className="p-8 max-w-screen-lg mx-auto">
-                  <h1 className="text-2xl font-bold mb-4">병원 모니터링 시스템</h1>
-                  <p className="mb-6">환영합니다. 이 시스템은 환자의 낙상 사고를 감지하고 환경을 모니터링합니다.</p>
-                  
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
-                    <div className="bg-white p-4 rounded shadow-sm border">
-                      <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center mb-3">
-                        <MonitorSmartphone className="h-5 w-5 text-blue-600" />
-                      </div>
-                      <h2 className="font-bold mb-2">낙상 감지</h2>
-                      <p className="text-sm text-gray-600 mb-4">AI 기술을 활용한 실시간 환자 낙상 감지 시스템입니다.</p>
-                      <a href="/fall-detection" className="text-sm text-primary font-medium">낙상 감지 페이지 &rarr;</a>
-                    </div>
-                    
-                    <div className="bg-white p-4 rounded shadow-sm border">
-                      <div className="w-10 h-10 bg-indigo-100 rounded-full flex items-center justify-center mb-3">
-                        <LayoutDashboard className="h-5 w-5 text-indigo-600" />
-                      </div>
-                      <h2 className="font-bold mb-2">대시보드</h2>
-                      <p className="text-sm text-gray-600 mb-4">병원 전체 현황과 환자 상태를 모니터링하는 대시보드입니다.</p>
-                      <a href="/dashboard" className="text-sm text-primary font-medium">대시보드 확인 &rarr;</a>
-                    </div>
-                    
-                    <div className="bg-white p-4 rounded shadow-sm border">
-                      <div className="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center mb-3">
-                        <Home className="h-5 w-5 text-green-600" />
-                      </div>
-                      <h2 className="font-bold mb-2">환경 모니터링</h2>
-                      <p className="text-sm text-gray-600 mb-4">병실 환경을 모니터링하고 이상 상황을 감지합니다.</p>
-                      <a href="/environment" className="text-sm text-primary font-medium">환경 모니터링 &rarr;</a>
-                    </div>
-                  </div>
-                </div>
-              </Route>
-              <Route path="/dashboard">
-                <DashboardPage />
-              </Route>
-              <Route path="/fall-detection">
-                <FallDetectionPage />
-              </Route>
-              <Route path="/patients/:id">
-                <PatientDetailPage />
-              </Route>
-              <Route>
-                <NotFound />
-              </Route>
+              <Route path="/auth" component={AuthPage} />
+              <ProtectedRoute path="/" component={HomePage} />
+              <ProtectedRoute path="/dashboard" component={DashboardPage} />
+              <ProtectedRoute path="/fall-detection" component={FallDetectionPage} />
+              <ProtectedRoute path="/patients/:id" component={PatientDetailPage} />
+              <Route component={NotFound} />
             </Switch>
           </main>
           
@@ -299,7 +357,7 @@ function App() {
         </div>
       </div>
       <Toaster />
-    </>
+    </AuthProvider>
   );
 }
 
