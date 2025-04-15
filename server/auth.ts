@@ -29,11 +29,9 @@ const JWT_EXPIRES_IN = '7d'; // 토큰 유효 기간
 
 // JWT 토큰을 생성하는 함수
 function generateToken(user: User) {
+  // 토큰에는 최소한의 정보만 포함 (사용자 식별자와 권한 정보)
   const payload = {
     id: user.id,
-    username: user.username,
-    email: user.email,
-    name: user.name,
     role: user.role
   };
   
@@ -42,34 +40,28 @@ function generateToken(user: User) {
 
 // JWT 인증 미들웨어
 export const authenticateJWT = (req: Request, res: Response, next: NextFunction) => {
-  // 쿠키에서 토큰 추출
-  const token = req.cookies?.token;
+  // Authorization 헤더에서 토큰 확인 (Bearer 형식)
+  const authHeader = req.headers.authorization;
+  console.log('Authorization 헤더:', authHeader); // 디버깅용 로그
   
-  console.log('쿠키 디버깅:', req.cookies); // 디버깅용 로그
-  
-  if (!token) {
-    // Authorization 헤더에서도 토큰 확인 (Bearer 형식)
-    const authHeader = req.headers.authorization;
-    const headerToken = authHeader?.split(' ')[1];
-    
-    if (!headerToken) {
-      return res.status(401).json({ message: '인증이 필요합니다' });
-    }
-    
-    try {
-      const decoded = jwt.verify(headerToken, JWT_SECRET) as any;
-      (req as any).user = decoded;
-      return next();
-    } catch (error) {
-      return res.status(401).json({ message: '유효하지 않은 토큰입니다' });
-    }
+  if (!authHeader) {
+    return res.status(401).json({ message: '인증이 필요합니다' });
   }
+  
+  // Bearer 토큰 형식인지 확인
+  const parts = authHeader.split(' ');
+  if (parts.length !== 2 || parts[0] !== 'Bearer') {
+    return res.status(401).json({ message: '잘못된 인증 형식입니다' });
+  }
+  
+  const token = parts[1];
   
   try {
     const decoded = jwt.verify(token, JWT_SECRET) as any;
     (req as any).user = decoded;
     next();
   } catch (error) {
+    console.error('토큰 검증 실패:', error);
     return res.status(401).json({ message: '유효하지 않은 토큰입니다' });
   }
 };
@@ -159,8 +151,22 @@ export function setupAuth(app: Express) {
   });
 
   // 현재 사용자 정보 API
-  app.get("/api/user", authenticateJWT, (req, res) => {
-    const user = (req as any).user;
-    res.status(200).json(user);
+  app.get("/api/user", authenticateJWT, async (req, res) => {
+    try {
+      // JWT에서 추출한 user 객체에는 id만 있으므로 데이터베이스에서 전체 사용자 정보를 조회
+      const userId = (req as any).user.id;
+      const user = await storage.getUser(userId);
+      
+      if (!user) {
+        return res.status(404).json({ message: '사용자를 찾을 수 없습니다' });
+      }
+      
+      // 비밀번호 제외하고 사용자 정보 반환
+      const { password: _, ...userWithoutPassword } = user;
+      res.status(200).json(userWithoutPassword);
+    } catch (error) {
+      console.error('사용자 정보 조회 오류:', error);
+      res.status(500).json({ message: '서버 오류가 발생했습니다' });
+    }
   });
 }
