@@ -79,7 +79,43 @@ export default function AuthPage() {
     loginMutation.mutate(values);
   }
 
-  function onRegisterSubmit(values: z.infer<typeof registerSchema>) {
+  async function checkExistingUsername(username: string) {
+    try {
+      const response = await fetch(`/api/check-user?username=${encodeURIComponent(username)}`);
+      const data = await response.json();
+      setUsernameExists(data.exists);
+      return data.exists;
+    } catch (error) {
+      console.error("아이디 확인 중 오류:", error);
+      return false;
+    }
+  }
+  
+  async function checkExistingEmail(email: string) {
+    try {
+      const response = await fetch(`/api/check-user?email=${encodeURIComponent(email)}`);
+      const data = await response.json();
+      setEmailExists(data.exists);
+      return data.exists;
+    } catch (error) {
+      console.error("이메일 확인 중 오류:", error);
+      return false;
+    }
+  }
+  
+  async function onRegisterSubmit(values: z.infer<typeof registerSchema>) {
+    // 사용자명 중복 확인
+    const usernameExists = await checkExistingUsername(values.username);
+    if (usernameExists) {
+      return;
+    }
+    
+    // 이메일 중복 확인
+    const emailExists = await checkExistingEmail(values.email);
+    if (emailExists) {
+      return;
+    }
+    
     const { confirmPassword, ...registerData } = values;
     registerMutation.mutate(registerData);
   }
@@ -164,6 +200,26 @@ export default function AuthPage() {
                         <FormControl>
                           <Input placeholder={t("아이디를 입력하세요")} {...field} />
                         </FormControl>
+                        {usernameExists && (
+                          <p className="text-sm font-medium text-destructive">이미 사용 중인 아이디입니다</p>
+                        )}
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  
+                  <FormField
+                    control={registerForm.control}
+                    name="email"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>{t("이메일")}</FormLabel>
+                        <FormControl>
+                          <Input placeholder={t("이메일을 입력하세요")} type="email" {...field} />
+                        </FormControl>
+                        {emailExists && (
+                          <p className="text-sm font-medium text-destructive">이미 사용 중인 이메일입니다</p>
+                        )}
                         <FormMessage />
                       </FormItem>
                     )}
