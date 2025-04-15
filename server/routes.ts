@@ -8,6 +8,13 @@ import { scrypt, randomBytes, timingSafeEqual } from "crypto";
 import { promisify } from "util";
 import { insertRoomSchema, insertPatientSchema, insertGuardianSchema, insertAccidentSchema, insertCameraSchema, insertMessageSchema, insertUserSchema, UserRole, User } from "@shared/schema";
 
+// 비밀번호 해싱 함수 정의
+async function hashPassword(password: string) {
+  const salt = randomBytes(16).toString("hex");
+  const buf = (await scryptAsync(password, salt, 64)) as Buffer;
+  return `${buf.toString("hex")}.${salt}`;
+}
+
 // scrypt 비동기 버전
 const scryptAsync = promisify(scrypt);
 
