@@ -45,8 +45,24 @@ export const authenticateJWT = (req: Request, res: Response, next: NextFunction)
   // 쿠키에서 토큰 추출
   const token = req.cookies?.token;
   
+  console.log('쿠키 디버깅:', req.cookies); // 디버깅용 로그
+  
   if (!token) {
-    return res.status(401).json({ message: '인증이 필요합니다' });
+    // Authorization 헤더에서도 토큰 확인 (Bearer 형식)
+    const authHeader = req.headers.authorization;
+    const headerToken = authHeader?.split(' ')[1];
+    
+    if (!headerToken) {
+      return res.status(401).json({ message: '인증이 필요합니다' });
+    }
+    
+    try {
+      const decoded = jwt.verify(headerToken, JWT_SECRET) as any;
+      (req as any).user = decoded;
+      return next();
+    } catch (error) {
+      return res.status(401).json({ message: '유효하지 않은 토큰입니다' });
+    }
   }
   
   try {
@@ -91,9 +107,12 @@ export function setupAuth(app: Express) {
         secure: process.env.NODE_ENV === 'production'
       });
       
-      // 비밀번호 제외하고 사용자 정보 반환
+      // 비밀번호 제외하고 사용자 정보와 토큰을 함께 반환
       const { password, ...userWithoutPassword } = user;
-      res.status(201).json(userWithoutPassword);
+      res.status(201).json({
+        ...userWithoutPassword,
+        token: token // 클라이언트에서 직접 토큰을 사용할 수 있도록 전달
+      });
     } catch (error) {
       next(error);
     }
@@ -121,9 +140,12 @@ export function setupAuth(app: Express) {
         secure: process.env.NODE_ENV === 'production'
       });
       
-      // 비밀번호 제외하고 사용자 정보 반환
+      // 비밀번호 제외하고 사용자 정보와 토큰을 함께 반환
       const { password: _, ...userWithoutPassword } = user;
-      res.status(200).json(userWithoutPassword);
+      res.status(200).json({
+        ...userWithoutPassword,
+        token: token // 클라이언트에서 직접 토큰을 사용할 수 있도록 전달
+      });
     } catch (error) {
       next(error);
     }

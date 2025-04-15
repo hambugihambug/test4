@@ -58,7 +58,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const loginMutation = useMutation({
     mutationFn: async (credentials: LoginData) => {
       const res = await apiRequest("POST", "/api/login", credentials);
-      return await res.json();
+      const userData = await res.json();
+      
+      // 서버에서 받은 토큰을 로컬 스토리지에 저장
+      if (userData.token) {
+        localStorage.setItem('token', userData.token);
+        // 응답에서 token 필드 제거 (사용자 객체에 불필요한 정보)
+        const { token, ...userWithoutToken } = userData;
+        return userWithoutToken;
+      }
+      
+      return userData;
     },
     onSuccess: (user: User) => {
       queryClient.setQueryData(["/api/user"], user);
@@ -87,7 +97,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const registerMutation = useMutation({
     mutationFn: async (credentials: InsertUser) => {
       const res = await apiRequest("POST", "/api/register", credentials);
-      return await res.json();
+      const userData = await res.json();
+      
+      // 서버에서 받은 토큰을 로컬 스토리지에 저장
+      if (userData.token) {
+        localStorage.setItem('token', userData.token);
+        // 응답에서 token 필드 제거
+        const { token, ...userWithoutToken } = userData;
+        return userWithoutToken;
+      }
+      
+      return userData;
     },
     onSuccess: (user: User) => {
       queryClient.setQueryData(["/api/user"], user);
@@ -110,6 +130,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const logoutMutation = useMutation({
     mutationFn: async () => {
       await apiRequest("POST", "/api/logout");
+      // 로그아웃 시 토큰 삭제
+      localStorage.removeItem('token');
     },
     onSuccess: () => {
       queryClient.setQueryData(["/api/user"], null);
