@@ -9,7 +9,9 @@ async function throwIfResNotOk(res: Response) {
 
 // 로컬 스토리지에서 토큰 가져오기
 function getAuthToken(): string | null {
-  return localStorage.getItem('token');
+  const token = localStorage.getItem('token');
+  console.log("API 호출 시 토큰 상태:", token ? "토큰 있음" : "토큰 없음");
+  return token;
 }
 
 export async function apiRequest(
@@ -26,14 +28,19 @@ export async function apiRequest(
   const token = getAuthToken();
   if (token) {
     headers["Authorization"] = `Bearer ${token}`;
+    console.log("요청에 인증 헤더 추가됨:", url);
   }
 
   const res = await fetch(url, {
     method,
     headers,
     body: data ? JSON.stringify(data) : undefined,
-    credentials: "include", // 쿠키도 함께 사용 (이중 인증 방식)
+    credentials: "include", // 쿠키도 함께 사용
   });
+
+  if (!res.ok) {
+    console.error(`API 오류 (${method} ${url}):`, res.status, res.statusText);
+  }
 
   await throwIfResNotOk(res);
   return res;
@@ -47,24 +54,37 @@ export const getQueryFn: <T>(options: {
   async ({ queryKey }) => {
     // 헤더 설정
     const headers: HeadersInit = {};
+    const url = queryKey[0] as string;
     
     // 인증 토큰이 있으면 헤더에 추가
     const token = getAuthToken();
     if (token) {
       headers["Authorization"] = `Bearer ${token}`;
+      console.log("쿼리 요청에 인증 헤더 추가됨:", url);
+    } else {
+      console.log("쿼리 요청에 인증 헤더 없음:", url);
     }
     
-    const res = await fetch(queryKey[0] as string, {
+    const res = await fetch(url, {
       headers,
       credentials: "include", // 쿠키도 함께 사용
     });
+    
+    console.log(`쿼리 응답 (${url}):`, res.status);
 
     if (unauthorizedBehavior === "returnNull" && res.status === 401) {
+      console.log("401 응답 처리: null 반환");
       return null;
     }
 
-    await throwIfResNotOk(res);
-    return await res.json();
+    try {
+      await throwIfResNotOk(res);
+      const data = await res.json();
+      return data;
+    } catch (error) {
+      console.error(`쿼리 오류 (${url}):`, error);
+      throw error;
+    }
   };
 
 export const queryClient = new QueryClient({

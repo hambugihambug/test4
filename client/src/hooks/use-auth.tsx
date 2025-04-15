@@ -35,6 +35,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         const token = localStorage.getItem('token');
         
         if (token) {
+          console.log("토큰 발견:", token.substring(0, 20) + "...");
           const response = await fetch('/api/user', {
             headers: {
               'Authorization': `Bearer ${token}`
@@ -44,17 +45,26 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           
           if (response.ok) {
             const userData = await response.json();
+            console.log("사용자 데이터 로드됨:", userData.username);
             queryClient.setQueryData(["/api/user"], userData);
             
             // 인증 페이지에 있다면 홈으로 리디렉트
             if (window.location.pathname === '/auth') {
               setLocation('/');
             }
+          } else {
+            console.error("사용자 데이터 로드 실패:", response.status);
+            // 토큰이 유효하지 않으면 삭제
+            localStorage.removeItem('token');
           }
+        } else {
+          console.log("저장된 토큰 없음");
         }
         setInitialChecked(true);
       } catch (error) {
         console.error("세션 확인 중 오류 발생:", error);
+        // 오류 발생 시 토큰 삭제
+        localStorage.removeItem('token');
         setInitialChecked(true);
       }
     };
