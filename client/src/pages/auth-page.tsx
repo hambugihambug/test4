@@ -51,6 +51,12 @@ export default function AuthPage() {
   
   // 임시 번역 함수
   const t = (text: string) => text;
+  
+  // 디버깅: 로그인 상태 확인
+  useEffect(() => {
+    const token = localStorage.getItem('token');
+    console.log("AuthPage - 토큰 상태:", token ? "토큰 있음" : "토큰 없음");
+  }, []);
 
   // 이미 로그인한 경우 메인 페이지로 리다이렉트
   useEffect(() => {
@@ -81,6 +87,8 @@ export default function AuthPage() {
 
   async function onLoginSubmit(values: z.infer<typeof loginSchema>) {
     try {
+      console.log("로그인 시도 (직접 API 호출):", values.username);
+      
       // 로그인 API 직접 호출
       const response = await fetch('/api/login', {
         method: 'POST',
@@ -90,24 +98,36 @@ export default function AuthPage() {
         body: JSON.stringify(values),
       });
       
+      console.log("로그인 응답 상태:", response.status);
+      
       if (!response.ok) {
         const errorData = await response.json();
         throw new Error(errorData.message || '로그인에 실패했습니다');
       }
       
       const userData = await response.json();
+      console.log("로그인 성공, 사용자 데이터:", userData.username, userData.role);
       
       // 토큰 저장
       if (userData.token) {
         localStorage.setItem('token', userData.token);
+        console.log("토큰 저장됨, 길이:", userData.token.length);
+      } else {
+        console.error("응답에 토큰이 없음");
       }
+      
+      // 토큰 잘 저장되었는지 확인
+      const savedToken = localStorage.getItem('token');
+      console.log("토큰 저장 확인:", savedToken ? "성공" : "실패");
       
       // 로그인 성공 메시지 표시
       alert(`${userData.name}님 환영합니다!`);
       
       // 홈 페이지로 강제 이동
+      console.log("홈페이지로 이동");
       window.location.href = '/';
     } catch (error) {
+      console.error("로그인 오류:", error);
       alert(error instanceof Error ? error.message : '로그인에 실패했습니다');
     }
   }
