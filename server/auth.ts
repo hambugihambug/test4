@@ -2,6 +2,7 @@ import passport from "passport";
 import { Strategy as LocalStrategy } from "passport-local";
 import { Express } from "express";
 import session from "express-session";
+import cookieParser from "cookie-parser";
 import { scrypt, randomBytes, timingSafeEqual } from "crypto";
 import { promisify } from "util";
 import { storage } from "./storage";
@@ -28,15 +29,19 @@ async function comparePasswords(supplied: string, stored: string) {
 export function setupAuth(app: Express) {
   const sessionSettings: session.SessionOptions = {
     secret: process.env.SESSION_SECRET || "dev-session-secret",
-    resave: false,
-    saveUninitialized: false,
+    resave: true, // 세션 저장소 이슈를 해결하기 위해 true로 변경
+    saveUninitialized: true, // 로그인 이슈 해결을 위해 true로 변경
     cookie: {
       maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+      httpOnly: true,
+      sameSite: 'lax',
+      secure: false // 개발 환경에서는 false로 설정
     },
     store: storage.sessionStore
   };
 
   app.set("trust proxy", 1);
+  app.use(cookieParser(process.env.SESSION_SECRET || "dev-session-secret"));
   app.use(session(sessionSettings));
   app.use(passport.initialize());
   app.use(passport.session());
