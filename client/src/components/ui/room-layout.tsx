@@ -39,14 +39,12 @@ const DEFAULT_LAYOUT = {
   roomHeight: 400
 };
 
-// 환자 배치를 위한 임시 데이터
-const AVAILABLE_PATIENTS = [
-  { id: 1, name: "김환자", assigned: true },
-  { id: 2, name: "이환자", assigned: true },
-  { id: 3, name: "박환자", assigned: false },
-  { id: 4, name: "최환자", assigned: false },
-  { id: 5, name: "정환자", assigned: false }
-];
+// 환자 배치 관련 인터페이스
+interface PatientWithAssignmentStatus {
+  id: number;
+  name: string;
+  assigned: boolean;
+}
 
 export function RoomLayout({ roomId, layout, onSave, editable }: RoomLayoutProps) {
   const { t } = useI18n();

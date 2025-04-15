@@ -382,8 +382,30 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get('/api/rooms/with-patients', authenticateJWT, async (req, res) => {
     try {
       const roomsWithPatients = await storage.getAllRoomsWithPatients();
+      
+      // 각 방의 최신 환경 데이터 가져오기
+      for (const room of roomsWithPatients) {
+        const latestEnvLog = await storage.getLatestEnvLogByRoomId(room.id);
+        if (latestEnvLog) {
+          room.currentTemp = latestEnvLog.temperature;
+          room.currentHumidity = latestEnvLog.humidity;
+          
+          // 상태 계산
+          if (room.currentTemp > room.tempThreshold) {
+            room.status = 'warning';
+          } else {
+            room.status = 'normal';
+          }
+        } else {
+          room.currentTemp = 24.5;  // 기본값
+          room.currentHumidity = 55; // 기본값
+          room.status = 'normal';
+        }
+      }
+      
       res.json(roomsWithPatients);
     } catch (error) {
+      console.error('Error fetching rooms with patients:', error);
       res.status(500).json({ message: "Error fetching rooms with patients" });
     }
   });
