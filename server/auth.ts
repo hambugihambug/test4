@@ -5,13 +5,10 @@ import session from "express-session";
 import { scrypt, randomBytes, timingSafeEqual } from "crypto";
 import { promisify } from "util";
 import { storage } from "./storage";
-import { User } from "@shared/schema";
+import { User as UserType } from "@shared/schema";
 
-declare global {
-  namespace Express {
-    interface User extends User {}
-  }
-}
+// 사용자 정의 인터페이스 대신 타입 추가 노트
+// Express.User 타입을 직접 확장할 수 없으므로 passport에 의존
 
 const scryptAsync = promisify(scrypt);
 
@@ -35,7 +32,8 @@ export function setupAuth(app: Express) {
     saveUninitialized: false,
     cookie: {
       maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
-    }
+    },
+    store: storage.sessionStore
   };
 
   app.set("trust proxy", 1);
@@ -58,7 +56,7 @@ export function setupAuth(app: Express) {
     }),
   );
 
-  passport.serializeUser((user, done) => done(null, user.id));
+  passport.serializeUser((user: any, done) => done(null, user.id));
   
   passport.deserializeUser(async (id: number, done) => {
     try {
