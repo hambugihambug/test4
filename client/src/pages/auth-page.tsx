@@ -42,6 +42,8 @@ export default function AuthPage() {
   const [, setLocation] = useLocation();
   const { user, loginMutation, registerMutation } = useAuth();
   const [activeTab, setActiveTab] = useState<string>("login");
+  const [usernameExists, setUsernameExists] = useState<boolean>(false);
+  const [emailExists, setEmailExists] = useState<boolean>(false);
   
   // 임시 번역 함수
   const t = (text: string) => text;

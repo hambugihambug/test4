@@ -21,6 +21,7 @@ export interface IStorage {
   // User methods
   getUser(id: number): Promise<User | undefined>;
   getUserByUsername(username: string): Promise<User | undefined>;
+  getUserByEmail(email: string): Promise<User | undefined>;
   createUser(user: InsertUser): Promise<User>;
   updateUser(id: number, userData: Partial<User>): Promise<User | undefined>;
   deleteUser(id: number): Promise<boolean>;
@@ -122,6 +123,7 @@ export class MemStorage implements IStorage {
     // Initialize with admin user
     this.createUser({
       username: "admin",
+      email: "admin@example.com",
       password: "adminpassword", // Will be hashed in auth.ts
       name: "병원장",
       role: UserRole.DIRECTOR,
@@ -160,6 +162,10 @@ export class MemStorage implements IStorage {
 
   async getUserByUsername(username: string): Promise<User | undefined> {
     return Array.from(this.users.values()).find(user => user.username === username);
+  }
+  
+  async getUserByEmail(email: string): Promise<User | undefined> {
+    return Array.from(this.users.values()).find(user => user.email === email);
   }
 
   async createUser(insertUser: InsertUser): Promise<User> {
@@ -537,6 +543,11 @@ export class DatabaseStorage implements IStorage {
 
   async getUserByUsername(username: string): Promise<User | undefined> {
     const [user] = await db.select().from(users).where(eq(users.username, username));
+    return user;
+  }
+  
+  async getUserByEmail(email: string): Promise<User | undefined> {
+    const [user] = await db.select().from(users).where(eq(users.email, email));
     return user;
   }
 
@@ -957,6 +968,7 @@ async function initializeData() {
     
     await db.insert(users).values({
       username: "admin",
+      email: "admin@example.com",
       password: hashedPassword,
       name: "병원장",
       role: UserRole.DIRECTOR,

@@ -69,6 +69,27 @@ export async function registerRoutes(app: Express): Promise<Server> {
     res.json(users);
   });
   
+  // Check if username or email exists
+  app.get('/api/check-user', async (req, res) => {
+    try {
+      const { username, email } = req.query;
+      
+      if (username) {
+        const user = await storage.getUserByUsername(username as string);
+        return res.json({ exists: !!user });
+      }
+      
+      if (email) {
+        const user = await storage.getUserByEmail(email as string);
+        return res.json({ exists: !!user });
+      }
+      
+      res.status(400).json({ message: "Username or email query parameter is required" });
+    } catch (error) {
+      res.status(500).json({ message: "Error checking user" });
+    }
+  });
+
   // Current user language preference
   app.patch('/api/user/language', isAuthenticated, async (req, res) => {
     const { language } = req.body;
