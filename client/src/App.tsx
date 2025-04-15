@@ -25,6 +25,7 @@ import {
   CollapsibleContent, 
   CollapsibleTrigger 
 } from "@/components/ui/collapsible";
+import { useState } from "react";
 
 // 임시 병실 및 환자 데이터
 const ROOMS_DATA = [
@@ -79,41 +80,53 @@ function SidebarMenuItem({ icon: Icon, label, active, href, onClick }: {
   );
 }
 
+function RoomItem({ room }: { room: typeof ROOMS_DATA[0] }) {
+  const [isOpen, setIsOpen] = useState(false);
+  
+  return (
+    <div className="w-full">
+      <button 
+        onClick={() => setIsOpen(!isOpen)}
+        className="flex w-full items-center justify-between px-2 py-1.5 text-sm hover:bg-gray-100 rounded-md"
+      >
+        <div className="flex items-center">
+          <BedDouble className="mr-2 h-4 w-4 text-gray-500" />
+          <span>{room.name}</span>
+        </div>
+        <ChevronDown className={`h-4 w-4 text-gray-500 transition-transform ${isOpen ? 'rotate-180' : ''}`} />
+      </button>
+      
+      {isOpen && (
+        <div className="pl-6 mt-1 space-y-1">
+          {room.patients.map(patient => (
+            <a 
+              key={patient.id} 
+              href={`/patients/${patient.id}`}
+              className="flex items-center px-2 py-1.5 text-sm rounded-md text-gray-700 hover:bg-gray-100"
+            >
+              <UserRound className="mr-2 h-3.5 w-3.5 text-gray-500" />
+              <span>{patient.name}</span>
+              <span className={cn(
+                "ml-auto text-xs rounded-full px-1.5 py-0.5",
+                patient.fallRisk === "높음" ? "bg-red-100 text-red-800" :
+                patient.fallRisk === "중간" ? "bg-yellow-100 text-yellow-800" :
+                "bg-green-100 text-green-800"
+              )}>
+                {patient.fallRisk}
+              </span>
+            </a>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
 function RoomList() {
   return (
     <div className="space-y-1 mt-2">
       {ROOMS_DATA.map(room => (
-        <Collapsible key={room.id} className="w-full">
-          <CollapsibleTrigger className="flex w-full items-center justify-between px-2 py-1.5 text-sm hover:bg-gray-100 rounded-md">
-            <div className="flex items-center">
-              <BedDouble className="mr-2 h-4 w-4 text-gray-500" />
-              <span>{room.name}</span>
-            </div>
-            <ChevronDown className="h-4 w-4 text-gray-500 transition-transform ui-open:rotate-180" />
-          </CollapsibleTrigger>
-          <CollapsibleContent>
-            <div className="pl-6 mt-1 space-y-1">
-              {room.patients.map(patient => (
-                <a 
-                  key={patient.id} 
-                  href={`/patients/${patient.id}`}
-                  className="flex items-center px-2 py-1.5 text-sm rounded-md text-gray-700 hover:bg-gray-100"
-                >
-                  <UserRound className="mr-2 h-3.5 w-3.5 text-gray-500" />
-                  <span>{patient.name}</span>
-                  <span className={cn(
-                    "ml-auto text-xs rounded-full px-1.5 py-0.5",
-                    patient.fallRisk === "높음" ? "bg-red-100 text-red-800" :
-                    patient.fallRisk === "중간" ? "bg-yellow-100 text-yellow-800" :
-                    "bg-green-100 text-green-800"
-                  )}>
-                    {patient.fallRisk}
-                  </span>
-                </a>
-              ))}
-            </div>
-          </CollapsibleContent>
-        </Collapsible>
+        <RoomItem key={room.id} room={room} />
       ))}
     </div>
   );
@@ -228,65 +241,65 @@ function App() {
           
           <main className="flex-1 overflow-auto">
             <Switch>
-            <Route path="/">
-              <div className="p-8 max-w-screen-lg mx-auto">
-                <h1 className="text-2xl font-bold mb-4">병원 모니터링 시스템</h1>
-                <p className="mb-6">환영합니다. 이 시스템은 환자의 낙상 사고를 감지하고 환경을 모니터링합니다.</p>
-                
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
-                  <div className="bg-white p-4 rounded shadow-sm border">
-                    <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center mb-3">
-                      <MonitorSmartphone className="h-5 w-5 text-blue-600" />
-                    </div>
-                    <h2 className="font-bold mb-2">낙상 감지</h2>
-                    <p className="text-sm text-gray-600 mb-4">AI 기술을 활용한 실시간 환자 낙상 감지 시스템입니다.</p>
-                    <a href="/fall-detection" className="text-sm text-primary font-medium">낙상 감지 페이지 &rarr;</a>
-                  </div>
+              <Route path="/">
+                <div className="p-8 max-w-screen-lg mx-auto">
+                  <h1 className="text-2xl font-bold mb-4">병원 모니터링 시스템</h1>
+                  <p className="mb-6">환영합니다. 이 시스템은 환자의 낙상 사고를 감지하고 환경을 모니터링합니다.</p>
                   
-                  <div className="bg-white p-4 rounded shadow-sm border">
-                    <div className="w-10 h-10 bg-indigo-100 rounded-full flex items-center justify-center mb-3">
-                      <LayoutDashboard className="h-5 w-5 text-indigo-600" />
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+                    <div className="bg-white p-4 rounded shadow-sm border">
+                      <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center mb-3">
+                        <MonitorSmartphone className="h-5 w-5 text-blue-600" />
+                      </div>
+                      <h2 className="font-bold mb-2">낙상 감지</h2>
+                      <p className="text-sm text-gray-600 mb-4">AI 기술을 활용한 실시간 환자 낙상 감지 시스템입니다.</p>
+                      <a href="/fall-detection" className="text-sm text-primary font-medium">낙상 감지 페이지 &rarr;</a>
                     </div>
-                    <h2 className="font-bold mb-2">대시보드</h2>
-                    <p className="text-sm text-gray-600 mb-4">병원 전체 현황과 환자 상태를 모니터링하는 대시보드입니다.</p>
-                    <a href="/dashboard" className="text-sm text-primary font-medium">대시보드 확인 &rarr;</a>
-                  </div>
-                  
-                  <div className="bg-white p-4 rounded shadow-sm border">
-                    <div className="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center mb-3">
-                      <Home className="h-5 w-5 text-green-600" />
+                    
+                    <div className="bg-white p-4 rounded shadow-sm border">
+                      <div className="w-10 h-10 bg-indigo-100 rounded-full flex items-center justify-center mb-3">
+                        <LayoutDashboard className="h-5 w-5 text-indigo-600" />
+                      </div>
+                      <h2 className="font-bold mb-2">대시보드</h2>
+                      <p className="text-sm text-gray-600 mb-4">병원 전체 현황과 환자 상태를 모니터링하는 대시보드입니다.</p>
+                      <a href="/dashboard" className="text-sm text-primary font-medium">대시보드 확인 &rarr;</a>
                     </div>
-                    <h2 className="font-bold mb-2">환경 모니터링</h2>
-                    <p className="text-sm text-gray-600 mb-4">병실 환경을 모니터링하고 이상 상황을 감지합니다.</p>
-                    <a href="/environment" className="text-sm text-primary font-medium">환경 모니터링 &rarr;</a>
+                    
+                    <div className="bg-white p-4 rounded shadow-sm border">
+                      <div className="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center mb-3">
+                        <Home className="h-5 w-5 text-green-600" />
+                      </div>
+                      <h2 className="font-bold mb-2">환경 모니터링</h2>
+                      <p className="text-sm text-gray-600 mb-4">병실 환경을 모니터링하고 이상 상황을 감지합니다.</p>
+                      <a href="/environment" className="text-sm text-primary font-medium">환경 모니터링 &rarr;</a>
+                    </div>
                   </div>
                 </div>
-              </div>
-            </Route>
-            <Route path="/dashboard">
-              <DashboardPage />
-            </Route>
-            <Route path="/fall-detection">
-              <FallDetectionPage />
-            </Route>
-            <Route path="/patients/:id">
-              <PatientDetailPage />
-            </Route>
-            <Route>
-              <NotFound />
-            </Route>
-          </Switch>
-        </main>
-        
-        <footer className="bg-white border-t py-4 mt-8">
-          <div className="container mx-auto px-4 text-center text-sm text-gray-500">
-            © 2025 스마트 케어 시스템. All rights reserved.
-          </div>
-        </footer>
+              </Route>
+              <Route path="/dashboard">
+                <DashboardPage />
+              </Route>
+              <Route path="/fall-detection">
+                <FallDetectionPage />
+              </Route>
+              <Route path="/patients/:id">
+                <PatientDetailPage />
+              </Route>
+              <Route>
+                <NotFound />
+              </Route>
+            </Switch>
+          </main>
+          
+          <footer className="bg-white border-t py-4 mt-8">
+            <div className="container mx-auto px-4 text-center text-sm text-gray-500">
+              © 2025 스마트 케어 시스템. All rights reserved.
+            </div>
+          </footer>
+        </div>
       </div>
-    </div>
-    <Toaster />
-  </>
+      <Toaster />
+    </>
   );
 }
 
