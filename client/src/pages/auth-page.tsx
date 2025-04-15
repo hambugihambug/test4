@@ -198,7 +198,14 @@ export default function AuthPage() {
                       <FormItem>
                         <FormLabel>{t("아이디")}</FormLabel>
                         <FormControl>
-                          <Input placeholder={t("아이디를 입력하세요")} {...field} />
+                          <Input 
+                            placeholder={t("아이디를 입력하세요")} 
+                            {...field} 
+                            onBlur={(e) => {
+                              field.onBlur();
+                              if (e.target.value) checkExistingUsername(e.target.value);
+                            }}
+                          />
                         </FormControl>
                         {usernameExists && (
                           <p className="text-sm font-medium text-destructive">이미 사용 중인 아이디입니다</p>
@@ -215,7 +222,15 @@ export default function AuthPage() {
                       <FormItem>
                         <FormLabel>{t("이메일")}</FormLabel>
                         <FormControl>
-                          <Input placeholder={t("이메일을 입력하세요")} type="email" {...field} />
+                          <Input 
+                            placeholder={t("이메일을 입력하세요")} 
+                            type="email" 
+                            {...field} 
+                            onBlur={(e) => {
+                              field.onBlur();
+                              if (e.target.value) checkExistingEmail(e.target.value);
+                            }}
+                          />
                         </FormControl>
                         {emailExists && (
                           <p className="text-sm font-medium text-destructive">이미 사용 중인 이메일입니다</p>
