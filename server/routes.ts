@@ -6,25 +6,22 @@ import { WebSocketServer } from "ws";
 import { z } from "zod";
 import { insertRoomSchema, insertPatientSchema, insertGuardianSchema, insertCameraSchema, insertMessageSchema, UserRole } from "@shared/schema";
 
-// Middleware to check if user is authenticated
-const isAuthenticated = (req: Request, res: Response, next: NextFunction) => {
-  if (req.isAuthenticated()) {
-    return next();
-  }
-  res.status(401).json({ message: "Unauthorized" });
-};
+import { authenticateJWT } from "./auth";
 
-// Middleware to check if user has specific role
+// Middleware to check user roles
 const hasRole = (roles: UserRole[]) => (req: Request, res: Response, next: NextFunction) => {
-  if (!req.isAuthenticated()) {
-    return res.status(401).json({ message: "Unauthorized" });
+  // user 객체는 authenticateJWT에서 이미 req에 추가됨
+  const user = (req as any).user;
+  
+  if (!user) {
+    return res.status(401).json({ message: "인증이 필요합니다" });
   }
   
-  if (roles.includes(req.user.role as UserRole)) {
+  if (roles.includes(user.role as UserRole)) {
     return next();
   }
   
-  res.status(403).json({ message: "Forbidden" });
+  res.status(403).json({ message: "권한이 없습니다" });
 };
 
 export async function registerRoutes(app: Express): Promise<Server> {
@@ -64,7 +61,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   };
   
   // User Routes
-  app.get('/api/users', isAuthenticated, hasRole([UserRole.DIRECTOR, UserRole.NURSE]), async (req, res) => {
+  app.get('/api/users', authenticateJWT, hasRole([UserRole.DIRECTOR, UserRole.NURSE]), async (req, res) => {
     const users = await storage.getUsersByRole(req.query.role as UserRole);
     res.json(users);
   });
@@ -91,7 +88,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Current user language preference
-  app.patch('/api/user/language', isAuthenticated, async (req, res) => {
+  app.patch('/api/user/language', authenticateJWT, async (req, res) => {
     const { language } = req.body;
     if (!language || (language !== 'ko' && language !== 'en')) {
       return res.status(400).json({ message: "Invalid language" });
@@ -106,7 +103,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
   
   // Room Routes
-  app.get('/api/rooms', isAuthenticated, async (req, res) => {
+  app.get('/api/rooms', authenticateJWT, async (req, res) => {
     try {
       const rooms = await storage.getRooms();
       res.json(rooms);
@@ -115,7 +112,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
   
-  app.get('/api/rooms/:id', isAuthenticated, async (req, res) => {
+  app.get('/api/rooms/:id', authenticateJWT, async (req, res) => {
     try {
       const room = await storage.getRoom(parseInt(req.params.id));
       if (!room) {
@@ -127,7 +124,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
   
-  app.post('/api/rooms', isAuthenticated, hasRole([UserRole.DIRECTOR]), async (req, res) => {
+  app.post('/api/rooms', authenticateJWT, hasRole([UserRole.DIRECTOR]), async (req, res) => {
     try {
       const validatedData = insertRoomSchema.parse(req.body);
       const room = await storage.createRoom(validatedData);
@@ -140,7 +137,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
   
-  app.put('/api/rooms/:id', isAuthenticated, hasRole([UserRole.DIRECTOR, UserRole.NURSE]), async (req, res) => {
+  app.put('/api/rooms/:id', authenticateJWT, hasRole([UserRole.DIRECTOR, UserRole.NURSE]), async (req, res) => {
     try {
       const roomId = parseInt(req.params.id);
       const room = await storage.getRoom(roomId);
@@ -155,7 +152,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
   
-  app.get('/api/rooms/:id/layout', isAuthenticated, async (req, res) => {
+  app.get('/api/rooms/:id/layout', authenticateJWT, async (req, res) => {
     try {
       const room = await storage.getRoom(parseInt(req.params.id));
       if (!room) {
@@ -169,7 +166,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
   
-  app.put('/api/rooms/:id/layout', isAuthenticated, hasRole([UserRole.DIRECTOR, UserRole.NURSE]), async (req, res) => {
+  app.put('/api/rooms/:id/layout', authenticateJWT, hasRole([UserRole.DIRECTOR, UserRole.NURSE]), async (req, res) => {
     try {
       const roomId = parseInt(req.params.id);
       const room = await storage.getRoom(roomId);
@@ -188,7 +185,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
   
   // Get rooms with patients
-  app.get('/api/rooms/with-patients', isAuthenticated, async (req, res) => {
+  app.get('/api/rooms/with-patients', authenticateJWT, async (req, res) => {
     try {
       const roomsWithPatients = await storage.getAllRoomsWithPatients();
       res.json(roomsWithPatients);
@@ -198,7 +195,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
   
   // Patient Routes
-  app.get('/api/patients', isAuthenticated, hasRole([UserRole.DIRECTOR, UserRole.NURSE]), async (req, res) => {
+  app.get('/api/patients', authenticateJWT, hasRole([UserRole.DIRECTOR, UserRole.NURSE]), async (req, res) => {
     try {
       const patients = await storage.getPatients();
       res.json(patients);
@@ -207,7 +204,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
   
-  app.get('/api/patients/:id', isAuthenticated, async (req, res) => {
+  app.get('/api/patients/:id', authenticateJWT, async (req, res) => {
     try {
       // Patients can only view their own data
       if (req.user.role === UserRole.PATIENT && req.user.id !== parseInt(req.params.id)) {
@@ -225,7 +222,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
   
-  app.get('/api/patients/:id/details', isAuthenticated, async (req, res) => {
+  app.get('/api/patients/:id/details', authenticateJWT, async (req, res) => {
     try {
       const patientId = parseInt(req.params.id);
       const patient = await storage.getPatientWithDetails(patientId);
@@ -248,7 +245,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
   
-  app.post('/api/patients', isAuthenticated, hasRole([UserRole.DIRECTOR, UserRole.NURSE]), async (req, res) => {
+  app.post('/api/patients', authenticateJWT, hasRole([UserRole.DIRECTOR, UserRole.NURSE]), async (req, res) => {
     try {
       const validatedData = insertPatientSchema.parse(req.body);
       const patient = await storage.createPatient(validatedData);
@@ -261,7 +258,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
   
-  app.put('/api/patients/:id', isAuthenticated, hasRole([UserRole.DIRECTOR, UserRole.NURSE]), async (req, res) => {
+  app.put('/api/patients/:id', authenticateJWT, hasRole([UserRole.DIRECTOR, UserRole.NURSE]), async (req, res) => {
     try {
       const patientId = parseInt(req.params.id);
       const patient = await storage.getPatient(patientId);
@@ -277,7 +274,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
   
   // Guardian Routes
-  app.get('/api/guardians', isAuthenticated, hasRole([UserRole.DIRECTOR, UserRole.NURSE]), async (req, res) => {
+  app.get('/api/guardians', authenticateJWT, hasRole([UserRole.DIRECTOR, UserRole.NURSE]), async (req, res) => {
     try {
       const guardians = await storage.getGuardians();
       res.json(guardians);
@@ -286,7 +283,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
   
-  app.get('/api/patients/:id/guardian', isAuthenticated, async (req, res) => {
+  app.get('/api/patients/:id/guardian', authenticateJWT, async (req, res) => {
     try {
       const patientId = parseInt(req.params.id);
       const guardian = await storage.getGuardianByPatientId(patientId);
@@ -301,7 +298,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
   
-  app.post('/api/guardians', isAuthenticated, hasRole([UserRole.DIRECTOR, UserRole.NURSE]), async (req, res) => {
+  app.post('/api/guardians', authenticateJWT, hasRole([UserRole.DIRECTOR, UserRole.NURSE]), async (req, res) => {
     try {
       const validatedData = insertGuardianSchema.parse(req.body);
       const guardian = await storage.createGuardian(validatedData);
@@ -315,7 +312,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
   
   // Accident Routes
-  app.get('/api/accidents', isAuthenticated, hasRole([UserRole.DIRECTOR, UserRole.NURSE]), async (req, res) => {
+  app.get('/api/accidents', authenticateJWT, hasRole([UserRole.DIRECTOR, UserRole.NURSE]), async (req, res) => {
     try {
       const accidents = await storage.getAccidents();
       res.json(accidents);
@@ -324,7 +321,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
   
-  app.get('/api/accidents/recent', isAuthenticated, async (req, res) => {
+  app.get('/api/accidents/recent', authenticateJWT, async (req, res) => {
     try {
       const limit = req.query.limit ? parseInt(req.query.limit as string) : 10;
       const accidents = await storage.getRecentAccidents(limit);
@@ -425,7 +422,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
   
-  app.put('/api/accidents/:id/resolve', isAuthenticated, hasRole([UserRole.DIRECTOR, UserRole.NURSE]), async (req, res) => {
+  app.put('/api/accidents/:id/resolve', authenticateJWT, hasRole([UserRole.DIRECTOR, UserRole.NURSE]), async (req, res) => {
     try {
       const accidentId = parseInt(req.params.id);
       const accident = await storage.getAccident(accidentId);
@@ -459,7 +456,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
   
   // Environment Log Routes
-  app.get('/api/rooms/:id/env-logs', isAuthenticated, async (req, res) => {
+  app.get('/api/rooms/:id/env-logs', authenticateJWT, async (req, res) => {
     try {
       const roomId = parseInt(req.params.id);
       const limit = req.query.limit ? parseInt(req.query.limit as string) : undefined;
@@ -502,7 +499,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
   
   // Camera Routes
-  app.get('/api/cameras', isAuthenticated, async (req, res) => {
+  app.get('/api/cameras', authenticateJWT, async (req, res) => {
     try {
       const cameras = await storage.getCameras();
       res.json(cameras);
@@ -511,7 +508,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
   
-  app.get('/api/rooms/:id/cameras', isAuthenticated, async (req, res) => {
+  app.get('/api/rooms/:id/cameras', authenticateJWT, async (req, res) => {
     try {
       const roomId = parseInt(req.params.id);
       const cameras = await storage.getCamerasByRoomId(roomId);
@@ -521,7 +518,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
   
-  app.post('/api/cameras', isAuthenticated, hasRole([UserRole.DIRECTOR]), async (req, res) => {
+  app.post('/api/cameras', authenticateJWT, hasRole([UserRole.DIRECTOR]), async (req, res) => {
     try {
       const validatedData = insertCameraSchema.parse(req.body);
       const camera = await storage.createCamera(validatedData);
@@ -535,7 +532,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
   
   // Message Routes
-  app.get('/api/messages/:user1Id/:user2Id', isAuthenticated, async (req, res) => {
+  app.get('/api/messages/:user1Id/:user2Id', authenticateJWT, async (req, res) => {
     try {
       const user1Id = parseInt(req.params.user1Id);
       const user2Id = parseInt(req.params.user2Id);
@@ -553,7 +550,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
   
-  app.post('/api/messages', isAuthenticated, async (req, res) => {
+  app.post('/api/messages', authenticateJWT, async (req, res) => {
     try {
       const validatedData = insertMessageSchema.parse(req.body);
       
@@ -579,7 +576,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
   
-  app.put('/api/messages/:id/read', isAuthenticated, async (req, res) => {
+  app.put('/api/messages/:id/read', authenticateJWT, async (req, res) => {
     try {
       const messageId = parseInt(req.params.id);
       const message = await storage.getMessage(messageId);
@@ -601,7 +598,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
   
   // Statistics Routes
-  app.get('/api/stats/dashboard', isAuthenticated, async (req, res) => {
+  app.get('/api/stats/dashboard', authenticateJWT, async (req, res) => {
     try {
       const rooms = await storage.getRooms();
       const patients = await storage.getPatients();
@@ -638,7 +635,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
   
   // Weekly fall incidents
-  app.get('/api/stats/fall-incidents', isAuthenticated, async (req, res) => {
+  app.get('/api/stats/fall-incidents', authenticateJWT, async (req, res) => {
     try {
       const accidents = await storage.getAccidents();
       
