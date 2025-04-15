@@ -7,6 +7,7 @@ import PatientDetailPage from "@/pages/patient-detail-page";
 import AuthPage from "@/pages/auth-page";
 import MyPage from "@/pages/my-page";
 import AccountsManagementPage from "@/pages/accounts-management-page";
+import RoomManagementPage from "@/pages/room-management-page";
 import { AuthProvider, useAuth } from "@/hooks/use-auth";
 import { ProtectedRoute } from "@/lib/protected-route";
 import { UserRole } from "@shared/schema";
@@ -190,7 +191,15 @@ function Sidebar() {
             <div className="px-2 mb-2 text-xs font-semibold text-gray-500 uppercase tracking-wider">
               병실 및 환자 관리
             </div>
-            <RoomList />
+            <SidebarMenuItem
+              icon={BedDouble}
+              label="병실 관리"
+              href="/room-management"
+              active={location === '/room-management'}
+            />
+            <div className="mt-2">
+              <RoomList />
+            </div>
           </div>
         )}
         
@@ -332,6 +341,11 @@ function App() {
               <ProtectedRoute 
                 path="/accounts" 
                 component={AccountsManagementPage} 
+                roles={[UserRole.DIRECTOR, UserRole.NURSE]} 
+              />
+              <ProtectedRoute 
+                path="/room-management" 
+                component={RoomManagementPage} 
                 roles={[UserRole.DIRECTOR, UserRole.NURSE]} 
               />
               <ProtectedRoute path="/messages" component={() => <div className="p-8">메시지 - 구현 중</div>} />
