@@ -21,10 +21,13 @@ import { insertUserSchema, UserRole } from "@shared/schema";
 const loginSchema = insertUserSchema.pick({
   username: true,
   password: true,
+}).extend({
+  usernameOrEmail: z.string().optional(),
 });
 
 const registerSchema = insertUserSchema.pick({
   username: true,
+  email: true,
   password: true,
   name: true,
   role: true,
@@ -62,6 +65,7 @@ export default function AuthPage() {
     resolver: zodResolver(registerSchema),
     defaultValues: {
       username: "",
+      email: "",
       password: "",
       confirmPassword: "",
       name: "",
