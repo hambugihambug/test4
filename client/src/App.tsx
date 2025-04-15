@@ -5,6 +5,8 @@ import FallDetectionPage from "@/pages/fall-detection-page";
 import DashboardPage from "@/pages/dashboard-page";
 import PatientDetailPage from "@/pages/patient-detail-page";
 import AuthPage from "@/pages/auth-page";
+import MyPage from "@/pages/my-page";
+import AccountsManagementPage from "@/pages/accounts-management-page";
 import { AuthProvider, useAuth } from "@/hooks/use-auth";
 import { ProtectedRoute } from "@/lib/protected-route";
 import { UserRole } from "@shared/schema";
@@ -202,6 +204,12 @@ function Sidebar() {
             />
           )}
           <SidebarMenuItem 
+            icon={UserRound} 
+            label="마이페이지" 
+            href="/mypage" 
+            active={location === '/mypage'} 
+          />
+          <SidebarMenuItem 
             icon={MessageCircle} 
             label="메시지" 
             href="/messages" 
@@ -256,36 +264,11 @@ function MobileSidebar() {
 }
 
 function Header() {
-  const { user } = useAuth();
-  const [, setLocation] = useLocation();
-  
   return (
-    <header className="bg-white border-b shadow-sm p-4">
-      <div className="container mx-auto flex justify-between items-center">
-        <div className="flex items-center">
-          <MobileSidebar />
-          <span className="text-xl font-bold text-primary md:hidden">스마트 케어</span>
-        </div>
-        <nav className="hidden md:flex space-x-2">
-          <a href="/" className="px-3 py-2 rounded hover:bg-gray-100">홈</a>
-          <a href="/dashboard" className="px-3 py-2 rounded hover:bg-gray-100">대시보드</a>
-          <a href="/fall-detection" className="px-3 py-2 rounded hover:bg-gray-100">낙상 감지</a>
-        </nav>
-        <div>
-          {!user ? (
-            <Button 
-              variant="outline" 
-              size="sm"
-              onClick={() => setLocation("/auth")}
-            >
-              로그인
-            </Button>
-          ) : (
-            <div className="flex items-center gap-2">
-              <span className="text-sm font-medium">{user.name}</span>
-            </div>
-          )}
-        </div>
+    <header className="bg-white border-b shadow-sm p-4 md:p-6">
+      <div className="container mx-auto flex items-center">
+        <MobileSidebar />
+        <span className="text-xl font-bold text-primary md:hidden">스마트 케어</span>
       </div>
     </header>
   );
@@ -345,6 +328,14 @@ function App() {
               <ProtectedRoute path="/dashboard" component={DashboardPage} />
               <ProtectedRoute path="/fall-detection" component={FallDetectionPage} />
               <ProtectedRoute path="/patients/:id" component={PatientDetailPage} />
+              <ProtectedRoute path="/mypage" component={MyPage} />
+              <ProtectedRoute 
+                path="/accounts" 
+                component={AccountsManagementPage} 
+                roles={[UserRole.DIRECTOR, UserRole.NURSE]} 
+              />
+              <ProtectedRoute path="/messages" component={() => <div className="p-8">메시지 - 구현 중</div>} />
+              <ProtectedRoute path="/settings" component={() => <div className="p-8">설정 - 구현 중</div>} />
               <Route component={NotFound} />
             </Switch>
           </main>
