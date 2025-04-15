@@ -1,9 +1,11 @@
 import { useState, useEffect, useRef } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
 import { Toggle } from '@/components/ui/toggle';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useI18n } from '@/contexts/I18nContext';
+import { Patient } from '@shared/schema';
 import { 
   RotateCw, Plus, Minus, Move, Save, Trash2, 
   BedDouble, PencilRuler, User, UserX 
@@ -53,6 +55,32 @@ export function RoomLayout({ roomId, layout, onSave, editable }: RoomLayoutProps
   const [editMode, setEditMode] = useState<'select' | 'add' | 'move' | 'resize' | 'rotate'>('select');
   const [showPatientAssignment, setShowPatientAssignment] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
+  
+  // 해당 병실의 환자 목록 가져오기
+  const { data: patients, isLoading: patientsLoading } = useQuery<Patient[]>({
+    queryKey: [`/api/rooms/${roomId}/patients`],
+    enabled: !!roomId,
+  });
+  
+  // 병실 환자 정보에 배정 상태 추가
+  const [availablePatients, setAvailablePatients] = useState<PatientWithAssignmentStatus[]>([]);
+  
+  // 환자 배정 상태 계산
+  useEffect(() => {
+    if (patients) {
+      const bedPatientIds = currentLayout.beds
+        .map(bed => bed.patientId)
+        .filter(id => id !== undefined) as number[];
+      
+      const patientsWithStatus = patients.map(patient => ({
+        id: patient.id,
+        name: patient.name,
+        assigned: bedPatientIds.includes(patient.id)
+      }));
+      
+      setAvailablePatients(patientsWithStatus);
+    }
+  }, [patients, currentLayout.beds]);
   
   // 선택된 침대
   const selectedBed = selectedBedId 
@@ -391,25 +419,39 @@ export function RoomLayout({ roomId, layout, onSave, editable }: RoomLayoutProps
               {showPatientAssignment && (
                 <div className="mt-2 p-2 border rounded-md bg-gray-50">
                   <h4 className="text-xs font-medium mb-2">{t('rooms.selectPatient')}</h4>
-                  <div className="max-h-32 overflow-y-auto space-y-1">
-                    {AVAILABLE_PATIENTS
-                      .filter(p => !p.assigned || (selectedBed.patientId === p.id))
-                      .map(patient => (
-                        <div 
-                          key={patient.id}
-                          className="flex items-center justify-between px-2 py-1 hover:bg-gray-100 rounded-sm cursor-pointer"
-                          onClick={() => assignPatient(patient.id, patient.name)}
-                        >
-                          <div className="flex items-center">
-                            <User className="h-3 w-3 mr-1 text-gray-500" />
-                            <span className="text-xs">{patient.name}</span>
+                  
+                  {patientsLoading ? (
+                    <div className="flex justify-center items-center py-2">
+                      <svg className="animate-spin h-4 w-4 text-primary" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                      </svg>
+                    </div>
+                  ) : availablePatients.length === 0 ? (
+                    <div className="text-xs text-gray-500 text-center py-2">
+                      {t('rooms.noPatients')}
+                    </div>
+                  ) : (
+                    <div className="max-h-32 overflow-y-auto space-y-1">
+                      {availablePatients
+                        .filter(p => !p.assigned || (selectedBed?.patientId === p.id))
+                        .map(patient => (
+                          <div 
+                            key={patient.id}
+                            className="flex items-center justify-between px-2 py-1 hover:bg-gray-100 rounded-sm cursor-pointer"
+                            onClick={() => assignPatient(patient.id, patient.name)}
+                          >
+                            <div className="flex items-center">
+                              <User className="h-3 w-3 mr-1 text-gray-500" />
+                              <span className="text-xs">{patient.name}</span>
+                            </div>
+                            {patient.assigned && patient.id !== selectedBed?.patientId && (
+                              <span className="text-xs text-gray-500">{t('rooms.alreadyAssigned')}</span>
+                            )}
                           </div>
-                          {patient.assigned && patient.id !== selectedBed.patientId && (
-                            <span className="text-xs text-gray-500">{t('rooms.alreadyAssigned')}</span>
-                          )}
-                        </div>
-                      ))}
-                  </div>
+                        ))}
+                    </div>
+                  )}
                 </div>
               )}
             </div>

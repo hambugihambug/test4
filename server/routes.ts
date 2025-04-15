@@ -420,6 +420,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
   
+  // 특정 병실의 환자 목록 조회
+  app.get('/api/rooms/:id/patients', authenticateJWT, async (req, res) => {
+    try {
+      const roomId = parseInt(req.params.id);
+      const patients = await storage.getPatientsByRoomId(roomId);
+      res.json(patients);
+    } catch (error) {
+      console.error('Error fetching room patients:', error);
+      res.status(500).json({ message: "Error fetching room patients" });
+    }
+  });
+  
   app.get('/api/patients/:id', authenticateJWT, async (req, res) => {
     try {
       // Patients can only view their own data
