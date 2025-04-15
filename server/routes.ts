@@ -64,7 +64,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   };
   
   // User Routes
-  app.get('/api/users', isAuthenticated, hasRole([UserRole.ADMIN, UserRole.NURSE]), async (req, res) => {
+  app.get('/api/users', isAuthenticated, hasRole([UserRole.DIRECTOR, UserRole.NURSE]), async (req, res) => {
     const users = await storage.getUsersByRole(req.query.role as UserRole);
     res.json(users);
   });
@@ -106,7 +106,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
   
-  app.post('/api/rooms', isAuthenticated, hasRole([UserRole.ADMIN]), async (req, res) => {
+  app.post('/api/rooms', isAuthenticated, hasRole([UserRole.DIRECTOR]), async (req, res) => {
     try {
       const validatedData = insertRoomSchema.parse(req.body);
       const room = await storage.createRoom(validatedData);
@@ -119,7 +119,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
   
-  app.put('/api/rooms/:id', isAuthenticated, hasRole([UserRole.ADMIN, UserRole.NURSE]), async (req, res) => {
+  app.put('/api/rooms/:id', isAuthenticated, hasRole([UserRole.DIRECTOR, UserRole.NURSE]), async (req, res) => {
     try {
       const roomId = parseInt(req.params.id);
       const room = await storage.getRoom(roomId);
@@ -148,7 +148,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
   
-  app.put('/api/rooms/:id/layout', isAuthenticated, hasRole([UserRole.ADMIN, UserRole.NURSE]), async (req, res) => {
+  app.put('/api/rooms/:id/layout', isAuthenticated, hasRole([UserRole.DIRECTOR, UserRole.NURSE]), async (req, res) => {
     try {
       const roomId = parseInt(req.params.id);
       const room = await storage.getRoom(roomId);
@@ -177,7 +177,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
   
   // Patient Routes
-  app.get('/api/patients', isAuthenticated, hasRole([UserRole.ADMIN, UserRole.NURSE]), async (req, res) => {
+  app.get('/api/patients', isAuthenticated, hasRole([UserRole.DIRECTOR, UserRole.NURSE]), async (req, res) => {
     try {
       const patients = await storage.getPatients();
       res.json(patients);
@@ -227,7 +227,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
   
-  app.post('/api/patients', isAuthenticated, hasRole([UserRole.ADMIN, UserRole.NURSE]), async (req, res) => {
+  app.post('/api/patients', isAuthenticated, hasRole([UserRole.DIRECTOR, UserRole.NURSE]), async (req, res) => {
     try {
       const validatedData = insertPatientSchema.parse(req.body);
       const patient = await storage.createPatient(validatedData);
@@ -240,7 +240,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
   
-  app.put('/api/patients/:id', isAuthenticated, hasRole([UserRole.ADMIN, UserRole.NURSE]), async (req, res) => {
+  app.put('/api/patients/:id', isAuthenticated, hasRole([UserRole.DIRECTOR, UserRole.NURSE]), async (req, res) => {
     try {
       const patientId = parseInt(req.params.id);
       const patient = await storage.getPatient(patientId);
@@ -256,7 +256,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
   
   // Guardian Routes
-  app.get('/api/guardians', isAuthenticated, hasRole([UserRole.ADMIN, UserRole.NURSE]), async (req, res) => {
+  app.get('/api/guardians', isAuthenticated, hasRole([UserRole.DIRECTOR, UserRole.NURSE]), async (req, res) => {
     try {
       const guardians = await storage.getGuardians();
       res.json(guardians);
@@ -280,7 +280,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
   
-  app.post('/api/guardians', isAuthenticated, hasRole([UserRole.ADMIN, UserRole.NURSE]), async (req, res) => {
+  app.post('/api/guardians', isAuthenticated, hasRole([UserRole.DIRECTOR, UserRole.NURSE]), async (req, res) => {
     try {
       const validatedData = insertGuardianSchema.parse(req.body);
       const guardian = await storage.createGuardian(validatedData);
@@ -294,7 +294,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
   
   // Accident Routes
-  app.get('/api/accidents', isAuthenticated, hasRole([UserRole.ADMIN, UserRole.NURSE]), async (req, res) => {
+  app.get('/api/accidents', isAuthenticated, hasRole([UserRole.DIRECTOR, UserRole.NURSE]), async (req, res) => {
     try {
       const accidents = await storage.getAccidents();
       res.json(accidents);
@@ -404,7 +404,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
   
-  app.put('/api/accidents/:id/resolve', isAuthenticated, hasRole([UserRole.ADMIN, UserRole.NURSE]), async (req, res) => {
+  app.put('/api/accidents/:id/resolve', isAuthenticated, hasRole([UserRole.DIRECTOR, UserRole.NURSE]), async (req, res) => {
     try {
       const accidentId = parseInt(req.params.id);
       const accident = await storage.getAccident(accidentId);
@@ -500,7 +500,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
   
-  app.post('/api/cameras', isAuthenticated, hasRole([UserRole.ADMIN]), async (req, res) => {
+  app.post('/api/cameras', isAuthenticated, hasRole([UserRole.DIRECTOR]), async (req, res) => {
     try {
       const validatedData = insertCameraSchema.parse(req.body);
       const camera = await storage.createCamera(validatedData);

@@ -109,7 +109,7 @@ export function setupAuth(app: Express) {
 
   // 로그인 라우트
   app.post("/api/login", (req, res, next) => {
-    passport.authenticate("local", (err, user, info) => {
+    passport.authenticate("local", (err: any, user: Express.User | false, info: { message: string } | undefined) => {
       if (err) return next(err);
       if (!user) return res.status(401).json({ error: info?.message || "로그인 실패" });
       

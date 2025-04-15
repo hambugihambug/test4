@@ -124,7 +124,7 @@ export class MemStorage implements IStorage {
       username: "admin",
       password: "adminpassword", // Will be hashed in auth.ts
       name: "병원장",
-      role: UserRole.ADMIN,
+      role: UserRole.DIRECTOR,
       preferredLanguage: "ko"
     });
     
@@ -558,7 +558,7 @@ export class DatabaseStorage implements IStorage {
     return result.rowCount > 0;
   }
 
-  async getUsersByRole(role: UserRole): Promise<User[]> {
+  async getUsersByRole(role?: UserRole): Promise<User[]> {
     if (!role) {
       return await db.select().from(users);
     }
@@ -945,7 +945,7 @@ export class DatabaseStorage implements IStorage {
 async function initializeData() {
   // Check if admin user exists
   const adminCheck = await db.select().from(users)
-    .where(eq(users.role, UserRole.ADMIN))
+    .where(eq(users.role, UserRole.DIRECTOR))
     .limit(1);
   
   if (adminCheck.length === 0) {
@@ -959,7 +959,7 @@ async function initializeData() {
       username: "admin",
       password: hashedPassword,
       name: "병원장",
-      role: UserRole.ADMIN,
+      role: UserRole.DIRECTOR,
       preferredLanguage: "ko"
     });
   }
