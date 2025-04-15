@@ -30,13 +30,26 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     const checkLoggedInStatus = async () => {
       try {
-        const response = await fetch('/api/user', {
-          credentials: 'include'
-        });
+        // 로컬 스토리지에서 토큰 가져오기
+        const token = localStorage.getItem('token');
         
-        if (response.ok) {
-          const userData = await response.json();
-          queryClient.setQueryData(["/api/user"], userData);
+        if (token) {
+          const response = await fetch('/api/user', {
+            headers: {
+              'Authorization': `Bearer ${token}`
+            },
+            credentials: 'include'
+          });
+          
+          if (response.ok) {
+            const userData = await response.json();
+            queryClient.setQueryData(["/api/user"], userData);
+            
+            // 인증 페이지에 있다면 홈으로 리디렉트
+            if (window.location.pathname === '/auth') {
+              setLocation('/');
+            }
+          }
         }
       } catch (error) {
         console.error("세션 확인 중 오류 발생:", error);
@@ -44,7 +57,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     };
     
     checkLoggedInStatus();
-  }, []);
+  }, [setLocation]);
   
   const {
     data: user,
@@ -76,8 +89,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         title: "로그인 성공",
         description: `${user.name}님 환영합니다!`,
       });
-      // 로그인 성공 시 메인 페이지로 이동
-      setLocation("/");
+      // 로그인 성공 시 메인 페이지로 이동 (직접 URL 변경)
+      window.location.href = "/";
     },
     onError: (error: Error) => {
       let errorMessage = "로그인에 실패했습니다";
