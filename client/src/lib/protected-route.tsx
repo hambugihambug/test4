@@ -16,6 +16,17 @@ export function ProtectedRoute({
   roles,
 }: ProtectedRouteProps) {
   const { user, isLoading } = useAuth();
+  
+  // 토큰 확인 로직 추가
+  const token = localStorage.getItem('token');
+  
+  // 디버깅용 로그 추가
+  console.log(`ProtectedRoute(${path}) - 인증 상태:`, {
+    isLoading,
+    userExists: !!user,
+    userRole: user?.role,
+    tokenExists: !!token
+  });
 
   if (isLoading) {
     return (
@@ -29,6 +40,7 @@ export function ProtectedRoute({
 
   // 사용자가 로그인하지 않은 경우
   if (!user) {
+    console.log(`ProtectedRoute(${path}) - 미인증 사용자 감지, 로그인 페이지로 리디렉션`);
     return (
       <Route path={path}>
         <Redirect to="/auth" />
