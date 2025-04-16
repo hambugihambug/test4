@@ -256,7 +256,36 @@ export default function PatientDetailPage() {
   // 환자 기본 정보 수정 처리
   const handleEditPatient = () => {
     try {
-      // 실제 API 호출 대신 상태 업데이트로 시뮬레이션
+      // 입력값 검증
+      if (!formData.name || !formData.age || !formData.roomNumber || !formData.bedNumber) {
+        toast({
+          title: "필수 정보 누락",
+          description: "이름, 나이, 병실, 침대 번호는 필수 항목입니다.",
+          variant: "destructive"
+        });
+        return;
+      }
+      
+      // 임시 데이터이므로 실제 데이터를 업데이트하는 대신 상태 변경
+      const updatedPatient = {
+        ...patient,
+        name: formData.name,
+        age: parseInt(formData.age),
+        gender: formData.gender,
+        birthDate: formData.birthDate,
+        roomNumber: formData.roomNumber,
+        bedNumber: parseInt(formData.bedNumber),
+        diagnosis: formData.diagnosis,
+        admissionDate: formData.admissionDate,
+        expectedDischargeDate: formData.expectedDischargeDate,
+        address: formData.address,
+        contact: formData.contact,
+        condition: formData.condition
+      };
+      
+      setPatient(updatedPatient);
+      
+      // 실제 API 호출 대신 상태 업데이트로 시뮬레이션 (성공 메시지 표시)
       setTimeout(() => {
         toast({
           title: "정보 수정 완료",
@@ -264,6 +293,10 @@ export default function PatientDetailPage() {
         });
         setEditDialogOpen(false);
       }, 500);
+      
+      // 실제 구현에서는 아래와 같이 API 호출 필요
+      // await apiRequest("PUT", `/api/patients/${patientId}`, formData);
+      // queryClient.invalidateQueries({ queryKey: ['/api/patients', patientId] });
     } catch (error) {
       toast({
         title: "오류 발생",

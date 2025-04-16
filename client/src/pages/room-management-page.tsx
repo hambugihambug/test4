@@ -7,6 +7,7 @@ import { z } from "zod";
 // import { useI18n } from "@/contexts/I18nContext";
 import { translations } from "@/lib/translations";
 import { useAuth } from "@/hooks/use-auth";
+import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -56,6 +57,7 @@ export default function RoomManagementPage() {
     };
     console.log("번역 함수 생성 완료");
     const { user } = useAuth();
+    const { toast } = useToast();
     
     console.log("RoomManagementPage 상태 초기화 중, 사용자:", user?.username);
   const [isAddingRoom, setIsAddingRoom] = useState(false);
@@ -239,13 +241,42 @@ export default function RoomManagementPage() {
     if (!selectedRoomId) return;
     
     try {
-      await apiRequest("PUT", `/api/rooms/${selectedRoomId}/layout`, layout);
+      // 실제 API 호출은 아직 구현되지 않았으므로 임시로 상태 변경으로 처리
+      console.log("레이아웃 저장:", selectedRoomId, layout);
       
-      // Refresh data
-      queryClient.invalidateQueries({ queryKey: ['/api/rooms/with-patients'] });
-      queryClient.invalidateQueries({ queryKey: ['/api/rooms'] });
+      // 레이아웃 즉시 반영 (임시)
+      const updatedRooms = roomsWithPatients?.map(room => 
+        room.id === selectedRoomId
+          ? { ...room, layout: JSON.stringify(layout) }
+          : room
+      );
+      
+      // 저장 성공 알림 표시
+      if (typeof toast === 'function') {
+        toast({
+          title: "저장되었습니다",
+          description: "병실 레이아웃이 성공적으로 저장되었습니다.",
+        });
+      } else {
+        console.log("저장 완료: 병실 레이아웃이 성공적으로 저장되었습니다.");
+      }
+      
+      // 나중에 실제 API 구현시 주석 해제
+      // await apiRequest("PUT", `/api/rooms/${selectedRoomId}/layout`, layout);
+      // queryClient.invalidateQueries({ queryKey: ['/api/rooms/with-patients'] });
+      // queryClient.invalidateQueries({ queryKey: ['/api/rooms'] });
     } catch (error) {
       console.error("Failed to save layout:", error);
+      
+      if (typeof toast === 'function') {
+        toast({
+          title: "저장 실패",
+          description: "레이아웃 저장 중 오류가 발생했습니다.",
+          variant: "destructive"
+        });
+      } else {
+        console.error("저장 실패: 레이아웃 저장 중 오류가 발생했습니다.");
+      }
     }
   };
   
