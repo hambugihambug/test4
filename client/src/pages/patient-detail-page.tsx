@@ -1306,6 +1306,209 @@ export default function PatientDetailPage() {
       </Dialog>
       
       {/* 약물 정보 수정 다이얼로그 - 여기에 약물 정보 편집 UI 추가 */}
+      <Dialog open={editMedicationDialogOpen} onOpenChange={setEditMedicationDialogOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>투약 정보 수정</DialogTitle>
+            <DialogDescription>환자의 약물 투여 정보를 수정합니다.</DialogDescription>
+          </DialogHeader>
+          <div className="grid gap-4 py-4">
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="border-b">
+                    <th className="text-left p-2">약품명</th>
+                    <th className="text-left p-2">용량</th>
+                    <th className="text-left p-2">빈도</th>
+                    <th className="text-left p-2">시간</th>
+                    <th className="text-left p-2"></th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {patient.medications.map((med: any, index: number) => (
+                    <tr key={index} className="border-b">
+                      <td className="p-2">
+                        <Input 
+                          value={med.name}
+                          className="w-full min-w-[120px]"
+                        />
+                      </td>
+                      <td className="p-2">
+                        <Input 
+                          value={med.dosage}
+                          className="w-full min-w-[80px]"
+                        />
+                      </td>
+                      <td className="p-2">
+                        <Input 
+                          value={med.frequency}
+                          className="w-full min-w-[80px]"
+                        />
+                      </td>
+                      <td className="p-2">
+                        <Input 
+                          value={med.timing}
+                          className="w-full min-w-[80px]"
+                        />
+                      </td>
+                      <td className="p-2">
+                        <Button variant="ghost" size="sm">
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+            <Button variant="outline" size="sm" className="mt-2">
+              <Plus className="h-4 w-4 mr-1" /> 약물 추가
+            </Button>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setEditMedicationDialogOpen(false)}>취소</Button>
+            <Button onClick={() => {
+              toast({
+                title: "투약 정보 업데이트",
+                description: "투약 정보가 성공적으로 업데이트되었습니다.",
+              });
+              setEditMedicationDialogOpen(false);
+            }}>저장</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+      
+      {/* 활력 징후 수정 다이얼로그 */}
+      <Dialog open={editVitalSignsDialogOpen} onOpenChange={setEditVitalSignsDialogOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>활력 징후 수정</DialogTitle>
+            <DialogDescription>환자의 활력 징후 기록을 수정합니다.</DialogDescription>
+          </DialogHeader>
+          <div className="grid gap-4 py-4">
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="border-b">
+                    <th className="text-left p-2">날짜</th>
+                    <th className="text-left p-2">혈압</th>
+                    <th className="text-left p-2">심박수</th>
+                    <th className="text-left p-2">체온</th>
+                    <th className="text-left p-2">호흡수</th>
+                    <th className="text-left p-2"></th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {patient.vitalSigns.map((vital: any, index: number) => (
+                    <tr key={index} className="border-b">
+                      <td className="p-2">
+                        <Input 
+                          value={vital.date}
+                          className="w-full min-w-[80px]"
+                        />
+                      </td>
+                      <td className="p-2">
+                        <Input 
+                          value={vital.bloodPressure}
+                          className="w-full min-w-[80px]"
+                        />
+                      </td>
+                      <td className="p-2">
+                        <Input 
+                          value={vital.heartRate}
+                          type="number"
+                          className="w-full min-w-[60px]"
+                        />
+                      </td>
+                      <td className="p-2">
+                        <Input 
+                          value={vital.temperature}
+                          type="number"
+                          step="0.1"
+                          className="w-full min-w-[60px]"
+                        />
+                      </td>
+                      <td className="p-2">
+                        <Input 
+                          value={vital.respiratoryRate}
+                          type="number"
+                          className="w-full min-w-[60px]"
+                        />
+                      </td>
+                      <td className="p-2">
+                        <Button variant="ghost" size="sm">
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+            <Button variant="outline" size="sm" className="mt-2">
+              <Plus className="h-4 w-4 mr-1" /> 기록 추가
+            </Button>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setEditVitalSignsDialogOpen(false)}>취소</Button>
+            <Button onClick={handleUpdateVitalSigns}>저장</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+      
+      {/* 진료 기록 수정 다이얼로그 */}
+      <Dialog open={editNotesDialogOpen} onOpenChange={setEditNotesDialogOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>진료 기록 수정</DialogTitle>
+            <DialogDescription>의료진 노트 및 관찰 사항을 수정합니다.</DialogDescription>
+          </DialogHeader>
+          <div className="grid gap-4 py-4">
+            <div className="space-y-4">
+              {patient.notes.map((note: any, index: number) => (
+                <div key={index} className="p-3 rounded-md border">
+                  <div className="flex justify-between items-center mb-2">
+                    <div className="grid grid-cols-2 gap-2 w-full">
+                      <div>
+                        <label className="text-xs text-gray-500">날짜</label>
+                        <Input 
+                          value={note.date}
+                          className="mt-1"
+                        />
+                      </div>
+                      <div>
+                        <label className="text-xs text-gray-500">작성자</label>
+                        <Input 
+                          value={note.author}
+                          className="mt-1"
+                        />
+                      </div>
+                    </div>
+                    <Button variant="ghost" size="sm" className="ml-2 mt-4">
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </div>
+                  <div className="mt-2">
+                    <label className="text-xs text-gray-500">내용</label>
+                    <Textarea 
+                      value={note.content}
+                      className="mt-1"
+                      rows={3}
+                    />
+                  </div>
+                </div>
+              ))}
+            </div>
+            <Button variant="outline" size="sm" className="mt-2">
+              <Plus className="h-4 w-4 mr-1" /> 기록 추가
+            </Button>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setEditNotesDialogOpen(false)}>취소</Button>
+            <Button onClick={handleUpdateNotes}>저장</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
