@@ -142,32 +142,42 @@ export function RoomLayout({ roomId, layout, onSave, editable }: RoomLayoutProps
   
   // 침대 위치에 따라 번호 재정렬
   const reorderBedNumbers = () => {
-    // 침대들을 X축 기준으로 정렬 (왼쪽에서 오른쪽으로)
-    const sortedBedsX = [...currentLayout.beds].sort((a, b) => a.x - b.x);
+    // 침대들을 Y축 기준으로 정렬 (위에서 아래로)
+    const sortedBedsY = [...currentLayout.beds].sort((a, b) => a.y - b.y);
     
-    // 각 행 기준으로 침대 그룹화 (Y축 유사한 위치에 있는 침대들)
-    const rows: Bed[][] = [];
-    sortedBedsX.forEach(bed => {
-      // Y축으로 유사한 위치의 행 찾기 (50px 이내 차이는 같은 행으로 간주)
-      const existingRow = rows.find(row => 
-        row.some(b => Math.abs(b.y - bed.y) < 50)
-      );
+    // Y축 기준으로 행 그룹화 (비슷한 Y 위치에 있는 침대들을 하나의 행으로 간주)
+    const rowGroups: Bed[][] = [];
+    const yThreshold = 50; // 같은 행으로 간주할 Y축 거리 임계값
+    
+    sortedBedsY.forEach(bed => {
+      // 이미 존재하는 행 중에 현재 침대와 Y축이 가까운 행이 있는지 확인
+      const existingRowIndex = rowGroups.findIndex(row => {
+        if (row.length === 0) return false;
+        const rowY = row[0].y;
+        return Math.abs(bed.y - rowY) < yThreshold;
+      });
       
-      if (existingRow) {
-        existingRow.push(bed);
+      if (existingRowIndex >= 0) {
+        // 기존 행에 추가
+        rowGroups[existingRowIndex].push(bed);
       } else {
-        rows.push([bed]);
+        // 새 행 생성
+        rowGroups.push([bed]);
       }
     });
     
-    // 각 행을 X축으로 정렬
-    rows.forEach(row => row.sort((a, b) => a.x - b.x));
+    // 각 행 내에서 침대를 X축 기준으로 정렬 (왼쪽에서 오른쪽으로)
+    rowGroups.forEach(row => {
+      row.sort((a, b) => a.x - b.x);
+    });
     
-    // 모든 침대를 순서대로 펼침
-    const reorderedBeds = rows.sort((a, b) => a[0].y - b[0].y).flat();
+    console.log("행 그룹화 결과:", rowGroups);
+    
+    // 모든 침대를 순서대로 펼침 (위에서 아래로, 각 행에서는 왼쪽에서 오른쪽으로)
+    const reorderedBeds = rowGroups.flat();
     
     // 환자 데이터 매핑하여 유지 (기존 침대 번호와 환자 정보 유지)
-    const updatedBeds = reorderedBeds.map((bed, index) => {
+    const updatedBeds = reorderedBeds.map((bed) => {
       const existingBed = currentLayout.beds.find(b => b.id === bed.id);
       return {
         ...bed,
