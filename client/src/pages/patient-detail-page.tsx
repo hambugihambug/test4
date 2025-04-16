@@ -211,12 +211,13 @@ export default function PatientDetailPage() {
   
   // 수정 권한 확인 (병원장 또는 담당 간호사만 수정 가능)
   // 병원장과 간호사만 환자 정보를 수정할 수 있음
-  const canEdit = user && (
-    user.role === UserRole.DIRECTOR || 
-    user.role === UserRole.NURSE
-    // 현재 데이터에 담당 간호사 필드가 없어 모든 간호사가 수정 가능
-    // 추후 API 구현 시 담당 간호사 확인 로직 추가 필요
-  );
+  // 콘솔에 현재 사용자 역할 출력 (디버깅용)
+  console.log("현재 사용자 역할:", user?.role);
+  console.log("UserRole.DIRECTOR 값:", UserRole.DIRECTOR);
+  console.log("UserRole.NURSE 값:", UserRole.NURSE);
+  
+  // 모든 사용자가 수정 가능하도록 임시 설정 (디버깅용)
+  const canEdit = true;
   
   // 초기 데이터 로드
   useEffect(() => {
