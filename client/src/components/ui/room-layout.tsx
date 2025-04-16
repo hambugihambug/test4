@@ -291,14 +291,7 @@ export function RoomLayout({ roomId, layout, onSave, editable }: RoomLayoutProps
     }));
   };
   
-  // 병실 크기 변경
-  const updateRoomSize = (width: number, height: number) => {
-    setCurrentLayout(prev => ({
-      ...prev,
-      roomWidth: width,
-      roomHeight: height
-    }));
-  };
+  // 병실 크기는 800x400으로 고정되어 있습니다
   
   return (
     <div className="space-y-4">
@@ -331,23 +324,7 @@ export function RoomLayout({ roomId, layout, onSave, editable }: RoomLayoutProps
           
           <div className="ml-auto flex items-center gap-2">
             <div className="flex items-center space-x-2">
-              <Label htmlFor="width" className="text-xs">W:</Label>
-              <Input
-                id="width"
-                type="number"
-                value={currentLayout.roomWidth}
-                onChange={(e) => updateRoomSize(parseInt(e.target.value), currentLayout.roomHeight)}
-                className="h-8 w-16"
-              />
-              
-              <Label htmlFor="height" className="text-xs">H:</Label>
-              <Input
-                id="height"
-                type="number"
-                value={currentLayout.roomHeight}
-                onChange={(e) => updateRoomSize(currentLayout.roomWidth, parseInt(e.target.value))}
-                className="h-8 w-16"
-              />
+              <span className="text-xs text-gray-500">800 × 400</span>
             </div>
             
             <Button onClick={saveLayout} size="sm">
@@ -362,8 +339,8 @@ export function RoomLayout({ roomId, layout, onSave, editable }: RoomLayoutProps
           ref={containerRef}
           className="border border-dashed relative bg-gray-50 cursor-pointer"
           style={{ 
-            width: `${currentLayout.roomWidth}px`, 
-            height: `${currentLayout.roomHeight}px`,
+            width: `${ROOM_WIDTH}px`, 
+            height: `${ROOM_HEIGHT}px`,
             margin: '0 auto'
           }}
           onClick={addBed}
