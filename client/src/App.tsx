@@ -8,6 +8,8 @@ import AuthPage from "@/pages/auth-page";
 import MyPage from "@/pages/my-page";
 import AccountsManagementPage from "@/pages/accounts-management-page";
 import RoomManagementPage from "@/pages/room-management-page";
+import MessagesPage from "@/pages/messages-page";
+import SettingsPage from "@/pages/settings-page";
 import { AuthProvider, useAuth } from "@/hooks/use-auth";
 import { ProtectedRoute } from "@/lib/protected-route";
 import { UserRole } from "@shared/schema";
