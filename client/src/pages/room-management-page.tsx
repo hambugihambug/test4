@@ -754,32 +754,102 @@ export default function RoomManagementPage() {
                 min="1"
                 placeholder="침대 번호를 입력하세요"
                 className="mt-1"
+                defaultValue={selectedRoom?.patients.length ? selectedRoom.patients.length + 1 : 1}
               />
-            </div>
-            
-            <div>
-              <Label htmlFor="bedLocation">침대 위치</Label>
-              <Select>
-                <SelectTrigger>
-                  <SelectValue placeholder="침대 위치를 선택하세요" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="window">창가</SelectItem>
-                  <SelectItem value="door">출입구 쪽</SelectItem>
-                  <SelectItem value="bathroom">화장실 쪽</SelectItem>
-                  <SelectItem value="center">병실 중앙</SelectItem>
-                </SelectContent>
-              </Select>
             </div>
             
             <div className="pt-4 flex justify-end space-x-2">
               <Button variant="outline" onClick={() => setIsAddingBed(false)}>취소</Button>
               <Button onClick={() => {
+                if (!selectedRoomId) return;
+                
+                // 현재 선택된 방의 인덱스 찾기
+                const roomIndex = dummyRooms.findIndex(r => r.id === selectedRoomId);
+                if (roomIndex === -1) return;
+                
+                // 입력된 침대 번호 가져오기
+                const bedNumber = parseInt((document.getElementById('bedNumber') as HTMLInputElement).value);
+                
+                // 이미 존재하는 침대 번호인지 확인
+                const existingBed = dummyRooms[roomIndex].patients.find(p => p.bedNumber === bedNumber);
+                if (existingBed) {
+                  toast({
+                    title: "침대 번호 중복",
+                    description: `${bedNumber}번 침대가 이미 존재합니다.`,
+                    variant: "destructive"
+                  });
+                  return;
+                }
+                
+                // 새 환자 ID 생성 (현재 최대 ID + 1)
+                const maxPatientId = Math.max(
+                  0, 
+                  ...dummyRooms.flatMap(r => r.patients).map(p => p.id)
+                );
+                const newPatientId = maxPatientId + 1;
+                
+                // 새 환자(비어있는 침대) 추가
+                const newPatient = {
+                  id: newPatientId,
+                  name: `침대 ${bedNumber}`,
+                  age: 0,
+                  roomId: selectedRoomId,
+                  bedNumber: bedNumber,
+                  fallRisk: "low" as const,
+                  userId: null,
+                  height: null,
+                  weight: null,
+                  blood: null,
+                  assignedNurseId: null
+                };
+                
+                // 레이아웃 업데이트
+                const room = dummyRooms[roomIndex];
+                let layout = { beds: [], objects: [] };
+                
+                if (room.layout) {
+                  try {
+                    layout = JSON.parse(room.layout);
+                  } catch (e) {
+                    console.error("레이아웃 파싱 오류:", e);
+                  }
+                }
+                
+                // 새 침대 추가 (기본 위치)
+                const newBed = {
+                  id: `${layout.beds.length + 1}`,
+                  x: 10 + (layout.beds.length * 100),
+                  y: 10,
+                  width: 80,
+                  height: 180,
+                  rotation: 0,
+                  patientId: newPatientId
+                };
+                
+                layout.beds.push(newBed);
+                
+                // 룸 업데이트
+                dummyRooms[roomIndex] = {
+                  ...room,
+                  layout: JSON.stringify(layout),
+                  patients: [...room.patients, newPatient]
+                };
+                
+                // UI 업데이트
                 toast({
                   title: "침대 추가됨",
-                  description: "새 침대가 성공적으로 추가되었습니다.",
+                  description: `${bedNumber}번 침대가 성공적으로 추가되었습니다.`,
                 });
+                
+                // 환자 탭으로 변경
+                setActiveTab("patients");
+                
+                // 다이얼로그 닫기
                 setIsAddingBed(false);
+                
+                // 상태 강제 업데이트 (화면에 변경사항 반영)
+                setSelectedRoomId(null);
+                setTimeout(() => setSelectedRoomId(selectedRoomId), 0);
               }}>침대 추가</Button>
             </div>
           </div>
