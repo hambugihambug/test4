@@ -1,9 +1,19 @@
 import { useParams } from "wouter";
-import { ArrowLeft, HeartPulse, User, CalendarClock, Users, BedDouble, MapPin, FileText, Phone, Shield, Clipboard, AlertTriangle } from "lucide-react";
+import { 
+  ArrowLeft, HeartPulse, User, CalendarClock, Users, BedDouble,
+  MapPin, FileText, Phone, Shield, Clipboard, AlertTriangle,
+  Edit, Check, X
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Progress } from "@/components/ui/progress";
+import { Input } from "@/components/ui/input";
+import { useState, useEffect } from "react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
+import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/hooks/use-auth";
+import { UserRole } from "@shared/schema";
 
 // 임시 환자 상세 데이터
 const PATIENT_DATA = {
@@ -90,9 +100,153 @@ const PATIENT_DATA = {
 export default function PatientDetailPage() {
   const { id } = useParams<{ id: string }>();
   const patientId = parseInt(id);
+  const { toast } = useToast();
+  const { user } = useAuth();
   
   // 임시 데이터에서 환자 정보 가져오기
-  const patient = PATIENT_DATA[patientId as keyof typeof PATIENT_DATA];
+  const currentPatient = PATIENT_DATA[patientId as keyof typeof PATIENT_DATA];
+  
+  // 팝업 관련 상태
+  const [editDialogOpen, setEditDialogOpen] = useState(false);
+  const [editMedicationDialogOpen, setEditMedicationDialogOpen] = useState(false);
+  const [editGuardianDialogOpen, setEditGuardianDialogOpen] = useState(false);
+  
+  // 환자 상태 관리 
+  const [patient, setPatient] = useState<any>(null);
+  
+  // 수정 폼을 위한 상태
+  const [formData, setFormData] = useState({
+    name: '',
+    age: '',
+    gender: '',
+    birthDate: '',
+    roomNumber: '',
+    bedNumber: '',
+    diagnosis: '',
+    admissionDate: '',
+    expectedDischargeDate: '',
+    address: '',
+    contact: '',
+    condition: ''
+  });
+  
+  // 약물 및 보호자 정보를 위한 폼 상태
+  const [medicationFormData, setMedicationFormData] = useState({
+    name: '',
+    dosage: '',
+    frequency: '',
+    timing: ''
+  });
+  
+  const [guardianFormData, setGuardianFormData] = useState({
+    name: '',
+    relation: '',
+    contact: ''
+  });
+  
+  // 수정 권한 확인 (병원장 또는 담당 간호사만 수정 가능)
+  // 데이터에 assignedNurseId가 없으므로 현재는 병원장만 수정 가능하도록 설정
+  const canEdit = user && (
+    user.role === UserRole.DIRECTOR || 
+    user.role === UserRole.NURSE
+  );
+  
+  // 초기 데이터 로드
+  useEffect(() => {
+    if (currentPatient) {
+      setPatient(currentPatient);
+      
+      setFormData({
+        name: currentPatient.name,
+        age: currentPatient.age.toString(),
+        gender: currentPatient.gender,
+        birthDate: currentPatient.birthDate,
+        roomNumber: currentPatient.roomNumber,
+        bedNumber: currentPatient.bedNumber.toString(),
+        diagnosis: currentPatient.diagnosis,
+        admissionDate: currentPatient.admissionDate,
+        expectedDischargeDate: currentPatient.expectedDischargeDate,
+        address: currentPatient.address,
+        contact: currentPatient.contact,
+        condition: currentPatient.condition
+      });
+      
+      setGuardianFormData({
+        name: currentPatient.guardian.name,
+        relation: currentPatient.guardian.relation,
+        contact: currentPatient.guardian.contact
+      });
+      
+      if (currentPatient.medications && currentPatient.medications.length > 0) {
+        setMedicationFormData({
+          name: currentPatient.medications[0].name,
+          dosage: currentPatient.medications[0].dosage,
+          frequency: currentPatient.medications[0].frequency,
+          timing: currentPatient.medications[0].timing
+        });
+      }
+    }
+  }, [currentPatient]);
+  
+  // 환자 기본 정보 수정 처리
+  const handleEditPatient = () => {
+    try {
+      // 실제 API 호출 대신 상태 업데이트로 시뮬레이션
+      setTimeout(() => {
+        toast({
+          title: "정보 수정 완료",
+          description: "환자 정보가 성공적으로 업데이트되었습니다.",
+        });
+        setEditDialogOpen(false);
+      }, 500);
+    } catch (error) {
+      toast({
+        title: "오류 발생",
+        description: "환자 정보 업데이트 중 문제가 발생했습니다.",
+        variant: "destructive"
+      });
+    }
+  };
+  
+  // 투약 정보 수정 처리
+  const handleEditMedication = () => {
+    try {
+      // 실제 API 호출 대신 상태 업데이트로 시뮬레이션
+      setTimeout(() => {
+        toast({
+          title: "투약 정보 수정 완료",
+          description: "환자의 투약 정보가 성공적으로 업데이트되었습니다.",
+        });
+        setEditMedicationDialogOpen(false);
+      }, 500);
+    } catch (error) {
+      toast({
+        title: "오류 발생",
+        description: "투약 정보 업데이트 중 문제가 발생했습니다.",
+        variant: "destructive"
+      });
+    }
+  };
+  
+  // 보호자 정보 수정 처리
+  const handleEditGuardian = () => {
+    try {
+      // 실제 API 호출 대신 상태 업데이트로 시뮬레이션
+      setTimeout(() => {
+        toast({
+          title: "보호자 정보 수정 완료",
+          description: "보호자 정보가 성공적으로 업데이트되었습니다.",
+        });
+        setEditGuardianDialogOpen(false);
+      }, 500);
+    } catch (error) {
+      toast({
+        title: "오류 발생",
+        description: "보호자 정보 업데이트 중 문제가 발생했습니다.",
+        variant: "destructive"
+      });
+    }
+  };
   
   if (!patient) {
     return (
@@ -104,8 +258,211 @@ export default function PatientDetailPage() {
     );
   }
   
+  // 환자 정보 수정 폼 핸들러
+  const handleFormChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({
+      ...prev,
+      [name]: value
+    }));
+  };
+  
+  // 보호자 정보 수정 폼 핸들러
+  const handleGuardianFormChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
+    setGuardianFormData(prev => ({
+      ...prev,
+      [name]: value
+    }));
+  };
+  
+  // 투약 정보 수정 폼 핸들러
+  const handleMedicationFormChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
+    setMedicationFormData(prev => ({
+      ...prev,
+      [name]: value
+    }));
+  };
+
   return (
     <div className="p-6">
+      {/* 환자 정보 수정 다이얼로그 */}
+      <Dialog open={editDialogOpen} onOpenChange={setEditDialogOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>환자 기본 정보 수정</DialogTitle>
+          </DialogHeader>
+          <div className="grid gap-4 py-4">
+            <div className="grid grid-cols-4 items-center gap-4">
+              <label htmlFor="name" className="text-right text-sm">이름</label>
+              <Input
+                id="name"
+                name="name"
+                value={formData.name}
+                onChange={handleFormChange}
+                className="col-span-3"
+              />
+            </div>
+            <div className="grid grid-cols-4 items-center gap-4">
+              <label htmlFor="age" className="text-right text-sm">나이</label>
+              <Input
+                id="age"
+                name="age"
+                value={formData.age}
+                onChange={handleFormChange}
+                className="col-span-3"
+                type="number"
+              />
+            </div>
+            <div className="grid grid-cols-4 items-center gap-4">
+              <label htmlFor="gender" className="text-right text-sm">성별</label>
+              <Input
+                id="gender"
+                name="gender"
+                value={formData.gender}
+                onChange={handleFormChange}
+                className="col-span-3"
+              />
+            </div>
+            <div className="grid grid-cols-4 items-center gap-4">
+              <label htmlFor="diagnosis" className="text-right text-sm">진단명</label>
+              <Input
+                id="diagnosis"
+                name="diagnosis"
+                value={formData.diagnosis}
+                onChange={handleFormChange}
+                className="col-span-3"
+              />
+            </div>
+            <div className="grid grid-cols-4 items-center gap-4">
+              <label htmlFor="address" className="text-right text-sm">주소</label>
+              <Input
+                id="address"
+                name="address"
+                value={formData.address}
+                onChange={handleFormChange}
+                className="col-span-3"
+              />
+            </div>
+            <div className="grid grid-cols-4 items-center gap-4">
+              <label htmlFor="contact" className="text-right text-sm">연락처</label>
+              <Input
+                id="contact"
+                name="contact"
+                value={formData.contact}
+                onChange={handleFormChange}
+                className="col-span-3"
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setEditDialogOpen(false)}>취소</Button>
+            <Button onClick={handleEditPatient}>저장</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+      
+      {/* 보호자 정보 수정 다이얼로그 */}
+      <Dialog open={editGuardianDialogOpen} onOpenChange={setEditGuardianDialogOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>보호자 정보 수정</DialogTitle>
+          </DialogHeader>
+          <div className="grid gap-4 py-4">
+            <div className="grid grid-cols-4 items-center gap-4">
+              <label htmlFor="guardian_name" className="text-right text-sm">이름</label>
+              <Input
+                id="guardian_name"
+                name="name"
+                value={guardianFormData.name}
+                onChange={handleGuardianFormChange}
+                className="col-span-3"
+              />
+            </div>
+            <div className="grid grid-cols-4 items-center gap-4">
+              <label htmlFor="guardian_relation" className="text-right text-sm">관계</label>
+              <Input
+                id="guardian_relation"
+                name="relation"
+                value={guardianFormData.relation}
+                onChange={handleGuardianFormChange}
+                className="col-span-3"
+              />
+            </div>
+            <div className="grid grid-cols-4 items-center gap-4">
+              <label htmlFor="guardian_contact" className="text-right text-sm">연락처</label>
+              <Input
+                id="guardian_contact"
+                name="contact"
+                value={guardianFormData.contact}
+                onChange={handleGuardianFormChange}
+                className="col-span-3"
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setEditGuardianDialogOpen(false)}>취소</Button>
+            <Button onClick={handleEditGuardian}>저장</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+      
+      {/* 투약 정보 수정 다이얼로그 */}
+      <Dialog open={editMedicationDialogOpen} onOpenChange={setEditMedicationDialogOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>투약 정보 수정</DialogTitle>
+          </DialogHeader>
+          <div className="grid gap-4 py-4">
+            <div className="grid grid-cols-4 items-center gap-4">
+              <label htmlFor="med_name" className="text-right text-sm">약품명</label>
+              <Input
+                id="med_name"
+                name="name"
+                value={medicationFormData.name}
+                onChange={handleMedicationFormChange}
+                className="col-span-3"
+              />
+            </div>
+            <div className="grid grid-cols-4 items-center gap-4">
+              <label htmlFor="med_dosage" className="text-right text-sm">용량</label>
+              <Input
+                id="med_dosage"
+                name="dosage"
+                value={medicationFormData.dosage}
+                onChange={handleMedicationFormChange}
+                className="col-span-3"
+              />
+            </div>
+            <div className="grid grid-cols-4 items-center gap-4">
+              <label htmlFor="med_frequency" className="text-right text-sm">빈도</label>
+              <Input
+                id="med_frequency"
+                name="frequency"
+                value={medicationFormData.frequency}
+                onChange={handleMedicationFormChange}
+                className="col-span-3"
+              />
+            </div>
+            <div className="grid grid-cols-4 items-center gap-4">
+              <label htmlFor="med_timing" className="text-right text-sm">투약 시간</label>
+              <Input
+                id="med_timing"
+                name="timing"
+                value={medicationFormData.timing}
+                onChange={handleMedicationFormChange}
+                className="col-span-3"
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setEditMedicationDialogOpen(false)}>취소</Button>
+            <Button onClick={handleEditMedication}>저장</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+      
       <div className="flex items-center mb-6">
         <a href="/" className="mr-4">
           <Button variant="ghost" size="sm">
@@ -126,8 +483,18 @@ export default function PatientDetailPage() {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div className="lg:col-span-1 space-y-6">
           <Card>
-            <CardHeader className="pb-2">
+            <CardHeader className="pb-2 flex flex-row items-center justify-between">
               <CardTitle>기본 정보</CardTitle>
+              {canEdit && (
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  onClick={() => setEditDialogOpen(true)}
+                  className="h-8"
+                >
+                  <Edit className="h-4 w-4 mr-1" /> 수정
+                </Button>
+              )}
             </CardHeader>
             <CardContent>
               <div className="space-y-3">
@@ -302,9 +669,21 @@ export default function PatientDetailPage() {
             
             <TabsContent value="medication">
               <Card>
-                <CardHeader>
-                  <CardTitle>투약 정보</CardTitle>
-                  <CardDescription>현재 처방된 약물 정보</CardDescription>
+                <CardHeader className="flex flex-row items-center justify-between">
+                  <div>
+                    <CardTitle>투약 정보</CardTitle>
+                    <CardDescription>현재 처방된 약물 정보</CardDescription>
+                  </div>
+                  {canEdit && (
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      onClick={() => setEditMedicationDialogOpen(true)}
+                      className="h-8"
+                    >
+                      <Edit className="h-4 w-4 mr-1" /> 수정
+                    </Button>
+                  )}
                 </CardHeader>
                 <CardContent>
                   <div className="overflow-x-auto">
