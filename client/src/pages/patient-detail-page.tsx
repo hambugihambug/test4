@@ -2,7 +2,7 @@ import { useParams } from "wouter";
 import { 
   ArrowLeft, HeartPulse, User, CalendarClock, Users, BedDouble,
   MapPin, FileText, Phone, Shield, Clipboard, AlertTriangle,
-  Edit, Check, X
+  Edit, Check, X, MessageCircle
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -10,10 +10,20 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Progress } from "@/components/ui/progress";
 import { Input } from "@/components/ui/input";
 import { useState, useEffect } from "react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter, DialogDescription } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/use-auth";
 import { UserRole } from "@shared/schema";
+import { Textarea } from "@/components/ui/textarea";
+import { 
+  Select, 
+  SelectContent, 
+  SelectItem, 
+  SelectTrigger, 
+  SelectValue 
+} from "@/components/ui/select";
+import { Switch } from "@/components/ui/switch";
+import { Checkbox } from "@/components/ui/checkbox";
 
 // 임시 환자 상세 데이터
 const PATIENT_DATA = {
@@ -833,7 +843,7 @@ export default function PatientDetailPage() {
                   {canEdit && (
                     <Button 
                       variant="ghost" 
-                      size="xs" 
+                      size="sm" 
                       onClick={() => setEditGuardianDialogOpen(true)}
                       className="h-6 px-2"
                     >
