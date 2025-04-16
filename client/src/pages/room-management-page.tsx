@@ -88,6 +88,11 @@ export default function RoomManagementPage() {
   const [isAssigningPatient, setIsAssigningPatient] = useState(false);
   const [editingPatientId, setEditingPatientId] = useState<number | null>(null);
   
+  // 환자 정보 수정을 위한 상태 추가
+  const [isEditingBasicInfo, setIsEditingBasicInfo] = useState(false);
+  const [isEditingGuardianInfo, setIsEditingGuardianInfo] = useState(false);
+  const [editedPatientDetails, setEditedPatientDetails] = useState<any>(null);
+  
   // 사용자 정보는 위에서 이미 가져옴
   console.log("RoomManagementPage - 현재 사용자:", user?.username, "역할:", user?.role);
   
@@ -1075,60 +1080,243 @@ export default function RoomManagementPage() {
                   <CardHeader className="pb-2">
                     <div className="flex justify-between items-center">
                     <CardTitle>{t('common.basicInfo')}</CardTitle>
-                    <Button variant="ghost" size="sm" className="text-blue-600">
+                    <Button 
+                      variant="ghost" 
+                      size="sm" 
+                      className="text-blue-600"
+                      onClick={() => {
+                        // 상세 정보를 수정하기 위한 초기 상태 설정
+                        setEditedPatientDetails({...PATIENT_DETAILS[selectedPatientId]});
+                        setIsEditingBasicInfo(true);
+                      }}
+                    >
                       <Pencil className="h-4 w-4 mr-1" />
                       {t('common.edit')}
                     </Button>
                   </div>
                   </CardHeader>
                   <CardContent>
-                    <div className="space-y-3">
-                      <div className="flex items-center">
-                        <User className="h-4 w-4 mr-2 text-gray-500" />
-                        <span className="text-sm font-medium mr-2">{t('common.name')}:</span>
-                        <span className="text-sm">{PATIENT_DETAILS[selectedPatientId].name}</span>
+                    {isEditingBasicInfo ? (
+                      // 수정 폼
+                      <div className="space-y-3">
+                        <div className="space-y-1">
+                          <Label htmlFor="patientName">{t('common.name')}</Label>
+                          <Input 
+                            id="patientName" 
+                            value={editedPatientDetails?.name || ''} 
+                            onChange={(e) => setEditedPatientDetails({
+                              ...editedPatientDetails,
+                              name: e.target.value
+                            })}
+                          />
+                        </div>
+                        <div className="grid grid-cols-2 gap-3">
+                          <div className="space-y-1">
+                            <Label htmlFor="patientAge">{t('dashboard.age')}</Label>
+                            <Input 
+                              id="patientAge" 
+                              type="number"
+                              value={editedPatientDetails?.age || 0} 
+                              onChange={(e) => setEditedPatientDetails({
+                                ...editedPatientDetails,
+                                age: parseInt(e.target.value)
+                              })}
+                            />
+                          </div>
+                          <div className="space-y-1">
+                            <Label htmlFor="patientGender">{t('common.gender')}</Label>
+                            <Select 
+                              defaultValue={editedPatientDetails?.gender || '남'}
+                              onValueChange={(value) => setEditedPatientDetails({
+                                ...editedPatientDetails,
+                                gender: value
+                              })}
+                            >
+                              <SelectTrigger>
+                                <SelectValue />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="남">남</SelectItem>
+                                <SelectItem value="여">여</SelectItem>
+                              </SelectContent>
+                            </Select>
+                          </div>
+                        </div>
+                        <div className="space-y-1">
+                          <Label htmlFor="patientBirthdate">{t('common.birthDate')}</Label>
+                          <Input 
+                            id="patientBirthdate" 
+                            value={editedPatientDetails?.birthDate || ''} 
+                            onChange={(e) => setEditedPatientDetails({
+                              ...editedPatientDetails,
+                              birthDate: e.target.value
+                            })}
+                          />
+                        </div>
+                        <div className="grid grid-cols-2 gap-3">
+                          <div className="space-y-1">
+                            <Label htmlFor="patientRoomNumber">{t('common.roomNumber')}</Label>
+                            <Input 
+                              id="patientRoomNumber" 
+                              value={editedPatientDetails?.roomNumber || ''} 
+                              onChange={(e) => setEditedPatientDetails({
+                                ...editedPatientDetails,
+                                roomNumber: e.target.value
+                              })}
+                            />
+                          </div>
+                          <div className="space-y-1">
+                            <Label htmlFor="patientBedNumber">{t('common.bedNumber')}</Label>
+                            <Input 
+                              id="patientBedNumber" 
+                              type="number"
+                              value={editedPatientDetails?.bedNumber || 0} 
+                              onChange={(e) => setEditedPatientDetails({
+                                ...editedPatientDetails,
+                                bedNumber: parseInt(e.target.value)
+                              })}
+                            />
+                          </div>
+                        </div>
+                        <div className="space-y-1">
+                          <Label htmlFor="patientDiagnosis">{t('common.diagnosis')}</Label>
+                          <Input 
+                            id="patientDiagnosis" 
+                            value={editedPatientDetails?.diagnosis || ''} 
+                            onChange={(e) => setEditedPatientDetails({
+                              ...editedPatientDetails,
+                              diagnosis: e.target.value
+                            })}
+                          />
+                        </div>
+                        <div className="space-y-1">
+                          <Label htmlFor="patientAdmissionDate">{t('common.admissionDate')}</Label>
+                          <Input 
+                            id="patientAdmissionDate" 
+                            value={editedPatientDetails?.admissionDate || ''} 
+                            onChange={(e) => setEditedPatientDetails({
+                              ...editedPatientDetails,
+                              admissionDate: e.target.value
+                            })}
+                          />
+                        </div>
+                        <div className="space-y-1">
+                          <Label htmlFor="patientDischargeDate">{t('common.dischargeDate')}</Label>
+                          <Input 
+                            id="patientDischargeDate" 
+                            value={editedPatientDetails?.expectedDischargeDate || ''} 
+                            onChange={(e) => setEditedPatientDetails({
+                              ...editedPatientDetails,
+                              expectedDischargeDate: e.target.value
+                            })}
+                          />
+                        </div>
+                        <div className="space-y-1">
+                          <Label htmlFor="patientAddress">{t('common.address')}</Label>
+                          <Input 
+                            id="patientAddress" 
+                            value={editedPatientDetails?.address || ''} 
+                            onChange={(e) => setEditedPatientDetails({
+                              ...editedPatientDetails,
+                              address: e.target.value
+                            })}
+                          />
+                        </div>
+                        <div className="space-y-1">
+                          <Label htmlFor="patientContact">{t('common.contact')}</Label>
+                          <Input 
+                            id="patientContact" 
+                            value={editedPatientDetails?.contact || ''} 
+                            onChange={(e) => setEditedPatientDetails({
+                              ...editedPatientDetails,
+                              contact: e.target.value
+                            })}
+                          />
+                        </div>
+                        <div className="pt-3 flex justify-end space-x-2">
+                          <Button 
+                            variant="outline"
+                            onClick={() => {
+                              setIsEditingBasicInfo(false);
+                              setEditedPatientDetails(null);
+                            }}
+                          >
+                            취소
+                          </Button>
+                          <Button 
+                            onClick={() => {
+                              if (!selectedPatientId || !editedPatientDetails) return;
+                              
+                              // 환자 데이터 업데이트
+                              PATIENT_DETAILS[selectedPatientId] = {
+                                ...PATIENT_DETAILS[selectedPatientId],
+                                ...editedPatientDetails
+                              };
+                              
+                              // UI 업데이트
+                              toast({
+                                title: "환자 정보가 업데이트되었습니다",
+                                description: "환자의 기본 정보가 성공적으로 저장되었습니다."
+                              });
+                              
+                              // 편집 모드 종료
+                              setIsEditingBasicInfo(false);
+                            }}
+                          >
+                            저장
+                          </Button>
+                        </div>
                       </div>
-                      <div className="flex items-center">
-                        <CalendarClock className="h-4 w-4 mr-2 text-gray-500" />
-                        <span className="text-sm font-medium mr-2">{t('dashboard.age')}:</span>
-                        <span className="text-sm">{PATIENT_DETAILS[selectedPatientId].age}세 ({PATIENT_DETAILS[selectedPatientId].gender})</span>
+                    ) : (
+                      // 기본 정보 표시
+                      <div className="space-y-3">
+                        <div className="flex items-center">
+                          <User className="h-4 w-4 mr-2 text-gray-500" />
+                          <span className="text-sm font-medium mr-2">{t('common.name')}:</span>
+                          <span className="text-sm">{PATIENT_DETAILS[selectedPatientId].name}</span>
+                        </div>
+                        <div className="flex items-center">
+                          <CalendarClock className="h-4 w-4 mr-2 text-gray-500" />
+                          <span className="text-sm font-medium mr-2">{t('dashboard.age')}:</span>
+                          <span className="text-sm">{PATIENT_DETAILS[selectedPatientId].age}세 ({PATIENT_DETAILS[selectedPatientId].gender})</span>
+                        </div>
+                        <div className="flex items-center">
+                          <CalendarClock className="h-4 w-4 mr-2 text-gray-500" />
+                          <span className="text-sm font-medium mr-2">{t('common.birthDate')}:</span>
+                          <span className="text-sm">{PATIENT_DETAILS[selectedPatientId].birthDate}</span>
+                        </div>
+                        <div className="flex items-center">
+                          <BedDouble className="h-4 w-4 mr-2 text-gray-500" />
+                          <span className="text-sm font-medium mr-2">{t('common.roomBed')}:</span>
+                          <span className="text-sm">{PATIENT_DETAILS[selectedPatientId].roomNumber}호 {PATIENT_DETAILS[selectedPatientId].bedNumber}번 침대</span>
+                        </div>
+                        <div className="flex items-center">
+                          <FileText className="h-4 w-4 mr-2 text-gray-500" />
+                          <span className="text-sm font-medium mr-2">{t('common.diagnosis')}:</span>
+                          <span className="text-sm">{PATIENT_DETAILS[selectedPatientId].diagnosis}</span>
+                        </div>
+                        <div className="flex items-center">
+                          <CalendarClock className="h-4 w-4 mr-2 text-gray-500" />
+                          <span className="text-sm font-medium mr-2">{t('common.admissionDate')}:</span>
+                          <span className="text-sm">{PATIENT_DETAILS[selectedPatientId].admissionDate}</span>
+                        </div>
+                        <div className="flex items-center">
+                          <CalendarClock className="h-4 w-4 mr-2 text-gray-500" />
+                          <span className="text-sm font-medium mr-2">{t('common.dischargeDate')}:</span>
+                          <span className="text-sm">{PATIENT_DETAILS[selectedPatientId].expectedDischargeDate}</span>
+                        </div>
+                        <div className="flex items-center">
+                          <MapPin className="h-4 w-4 mr-2 text-gray-500" />
+                          <span className="text-sm font-medium mr-2">{t('common.address')}:</span>
+                          <span className="text-sm">{PATIENT_DETAILS[selectedPatientId].address}</span>
+                        </div>
+                        <div className="flex items-center">
+                          <Phone className="h-4 w-4 mr-2 text-gray-500" />
+                          <span className="text-sm font-medium mr-2">{t('common.contact')}:</span>
+                          <span className="text-sm">{PATIENT_DETAILS[selectedPatientId].contact}</span>
+                        </div>
                       </div>
-                      <div className="flex items-center">
-                        <CalendarClock className="h-4 w-4 mr-2 text-gray-500" />
-                        <span className="text-sm font-medium mr-2">{t('common.birthDate')}:</span>
-                        <span className="text-sm">{PATIENT_DETAILS[selectedPatientId].birthDate}</span>
-                      </div>
-                      <div className="flex items-center">
-                        <BedDouble className="h-4 w-4 mr-2 text-gray-500" />
-                        <span className="text-sm font-medium mr-2">{t('common.roomBed')}:</span>
-                        <span className="text-sm">{PATIENT_DETAILS[selectedPatientId].roomNumber}호 {PATIENT_DETAILS[selectedPatientId].bedNumber}번 침대</span>
-                      </div>
-                      <div className="flex items-center">
-                        <FileText className="h-4 w-4 mr-2 text-gray-500" />
-                        <span className="text-sm font-medium mr-2">{t('common.diagnosis')}:</span>
-                        <span className="text-sm">{PATIENT_DETAILS[selectedPatientId].diagnosis}</span>
-                      </div>
-                      <div className="flex items-center">
-                        <CalendarClock className="h-4 w-4 mr-2 text-gray-500" />
-                        <span className="text-sm font-medium mr-2">{t('common.admissionDate')}:</span>
-                        <span className="text-sm">{PATIENT_DETAILS[selectedPatientId].admissionDate}</span>
-                      </div>
-                      <div className="flex items-center">
-                        <CalendarClock className="h-4 w-4 mr-2 text-gray-500" />
-                        <span className="text-sm font-medium mr-2">{t('common.dischargeDate')}:</span>
-                        <span className="text-sm">{PATIENT_DETAILS[selectedPatientId].expectedDischargeDate}</span>
-                      </div>
-                      <div className="flex items-center">
-                        <MapPin className="h-4 w-4 mr-2 text-gray-500" />
-                        <span className="text-sm font-medium mr-2">{t('common.address')}:</span>
-                        <span className="text-sm">{PATIENT_DETAILS[selectedPatientId].address}</span>
-                      </div>
-                      <div className="flex items-center">
-                        <Phone className="h-4 w-4 mr-2 text-gray-500" />
-                        <span className="text-sm font-medium mr-2">{t('common.contact')}:</span>
-                        <span className="text-sm">{PATIENT_DETAILS[selectedPatientId].contact}</span>
-                      </div>
-                    </div>
+                    )}
                   </CardContent>
                 </Card>
                 
@@ -1136,25 +1324,117 @@ export default function RoomManagementPage() {
                   <CardHeader className="pb-2">
                     <div className="flex justify-between items-center">
                       <CardTitle>{t('common.guardianInfo')}</CardTitle>
-                      <Button variant="ghost" size="sm" className="text-blue-600">
+                      <Button 
+                        variant="ghost" 
+                        size="sm" 
+                        className="text-blue-600"
+                        onClick={() => {
+                          // 보호자 정보를 수정하기 위한 초기 상태 설정
+                          setEditedPatientDetails({
+                            ...editedPatientDetails,
+                            guardian: {...PATIENT_DETAILS[selectedPatientId].guardian}
+                          });
+                          setIsEditingGuardianInfo(true);
+                        }}
+                      >
                         <Pencil className="h-4 w-4 mr-1" />
                         {t('common.edit')}
                       </Button>
                     </div>
                   </CardHeader>
                   <CardContent>
-                    <div className="space-y-3">
-                      <div className="flex items-center">
-                        <Users className="h-4 w-4 mr-2 text-gray-500" />
-                        <span className="text-sm font-medium mr-2">{t('common.guardianName')}:</span>
-                        <span className="text-sm">{PATIENT_DETAILS[selectedPatientId].guardian.name} ({PATIENT_DETAILS[selectedPatientId].guardian.relation})</span>
+                    {isEditingGuardianInfo ? (
+                      // 보호자 정보 수정 폼
+                      <div className="space-y-3">
+                        <div className="space-y-1">
+                          <Label htmlFor="guardianName">{t('common.guardianName')}</Label>
+                          <Input 
+                            id="guardianName" 
+                            value={editedPatientDetails?.guardian?.name || ''} 
+                            onChange={(e) => setEditedPatientDetails({
+                              ...editedPatientDetails,
+                              guardian: {
+                                ...editedPatientDetails?.guardian,
+                                name: e.target.value
+                              }
+                            })}
+                          />
+                        </div>
+                        <div className="space-y-1">
+                          <Label htmlFor="guardianRelation">{t('common.relation')}</Label>
+                          <Input 
+                            id="guardianRelation" 
+                            value={editedPatientDetails?.guardian?.relation || ''} 
+                            onChange={(e) => setEditedPatientDetails({
+                              ...editedPatientDetails,
+                              guardian: {
+                                ...editedPatientDetails?.guardian,
+                                relation: e.target.value
+                              }
+                            })}
+                          />
+                        </div>
+                        <div className="space-y-1">
+                          <Label htmlFor="guardianContact">{t('common.guardianContact')}</Label>
+                          <Input 
+                            id="guardianContact" 
+                            value={editedPatientDetails?.guardian?.contact || ''} 
+                            onChange={(e) => setEditedPatientDetails({
+                              ...editedPatientDetails,
+                              guardian: {
+                                ...editedPatientDetails?.guardian,
+                                contact: e.target.value
+                              }
+                            })}
+                          />
+                        </div>
+                        <div className="pt-3 flex justify-end space-x-2">
+                          <Button 
+                            variant="outline"
+                            onClick={() => {
+                              setIsEditingGuardianInfo(false);
+                            }}
+                          >
+                            취소
+                          </Button>
+                          <Button 
+                            onClick={() => {
+                              if (!selectedPatientId || !editedPatientDetails || !editedPatientDetails.guardian) return;
+                              
+                              // 보호자 데이터 업데이트
+                              PATIENT_DETAILS[selectedPatientId].guardian = {
+                                ...editedPatientDetails.guardian
+                              };
+                              
+                              // UI 업데이트
+                              toast({
+                                title: "보호자 정보가 업데이트되었습니다",
+                                description: "환자의 보호자 정보가 성공적으로 저장되었습니다."
+                              });
+                              
+                              // 편집 모드 종료
+                              setIsEditingGuardianInfo(false);
+                            }}
+                          >
+                            저장
+                          </Button>
+                        </div>
                       </div>
-                      <div className="flex items-center">
-                        <Phone className="h-4 w-4 mr-2 text-gray-500" />
-                        <span className="text-sm font-medium mr-2">{t('common.guardianContact')}:</span>
-                        <span className="text-sm">{PATIENT_DETAILS[selectedPatientId].guardian.contact}</span>
+                    ) : (
+                      // 기본 보호자 정보 표시
+                      <div className="space-y-3">
+                        <div className="flex items-center">
+                          <Users className="h-4 w-4 mr-2 text-gray-500" />
+                          <span className="text-sm font-medium mr-2">{t('common.guardianName')}:</span>
+                          <span className="text-sm">{PATIENT_DETAILS[selectedPatientId].guardian.name} ({PATIENT_DETAILS[selectedPatientId].guardian.relation})</span>
+                        </div>
+                        <div className="flex items-center">
+                          <Phone className="h-4 w-4 mr-2 text-gray-500" />
+                          <span className="text-sm font-medium mr-2">{t('common.guardianContact')}:</span>
+                          <span className="text-sm">{PATIENT_DETAILS[selectedPatientId].guardian.contact}</span>
+                        </div>
                       </div>
-                    </div>
+                    )}
                   </CardContent>
                 </Card>
               </div>
