@@ -43,6 +43,7 @@ export interface IStorage {
   updatePatient(id: number, patientData: Partial<Patient>): Promise<Patient | undefined>;
   deletePatient(id: number): Promise<boolean>;
   getPatientsByRoomId(roomId: number): Promise<Patient[]>;
+  getPatientsByAssignedNurse(nurseId: number): Promise<Patient[]>;
   getPatientWithDetails(id: number): Promise<PatientWithDetails | undefined>;
   getPatientsWithDetails(): Promise<PatientWithDetails[]>;
   

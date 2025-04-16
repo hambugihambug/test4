@@ -437,10 +437,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Patient Routes
   app.get('/api/patients', authenticateJWT, hasRole([UserRole.DIRECTOR, UserRole.NURSE]), async (req, res) => {
     try {
-      const patients = await storage.getPatients();
+      const requestUser = (req as any).user;
+      let patients = [];
+      
+      // 병원장은 모든 환자 정보 접근 가능
+      if (requestUser.role === UserRole.DIRECTOR) {
+        patients = await storage.getPatients();
+      } 
+      // 간호사는 자신의 담당 환자만 접근 가능
+      else if (requestUser.role === UserRole.NURSE) {
+        patients = await storage.getPatientsByAssignedNurse(requestUser.id);
+      }
+      
       res.json(patients);
     } catch (error) {
-      res.status(500).json({ message: "Error fetching patients" });
+      console.error('환자 목록 조회 오류:', error);
+      res.status(500).json({ message: "환자 목록 조회 중 오류가 발생했습니다" });
     }
   });
   
@@ -458,24 +470,53 @@ export async function registerRoutes(app: Express): Promise<Server> {
   
   app.get('/api/patients/:id', authenticateJWT, async (req, res) => {
     try {
-      // Patients can only view their own data
-      if (req.user.role === UserRole.PATIENT && req.user.id !== parseInt(req.params.id)) {
-        return res.status(403).json({ message: "Forbidden" });
-      }
+      const requestUser = (req as any).user;
+      const patientId = parseInt(req.params.id);
       
-      const patient = await storage.getPatient(parseInt(req.params.id));
+      const patient = await storage.getPatient(patientId);
       if (!patient) {
         return res.status(404).json({ message: "Patient not found" });
       }
       
+      // 권한 체크:
+      // 1. 병원장은 모든 환자 정보 접근 가능
+      // 2. 간호사는 자신의 담당 환자만 접근 가능
+      // 3. 환자는 자신의 정보만 접근 가능
+      // 4. 보호자는 자신의 환자만 접근 가능
+      
+      if (requestUser.role === UserRole.DIRECTOR) {
+        // 접근 허용
+      } 
+      else if (requestUser.role === UserRole.NURSE) {
+        // 간호사가 환자의 담당 간호사인지 확인
+        if (patient.assignedNurseId !== requestUser.id) {
+          return res.status(403).json({ message: "담당 환자만 조회할 수 있습니다" });
+        }
+      }
+      else if (requestUser.role === UserRole.PATIENT) {
+        // 환자가 자신의 정보인지 확인
+        if (patient.userId !== requestUser.id) {
+          return res.status(403).json({ message: "자신의 정보만 조회할 수 있습니다" });
+        }
+      }
+      else if (requestUser.role === UserRole.GUARDIAN) {
+        // 보호자가 담당하는 환자인지 확인
+        const guardian = await storage.getGuardianByPatientId(patientId);
+        if (!guardian || guardian.userId !== requestUser.id) {
+          return res.status(403).json({ message: "담당 환자만 조회할 수 있습니다" });
+        }
+      }
+      
       res.json(patient);
     } catch (error) {
-      res.status(500).json({ message: "Error fetching patient" });
+      console.error('환자 정보 조회 오류:', error);
+      res.status(500).json({ message: "환자 정보 조회 중 오류가 발생했습니다" });
     }
   });
   
   app.get('/api/patients/:id/details', authenticateJWT, async (req, res) => {
     try {
+      const requestUser = (req as any).user;
       const patientId = parseInt(req.params.id);
       const patient = await storage.getPatientWithDetails(patientId);
       
@@ -483,17 +524,39 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ message: "Patient not found" });
       }
       
-      // Guardians can only see details of their patients
-      if (req.user.role === UserRole.GUARDIAN) {
+      // 권한 체크:
+      // 1. 병원장은 모든 환자 정보 접근 가능
+      // 2. 간호사는 자신의 담당 환자만 접근 가능
+      // 3. 환자는 자신의 정보만 접근 가능
+      // 4. 보호자는 자신의 환자만 접근 가능
+      
+      if (requestUser.role === UserRole.DIRECTOR) {
+        // 접근 허용
+      } 
+      else if (requestUser.role === UserRole.NURSE) {
+        // 간호사가 환자의 담당 간호사인지 확인
+        if (patient.assignedNurseId !== requestUser.id) {
+          return res.status(403).json({ message: "담당 환자만 조회할 수 있습니다" });
+        }
+      }
+      else if (requestUser.role === UserRole.PATIENT) {
+        // 환자가 자신의 정보인지 확인
+        if (patient.userId !== requestUser.id) {
+          return res.status(403).json({ message: "자신의 정보만 조회할 수 있습니다" });
+        }
+      }
+      else if (requestUser.role === UserRole.GUARDIAN) {
+        // 보호자가 담당하는 환자인지 확인
         const guardian = await storage.getGuardianByPatientId(patientId);
-        if (!guardian || guardian.userId !== req.user.id) {
-          return res.status(403).json({ message: "Forbidden" });
+        if (!guardian || guardian.userId !== requestUser.id) {
+          return res.status(403).json({ message: "담당 환자만 조회할 수 있습니다" });
         }
       }
       
       res.json(patient);
     } catch (error) {
-      res.status(500).json({ message: "Error fetching patient details" });
+      console.error('환자 상세 정보 조회 오류:', error);
+      res.status(500).json({ message: "환자 상세 정보 조회 중 오류가 발생했습니다" });
     }
   });
   
@@ -512,16 +575,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
   
   app.put('/api/patients/:id', authenticateJWT, hasRole([UserRole.DIRECTOR, UserRole.NURSE]), async (req, res) => {
     try {
+      const requestUser = (req as any).user;
       const patientId = parseInt(req.params.id);
       const patient = await storage.getPatient(patientId);
+      
       if (!patient) {
         return res.status(404).json({ message: "Patient not found" });
+      }
+      
+      // 간호사의 경우 자신의 담당 환자만 수정 가능하도록 체크
+      if (requestUser.role === UserRole.NURSE && patient.assignedNurseId !== requestUser.id) {
+        return res.status(403).json({ message: "담당 환자만 수정할 수 있습니다" });
       }
       
       const updatedPatient = await storage.updatePatient(patientId, req.body);
       res.json(updatedPatient);
     } catch (error) {
-      res.status(500).json({ message: "Error updating patient" });
+      console.error('환자 정보 수정 오류:', error);
+      res.status(500).json({ message: "환자 정보 수정 중 오류가 발생했습니다" });
     }
   });
   
