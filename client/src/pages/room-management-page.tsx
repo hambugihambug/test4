@@ -36,6 +36,7 @@ export default function RoomManagementPage() {
   
   try {
     console.log("RoomManagementPage에서 try 블록 시작");
+    console.log("디버깅: window 객체 존재 확인:", typeof window !== 'undefined');
     // 직접 간단한 번역 함수 구현
     const language = 'ko'; // 기본적으로 한국어 사용
     const t = (key: string): string => {
