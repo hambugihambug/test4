@@ -84,6 +84,8 @@ export default function RoomManagementPage() {
   const [selectedFloor, setSelectedFloor] = useState<number>(1);
   const [floorInput, setFloorInput] = useState<string>("");
   const [floors, setFloors] = useState<number[]>([1, 2, 3]);
+  const [isAssigningPatient, setIsAssigningPatient] = useState(false);
+  const [editingPatientId, setEditingPatientId] = useState<number | null>(null);
   
   // 사용자 정보는 위에서 이미 가져옴
   console.log("RoomManagementPage - 현재 사용자:", user?.username, "역할:", user?.role);
@@ -163,6 +165,20 @@ export default function RoomManagementPage() {
     data: dummyRooms,
     isLoading: false,
     error: null
+  };
+  
+  // 임시 간호사 데이터
+  const dummyNurses = [
+    { id: 101, name: "김간호사", role: "nurse" },
+    { id: 102, name: "이간호사", role: "nurse" },
+    { id: 103, name: "박간호사", role: "nurse" },
+    { id: 104, name: "최간호사", role: "nurse" },
+  ];
+  
+  // 간호사 ID로 이름 조회하는 함수
+  const getNurseName = (nurseId: number): string => {
+    const nurse = dummyNurses.find(n => n.id === nurseId);
+    return nurse ? nurse.name : `간호사 ID: ${nurseId}`;
   };
   
   // Get the selected room data
@@ -665,6 +681,7 @@ export default function RoomManagementPage() {
                           <TableHead>{t('dashboard.age')}</TableHead>
                           <TableHead>{t('dashboard.fallRisk')}</TableHead>
                           <TableHead>{t('rooms.beds')}</TableHead>
+                          <TableHead>담당 간호사</TableHead>
                           <TableHead></TableHead>
                         </TableRow>
                       </TableHeader>
@@ -672,8 +689,7 @@ export default function RoomManagementPage() {
                         {selectedRoom.patients.map((patient) => (
                           <TableRow 
                             key={patient.id} 
-                            className="cursor-pointer hover:bg-gray-50"
-                            onClick={() => navigate(`/patient-detail/${patient.id}`)}
+                            className="hover:bg-gray-50"
                           >
                             <TableCell className="font-medium">{patient.name}</TableCell>
                             <TableCell>{patient.age}</TableCell>
@@ -689,17 +705,36 @@ export default function RoomManagementPage() {
                               </span>
                             </TableCell>
                             <TableCell>{patient.bedNumber}</TableCell>
+                            <TableCell>
+                              {patient.assignedNurseId ? (
+                                <span>{getNurseName(patient.assignedNurseId)}</span>
+                              ) : (
+                                <span className="text-gray-400">미배정</span>
+                              )}
+                            </TableCell>
                             <TableCell className="text-right">
-                              <Button 
-                                variant="outline" 
-                                size="sm"
-                                onClick={(e) => {
-                                  e.stopPropagation(); // 이벤트 버블링 방지
-                                  navigate(`/patient-detail/${patient.id}`);
-                                }}
-                              >
-                                {t('common.details')}
-                              </Button>
+                              <div className="flex justify-end space-x-2">
+                                <Button 
+                                  variant="outline" 
+                                  size="sm"
+                                  onClick={() => {
+                                    setSelectedPatientId(patient.id);
+                                    setIsViewingPatientDetails(true);
+                                  }}
+                                >
+                                  {t('common.details')}
+                                </Button>
+                                <Button 
+                                  variant="default" 
+                                  size="sm"
+                                  onClick={() => {
+                                    setEditingPatientId(patient.id);
+                                    setIsAssigningPatient(true);
+                                  }}
+                                >
+                                  환자 배정
+                                </Button>
+                              </div>
                             </TableCell>
                           </TableRow>
                         ))}
@@ -848,8 +883,16 @@ export default function RoomManagementPage() {
                 setIsAddingBed(false);
                 
                 // 상태 강제 업데이트 (화면에 변경사항 반영)
+                // 타입스크립트 타입 문제로 데이터 변경 후 UI 업데이트를 위해 새로운 객체로 복사
+                const updatedRoom = JSON.parse(JSON.stringify(dummyRooms[roomIndex]));
+                
+                // 변경사항을 화면에 반영하기 위한 트릭
                 setSelectedRoomId(null);
-                setTimeout(() => setSelectedRoomId(selectedRoomId), 0);
+                setTimeout(() => {
+                  // 화면 갱신을 위해 원본 데이터 직접 수정
+                  Object.assign(roomsWithPatients?.find(r => r.id === selectedRoomId) || {}, updatedRoom);
+                  setSelectedRoomId(selectedRoomId);
+                }, 10);
               }}>침대 추가</Button>
             </div>
           </div>
