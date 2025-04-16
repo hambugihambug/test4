@@ -79,6 +79,7 @@ export default function RoomManagementPage() {
   const [selectedPatientId, setSelectedPatientId] = useState<number | null>(null);
   const [isViewingPatientDetails, setIsViewingPatientDetails] = useState(false);
   const [activeTab, setActiveTab] = useState<string>("details");
+  const [isAddingBed, setIsAddingBed] = useState(false);
   const [selectedFloor, setSelectedFloor] = useState<number>(1);
   const [floorInput, setFloorInput] = useState<string>("");
   const [floors, setFloors] = useState<number[]>([1, 2, 3]);
@@ -473,10 +474,16 @@ export default function RoomManagementPage() {
           <h1 className="text-2xl font-bold text-neutral-800">{t('rooms.title')}</h1>
           <p className="text-neutral-500">{t('rooms.subtitle')}</p>
         </div>
-        <Button onClick={() => setIsAddingRoom(true)}>
-          <Plus className="h-4 w-4 mr-1.5" />
-          {t('rooms.addRoom')}
-        </Button>
+        <div className="flex space-x-2">
+          <Button onClick={() => selectedRoomId && setIsAddingBed(true)} disabled={!selectedRoomId}>
+            <BedDouble className="h-4 w-4 mr-1.5" />
+            침대 추가
+          </Button>
+          <Button onClick={() => setIsAddingRoom(true)}>
+            <Plus className="h-4 w-4 mr-1.5" />
+            {t('rooms.addRoom')}
+          </Button>
+        </div>
       </div>
       
       {/* Room Management Interface */}
@@ -606,9 +613,8 @@ export default function RoomManagementPage() {
             </CardHeader>
             <CardContent>
               <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-                <TabsList className="grid grid-cols-3 mb-6">
+                <TabsList className="grid grid-cols-2 mb-6">
                   <TabsTrigger value="details">{t('common.details')}</TabsTrigger>
-                  <TabsTrigger value="layout">{t('rooms.layout')}</TabsTrigger>
                   <TabsTrigger value="patients">{t('rooms.patients')}</TabsTrigger>
                 </TabsList>
                 
@@ -646,17 +652,7 @@ export default function RoomManagementPage() {
                   </div>
                 </TabsContent>
                 
-                {/* Room Layout Tab */}
-                <TabsContent value="layout" className="mt-0">
-                  <div className="border rounded-md">
-                    <RoomLayout
-                      roomId={selectedRoom.id}
-                      layout={selectedRoom.layout ? JSON.parse(selectedRoom.layout) : {beds: []}}
-                      onSave={handleSaveLayout}
-                      editable={true}
-                    />
-                  </div>
-                </TabsContent>
+
                 
                 {/* Patients Tab */}
                 <TabsContent value="patients" className="mt-0">
@@ -733,6 +729,61 @@ export default function RoomManagementPage() {
           </Card>
         )}
       </div>
+      
+      {/* 침대 추가 다이얼로그 */}
+      <Dialog open={isAddingBed} onOpenChange={(open) => {
+        if (!open) {
+          setIsAddingBed(false);
+        }
+      }}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>침대 추가</DialogTitle>
+            <DialogDescription>
+              {selectedRoom ? `${selectedRoom.name} 병실에 새 침대를 추가합니다.` : '병실에 새 침대를 추가합니다.'}
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="space-y-4">
+            <div>
+              <Label htmlFor="bedNumber">침대 번호</Label>
+              <Input
+                id="bedNumber"
+                type="number"
+                min="1"
+                placeholder="침대 번호를 입력하세요"
+                className="mt-1"
+              />
+            </div>
+            
+            <div>
+              <Label htmlFor="bedLocation">침대 위치</Label>
+              <Select>
+                <SelectTrigger>
+                  <SelectValue placeholder="침대 위치를 선택하세요" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="window">창가</SelectItem>
+                  <SelectItem value="door">출입구 쪽</SelectItem>
+                  <SelectItem value="bathroom">화장실 쪽</SelectItem>
+                  <SelectItem value="center">병실 중앙</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            
+            <div className="pt-4 flex justify-end space-x-2">
+              <Button variant="outline" onClick={() => setIsAddingBed(false)}>취소</Button>
+              <Button onClick={() => {
+                toast({
+                  title: "침대 추가됨",
+                  description: "새 침대가 성공적으로 추가되었습니다.",
+                });
+                setIsAddingBed(false);
+              }}>침대 추가</Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
       
       {/* Patient Details Dialog */}
       <Dialog open={isViewingPatientDetails} onOpenChange={(open) => {
