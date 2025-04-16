@@ -30,17 +30,17 @@ interface RoomLayoutProps {
   roomId: number;
   layout?: {
     beds: Bed[];
-    roomWidth: number;
-    roomHeight: number;
   };
   onSave: (layout: any) => void;
   editable: boolean;
 }
 
+// 병실 레이아웃 크기를 800x400으로 고정합니다
+const ROOM_WIDTH = 800;
+const ROOM_HEIGHT = 400;
+
 const DEFAULT_LAYOUT = {
-  beds: [],
-  roomWidth: 800,
-  roomHeight: 400
+  beds: []
 };
 
 // 환자 배치 관련 인터페이스
@@ -192,9 +192,9 @@ export function RoomLayout({ roomId, layout, onSave, editable }: RoomLayoutProps
     // 침대가 화면 밖으로 나가지 않도록 경계 설정
     // 침대 중심 기준으로 각 방향 최대/최소값 계산
     const minX = selectedBed.width / 2;
-    const maxX = currentLayout.roomWidth - (selectedBed.width / 2);
+    const maxX = ROOM_WIDTH - (selectedBed.width / 2);
     const minY = selectedBed.height / 2;
-    const maxY = currentLayout.roomHeight - (selectedBed.height / 2);
+    const maxY = ROOM_HEIGHT - (selectedBed.height / 2);
     
     // 경계 내로 제한
     const x = Math.min(maxX, Math.max(minX, rawX));

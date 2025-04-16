@@ -8,6 +8,7 @@ import AuthPage from "@/pages/auth-page";
 import MyPage from "@/pages/my-page";
 import AccountsManagementPage from "@/pages/accounts-management-page";
 import RoomManagementPage from "@/pages/room-management-page";
+import EnvironmentPage from "@/pages/environment-page";
 import MessagesPage from "@/pages/messages-page";
 import SettingsPage from "@/pages/settings-page";
 import { AuthProvider, useAuth } from "@/hooks/use-auth";
@@ -406,6 +407,7 @@ function App() {
                 <ProtectedRoute path="/" component={HomePage} />
                 <ProtectedRoute path="/dashboard" component={DashboardPage} />
                 <ProtectedRoute path="/fall-detection" component={FallDetectionPage} />
+                <ProtectedRoute path="/environment" component={EnvironmentPage} />
                 <ProtectedRoute path="/patients/:id" component={PatientDetailPage} />
                 <ProtectedRoute path="/mypage" component={MyPage} />
                 <ProtectedRoute 
