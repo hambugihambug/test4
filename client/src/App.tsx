@@ -11,6 +11,8 @@ import RoomManagementPage from "@/pages/room-management-page";
 import EnvironmentPage from "@/pages/environment-page";
 import MessagesPage from "@/pages/messages-page";
 import SettingsPage from "@/pages/settings-page";
+import SchedulePage from "@/pages/schedule-page";
+import EventsPage from "@/pages/events-page";
 import { AuthProvider, useAuth } from "@/hooks/use-auth";
 import { ProtectedRoute } from "@/lib/protected-route";
 import { UserRole } from "@shared/schema";
@@ -29,7 +31,9 @@ import {
   Menu,
   LogOut,
   ChevronDown,
-  Activity
+  Activity,
+  Calendar,
+  CalendarClock
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -123,16 +127,34 @@ function Sidebar() {
         {canAccessRoomManagement && (
           <div className="mt-6 pt-4 border-t">
             <div className="px-2 mb-2 text-xs font-semibold text-gray-500 uppercase tracking-wider">
-              병실 관리
+              병실 및 환자 관리
             </div>
             <SidebarMenuItem
               icon={BedDouble}
-              label="병실 관리"
+              label="병실 및 환자 관리"
               href="/room-management"
               active={location === '/room-management'}
             />
           </div>
         )}
+        
+        <div className="mt-6 pt-4 border-t">
+          <div className="px-2 mb-2 text-xs font-semibold text-gray-500 uppercase tracking-wider">
+            일정 관리
+          </div>
+          <SidebarMenuItem
+            icon={Calendar}
+            label="일정 관리"
+            href="/schedule"
+            active={location === '/schedule'}
+          />
+          <SidebarMenuItem
+            icon={CalendarClock}
+            label="모든 이벤트 보기"
+            href="/events"
+            active={location === '/events'}
+          />
+        </div>
         
         <div className="mt-6 pt-4 border-t">
           {canAccessUserManagement && (
@@ -240,11 +262,24 @@ function MobileSidebar() {
             {canAccessRoomManagement && (
               <SidebarMenuItem
                 icon={BedDouble}
-                label="병실 관리"
+                label="병실 및 환자 관리"
                 href="/room-management"
                 active={location === '/room-management'}
               />
             )}
+            
+            <SidebarMenuItem
+              icon={Calendar}
+              label="일정 관리"
+              href="/schedule"
+              active={location === '/schedule'}
+            />
+            <SidebarMenuItem
+              icon={CalendarClock}
+              label="모든 이벤트 보기"
+              href="/events"
+              active={location === '/events'}
+            />
             
             {canAccessUserManagement && (
               <SidebarMenuItem 
@@ -422,6 +457,8 @@ function App() {
                 />
                 <ProtectedRoute path="/messages" component={MessagesPage} />
                 <ProtectedRoute path="/settings" component={SettingsPage} />
+                <ProtectedRoute path="/schedule" component={SchedulePage} />
+                <ProtectedRoute path="/events" component={EventsPage} />
                 <Route component={NotFound} />
               </Switch>
             </main>
