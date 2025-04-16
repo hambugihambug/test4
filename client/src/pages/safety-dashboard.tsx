@@ -5,6 +5,10 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { AnimatedProgress } from '@/components/ui/animated-progress';
 import { SafetyScoreCard } from '@/components/ui/safety-score-card';
 import { ActivityLevel } from '@/components/ui/activity-level';
+import { AnimatedCharacter } from '@/components/ui/animated-character';
+import { AnimatedWave } from '@/components/ui/animated-wave';
+import { AnimatedStatus } from '@/components/ui/animated-status';
+import { AnimatedDataCard } from '@/components/ui/animated-data-card';
 import { UserRole } from '@shared/schema';
 import { 
   TrendingUp, 
@@ -15,9 +19,13 @@ import {
   Calendar, 
   Users, 
   Moon, 
-  Bed
+  Bed,
+  Activity,
+  Heart,
+  BarChart3,
+  UserCheck
 } from 'lucide-react';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { useToast } from '@/hooks/use-toast';
 
 // 임시 데이터 타입 정의
@@ -149,119 +157,107 @@ const SafetyDashboardPage: React.FC = () => {
         {/* 전체 개요 탭 */}
         <TabsContent value="overview">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5 }}
+            <AnimatePresence>
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.5 }}
+              >
+                <SafetyScoreCard 
+                  score={data.safetyScore} 
+                  title="병원 전체 안전 점수" 
+                  description="전체 환자의 평균 안전 지수입니다"
+                />
+              </motion.div>
+
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.5, delay: 0.1 }}
+              >
+                <AnimatedStatus
+                  status={data.incidentCount > 3 ? 'error' : data.incidentCount > 0 ? 'warning' : 'success'}
+                  title="오늘의 낙상 사고"
+                  description={data.incidentCount > 0 
+                    ? `금일 낙상 사고 ${data.incidentCount}건이 발생했습니다` 
+                    : "오늘은 낙상 사고가 발생하지 않았습니다"}
+                />
+              </motion.div>
+
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.5, delay: 0.2 }}
+              >
+                <AnimatedDataCard
+                  title="온도 및 습도"
+                  value={`${data.avgTemperature}°C`}
+                  icon={<Thermometer className="h-5 w-5" />}
+                  trend={{
+                    direction: 'up',
+                    value: '+0.5°C'
+                  }}
+                  color="info"
+                />
+              </motion.div>
+
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.5, delay: 0.3 }}
+              >
+                <AnimatedDataCard
+                  title="입원 환자 현황"
+                  value={data.patientCount}
+                  icon={<Users className="h-5 w-5" />}
+                  trend={{
+                    direction: 'up',
+                    value: '+2명'
+                  }}
+                  color="primary"
+                />
+              </motion.div>
+            </AnimatePresence>
+          </div>
+          
+          {/* 캐릭터 애니메이션 행 추가 */}
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+            <motion.div 
+              initial={{ opacity: 0, scale: 0.8 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ duration: 0.5, delay: 0.4 }}
+              className="col-span-1"
             >
-              <SafetyScoreCard 
-                score={data.safetyScore} 
-                title="병원 전체 안전 점수" 
-                description="전체 환자의 평균 안전 지수입니다"
+              <AnimatedCharacter
+                character={data.safetyScore >= 80 ? "😀" : 
+                          data.safetyScore >= 60 ? "🙂" : 
+                          data.safetyScore >= 40 ? "😐" : 
+                          data.safetyScore >= 20 ? "🙁" : "😰"}
+                state={data.safetyScore >= 70 ? "happy" : 
+                       data.safetyScore >= 40 ? "idle" : 
+                       data.safetyScore >= 20 ? "sad" : "alert"}
+                title="병원 안전 상태"
+                description={data.safetyScore >= 80 ? "매우 안전한 상태입니다" : 
+                            data.safetyScore >= 60 ? "안전한 상태입니다" : 
+                            data.safetyScore >= 40 ? "주의가 필요합니다" : 
+                            data.safetyScore >= 20 ? "위험 상태입니다" : "매우 위험한 상태입니다"}
+                size="lg"
               />
             </motion.div>
-
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5, delay: 0.1 }}
+            
+            <motion.div 
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ duration: 0.5, delay: 0.6 }}
+              className="col-span-3"
             >
-              <Card>
+              <Card className="h-full">
                 <CardHeader className="pb-2">
-                  <CardTitle className="text-lg">오늘의 낙상 사고</CardTitle>
+                  <CardTitle>실시간 데이터 흐름</CardTitle>
                 </CardHeader>
-                <CardContent>
-                  <div className="flex items-center">
-                    <div className="p-2 bg-red-100 rounded-full mr-3">
-                      <AlertTriangle className="h-6 w-6 text-red-500" />
-                    </div>
-                    <div>
-                      <div className="text-3xl font-bold">{data.incidentCount}</div>
-                      <p className="text-sm text-gray-500">건</p>
-                    </div>
-                    {data.incidentCount > 0 ? (
-                      <div className="ml-auto flex items-center text-red-500">
-                        <TrendingUp className="h-4 w-4 mr-1" />
-                        <span className="text-sm">전일 대비 +1</span>
-                      </div>
-                    ) : (
-                      <div className="ml-auto flex items-center text-green-500">
-                        <TrendingDown className="h-4 w-4 mr-1" />
-                        <span className="text-sm">전일 대비 -2</span>
-                      </div>
-                    )}
-                  </div>
-                </CardContent>
-              </Card>
-            </motion.div>
-
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5, delay: 0.2 }}
-            >
-              <Card>
-                <CardHeader className="pb-2">
-                  <CardTitle className="text-lg">평균 온습도</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="flex flex-col space-y-4">
-                    <div className="flex items-center">
-                      <div className="p-2 bg-blue-100 rounded-full mr-3">
-                        <Thermometer className="h-5 w-5 text-blue-500" />
-                      </div>
-                      <div>
-                        <div className="text-2xl font-bold">{data.avgTemperature}°C</div>
-                        <p className="text-sm text-gray-500">평균 온도</p>
-                      </div>
-                    </div>
-                    <div className="flex items-center">
-                      <div className="p-2 bg-indigo-100 rounded-full mr-3">
-                        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-indigo-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19.5 12c0-1.232-.046-2.453-.138-3.662a4.006 4.006 0 0 0-3.7-3.7 48.678 48.678 0 0 0-7.324 0 4.006 4.006 0 0 0-3.7 3.7A48.676 48.676 0 0 0 4.5 12c0 1.232.046 2.453.138 3.662a4.006 4.006 0 0 0 3.7 3.7 48.68 48.68 0 0 0 7.324 0 4.006 4.006 0 0 0 3.7-3.7c.092-1.21.138-2.43.138-3.662Z" />
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.75 6.75 16 9m-4.25 4.25 2.25 2.25m-8.5-2.25 2.25 2.25m-4.25-8.5 2.25 2.25" />
-                        </svg>
-                      </div>
-                      <div>
-                        <div className="text-2xl font-bold">{data.avgHumidity}%</div>
-                        <p className="text-sm text-gray-500">평균 습도</p>
-                      </div>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            </motion.div>
-
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5, delay: 0.3 }}
-            >
-              <Card>
-                <CardHeader className="pb-2">
-                  <CardTitle className="text-lg">오늘의 현황</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="flex flex-col space-y-4">
-                    <div className="flex items-center">
-                      <div className="p-2 bg-green-100 rounded-full mr-3">
-                        <Calendar className="h-5 w-5 text-green-500" />
-                      </div>
-                      <div>
-                        <div className="text-2xl font-bold">{data.todayVisits}</div>
-                        <p className="text-sm text-gray-500">금일 방문</p>
-                      </div>
-                    </div>
-                    <div className="flex items-center">
-                      <div className="p-2 bg-purple-100 rounded-full mr-3">
-                        <Users className="h-5 w-5 text-purple-500" />
-                      </div>
-                      <div>
-                        <div className="text-2xl font-bold">{data.patientCount}</div>
-                        <p className="text-sm text-gray-500">입원 환자</p>
-                      </div>
-                    </div>
-                  </div>
+                <CardContent className="flex flex-col justify-end h-full">
+                  <AnimatedWave color="#4C9AFF" height={30} width={110} speed={0.8} />
+                  <AnimatedWave color="#60C6A8" height={20} width={120} speed={1.2} className="-mt-6" />
                 </CardContent>
               </Card>
             </motion.div>
@@ -369,6 +365,23 @@ const SafetyDashboardPage: React.FC = () => {
 
         {/* 환자별 현황 탭 */}
         <TabsContent value="patients">
+          <motion.div 
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            className="mb-6 p-4 bg-blue-50 rounded-lg border border-blue-100 flex items-center"
+          >
+            <AnimatedCharacter
+              character="👨‍⚕️"
+              state="happy"
+              size="sm"
+              className="mr-4"
+            />
+            <div>
+              <h3 className="text-lg font-medium text-blue-800">환자 안전 모니터링</h3>
+              <p className="text-sm text-blue-700">각 환자의 안전 상태와 낙상 위험도를 실시간으로 확인하세요.</p>
+            </div>
+          </motion.div>
+
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {data.patients.map((patient, index) => (
               <motion.div
@@ -376,19 +389,46 @@ const SafetyDashboardPage: React.FC = () => {
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.3, delay: index * 0.1 }}
+                whileHover={{ 
+                  scale: 1.02,
+                  boxShadow: "0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)"
+                }}
+                className="rounded-lg overflow-hidden"
               >
-                <Card>
+                <Card className="h-full border-2 hover:border-primary transition-colors duration-300">
                   <CardHeader className="pb-2">
                     <div className="flex justify-between items-center">
-                      <CardTitle className="text-lg">{patient.name}</CardTitle>
-                      <span className="text-sm text-gray-500">{patient.room}호</span>
+                      <div className="flex items-center">
+                        <AnimatedCharacter
+                          character={patient.safetyScore >= 80 ? "😀" : 
+                                    patient.safetyScore >= 60 ? "🙂" : 
+                                    patient.safetyScore >= 40 ? "😐" : 
+                                    patient.safetyScore >= 20 ? "🙁" : "😰"}
+                          state={patient.safetyScore >= 70 ? "happy" : 
+                                patient.safetyScore >= 40 ? "idle" : 
+                                patient.safetyScore >= 20 ? "sad" : "alert"}
+                          size="sm"
+                          className="mr-2"
+                        />
+                        <CardTitle className="text-lg">{patient.name}</CardTitle>
+                      </div>
+                      
+                      <motion.div 
+                        className="px-2 py-1 rounded-full bg-blue-100 text-blue-700 text-xs"
+                        whileHover={{ scale: 1.05 }}
+                      >
+                        {patient.room}호
+                      </motion.div>
                     </div>
                   </CardHeader>
                   <CardContent>
-                    <div className="space-y-4">
+                    <div className="space-y-5">
                       <div>
                         <div className="flex justify-between mb-1">
-                          <span className="text-sm font-medium">안전 점수</span>
+                          <span className="text-sm font-medium flex items-center">
+                            <ShieldCheck className="h-4 w-4 mr-1 text-green-500" />
+                            안전 점수
+                          </span>
                           <span className={`text-sm font-medium ${
                             patient.safetyScore >= 70 ? 'text-green-600' : 
                             patient.safetyScore >= 40 ? 'text-amber-600' : 'text-red-600'
@@ -396,9 +436,9 @@ const SafetyDashboardPage: React.FC = () => {
                             {patient.safetyScore}점
                           </span>
                         </div>
-                        <div className="w-full bg-gray-200 rounded-full h-2">
+                        <div className="w-full bg-gray-200 rounded-full h-2.5">
                           <motion.div
-                            className={`h-2 rounded-full ${
+                            className={`h-2.5 rounded-full ${
                               patient.safetyScore >= 70 ? 'bg-green-500' : 
                               patient.safetyScore >= 40 ? 'bg-amber-500' : 'bg-red-500'
                             }`}
@@ -412,7 +452,10 @@ const SafetyDashboardPage: React.FC = () => {
 
                       <div>
                         <div className="flex justify-between mb-1">
-                          <span className="text-sm font-medium">낙상 위험도</span>
+                          <span className="text-sm font-medium flex items-center">
+                            <AlertTriangle className="h-4 w-4 mr-1 text-amber-500" />
+                            낙상 위험도
+                          </span>
                           <span className={`text-sm font-medium ${
                             patient.fallRisk <= 30 ? 'text-green-600' : 
                             patient.fallRisk <= 60 ? 'text-amber-600' : 'text-red-600'
@@ -420,9 +463,9 @@ const SafetyDashboardPage: React.FC = () => {
                             {patient.fallRisk}%
                           </span>
                         </div>
-                        <div className="w-full bg-gray-200 rounded-full h-2">
+                        <div className="w-full bg-gray-200 rounded-full h-2.5">
                           <motion.div
-                            className={`h-2 rounded-full ${
+                            className={`h-2.5 rounded-full ${
                               patient.fallRisk <= 30 ? 'bg-green-500' : 
                               patient.fallRisk <= 60 ? 'bg-amber-500' : 'bg-red-500'
                             }`}
@@ -435,18 +478,37 @@ const SafetyDashboardPage: React.FC = () => {
                       </div>
 
                       <div>
-                        <p className="text-sm font-medium mb-2">활동 수준</p>
+                        <p className="text-sm font-medium mb-2 flex items-center">
+                          <Activity className="h-4 w-4 mr-1 text-blue-500" />
+                          활동 수준
+                        </p>
                         <ActivityLevel level={patient.activityLevel} animated={true} />
                       </div>
 
-                      <div className="pt-3 mt-3 border-t border-gray-200">
+                      <motion.div 
+                        className="pt-3 mt-3 border-t border-gray-200"
+                        whileHover={{ x: 5 }}
+                        transition={{ type: "spring", stiffness: 400 }}
+                      >
                         <a 
                           href={`/patients/${patient.id}`}
-                          className="text-sm text-primary font-medium hover:underline"
+                          className="text-sm text-primary font-medium hover:underline flex items-center"
                         >
-                          상세 정보 보기 →
+                          상세 정보 보기
+                          <motion.span 
+                            initial={{ x: 0 }}
+                            animate={{ x: [0, 5, 0] }}
+                            transition={{ 
+                              repeat: Infinity, 
+                              repeatType: "loop", 
+                              duration: 1.5,
+                              repeatDelay: 0.5
+                            }}
+                          >
+                            →
+                          </motion.span>
                         </a>
-                      </div>
+                      </motion.div>
                     </div>
                   </CardContent>
                 </Card>
@@ -457,54 +519,183 @@ const SafetyDashboardPage: React.FC = () => {
 
         {/* 병실 현황 탭 */}
         <TabsContent value="rooms">
+          <motion.div 
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            className="mb-6 p-4 bg-green-50 rounded-lg border border-green-100 flex items-center"
+          >
+            <AnimatedCharacter
+              character="🏥"
+              state="idle"
+              size="sm"
+              className="mr-4"
+            />
+            <div>
+              <h3 className="text-lg font-medium text-green-800">병실 안전 모니터링</h3>
+              <p className="text-sm text-green-700">각 병실의 안전 상태와 환경 조건을 실시간으로 확인하세요.</p>
+            </div>
+          </motion.div>
+
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {[301, 302, 303, 304, 305, 306].map((room, index) => (
-              <motion.div
-                key={room}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.3, delay: index * 0.1 }}
-              >
-                <Card>
-                  <CardHeader className="pb-2">
-                    <CardTitle className="text-lg">{room}호</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="mb-4">
-                      <AnimatedProgress
-                        value={Math.floor(60 + Math.random() * 30)}
-                        maxValue={100}
-                        title="병실 안전 점수"
-                        color={index % 3 === 0 ? "success" : index % 3 === 1 ? "primary" : "warning"}
-                        type="circle"
-                        size="sm"
-                      />
-                    </div>
-                    
-                    <div className="mt-4 space-y-3">
-                      <div className="flex justify-between">
-                        <span className="text-sm text-gray-600">현재 온도</span>
-                        <span className="text-sm font-medium">{(22 + Math.random() * 5).toFixed(1)}°C</span>
+            {[301, 302, 303, 304, 305, 306].map((room, index) => {
+              // 각 방마다 다른 점수 값 할당 (실제로는 서버에서 가져올 값)
+              const safetyScore = Math.floor(60 + Math.random() * 30);
+              const temperature = (22 + Math.random() * 5).toFixed(1);
+              const humidity = Math.floor(40 + Math.random() * 15);
+              const patientCount = Math.floor(1 + Math.random() * 3);
+              const hasRecentIncident = Math.random() > 0.7;
+              const recentIncidentDays = Math.floor(1 + Math.random() * 5);
+              
+              return (
+                <motion.div
+                  key={room}
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.3, delay: index * 0.1 }}
+                  whileHover={{ 
+                    scale: 1.02,
+                    boxShadow: "0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)"
+                  }}
+                  className="rounded-lg overflow-hidden"
+                >
+                  <Card className="h-full border-2 hover:border-primary transition-colors duration-300">
+                    <CardHeader className="pb-2">
+                      <div className="flex justify-between items-center">
+                        <div className="flex items-center">
+                          <motion.div 
+                            className="p-2 bg-blue-100 rounded-full mr-2"
+                            whileHover={{ rotate: 10 }}
+                          >
+                            <Bed className="h-4 w-4 text-blue-600" />
+                          </motion.div>
+                          <CardTitle className="text-lg">{room}호실</CardTitle>
+                        </div>
+                        
+                        <AnimatedStatus 
+                          status={safetyScore >= 80 ? "success" : 
+                                 safetyScore >= 60 ? "warning" : "error"}
+                          title=""
+                          icon={
+                            safetyScore >= 80 ? <Check className="h-4 w-4" /> : 
+                            safetyScore >= 60 ? <AlertTriangle className="h-4 w-4" /> : 
+                            <AlertCircle className="h-4 w-4" />
+                          }
+                          className="bg-transparent border-0 p-0 m-0"
+                        />
                       </div>
-                      <div className="flex justify-between">
-                        <span className="text-sm text-gray-600">현재 습도</span>
-                        <span className="text-sm font-medium">{Math.floor(40 + Math.random() * 15)}%</span>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="mb-4">
+                        <AnimatedProgress
+                          value={safetyScore}
+                          maxValue={100}
+                          title="병실 안전 점수"
+                          icon={<ShieldCheck className="h-4 w-4" />}
+                          color={safetyScore >= 80 ? "success" : 
+                                safetyScore >= 60 ? "warning" : "danger"}
+                          type="circle"
+                          size="sm"
+                        />
                       </div>
-                      <div className="flex justify-between">
-                        <span className="text-sm text-gray-600">수용 환자</span>
-                        <span className="text-sm font-medium">{Math.floor(1 + Math.random() * 3)}명</span>
+                      
+                      <div className="mt-4 space-y-3">
+                        <motion.div 
+                          className="flex justify-between items-center p-2 rounded-lg bg-blue-50"
+                          whileHover={{ backgroundColor: "#EFF6FF" }}
+                        >
+                          <span className="text-sm font-medium flex items-center text-blue-700">
+                            <Thermometer className="h-4 w-4 mr-1 text-blue-600" />
+                            현재 온도
+                          </span>
+                          <motion.span 
+                            className="text-sm font-medium text-blue-800"
+                            whileHover={{ scale: 1.1 }}
+                          >
+                            {temperature}°C
+                          </motion.span>
+                        </motion.div>
+                        
+                        <motion.div 
+                          className="flex justify-between items-center p-2 rounded-lg bg-indigo-50"
+                          whileHover={{ backgroundColor: "#EEF2FF" }}
+                        >
+                          <span className="text-sm font-medium flex items-center text-indigo-700">
+                            <svg className="h-4 w-4 mr-1 text-indigo-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19.5 12c0-1.232-.046-2.453-.138-3.662a4.006 4.006 0 0 0-3.7-3.7 48.678 48.678 0 0 0-7.324 0 4.006 4.006 0 0 0-3.7 3.7c-.092 1.21-.138 2.43-.138 3.662 0 1.232.046 2.453.138 3.662a4.006 4.006 0 0 0 3.7 3.7 48.68 48.68 0 0 0 7.324 0 4.006 4.006 0 0 0 3.7-3.7c.092-1.21.138-2.43.138-3.662Z" />
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.75 6.75 16 9m-4.25 4.25 2.25 2.25m-8.5-2.25 2.25 2.25m-4.25-8.5 2.25 2.25" />
+                            </svg>
+                            현재 습도
+                          </span>
+                          <motion.span 
+                            className="text-sm font-medium text-indigo-800"
+                            whileHover={{ scale: 1.1 }}
+                          >
+                            {humidity}%
+                          </motion.span>
+                        </motion.div>
+                        
+                        <motion.div 
+                          className="flex justify-between items-center p-2 rounded-lg bg-purple-50"
+                          whileHover={{ backgroundColor: "#F5F3FF" }}
+                        >
+                          <span className="text-sm font-medium flex items-center text-purple-700">
+                            <Users className="h-4 w-4 mr-1 text-purple-600" />
+                            수용 환자
+                          </span>
+                          <motion.span 
+                            className="text-sm font-medium text-purple-800"
+                            whileHover={{ scale: 1.1 }}
+                          >
+                            {patientCount}명
+                          </motion.span>
+                        </motion.div>
+                        
+                        <motion.div 
+                          className={`flex justify-between items-center p-2 rounded-lg ${hasRecentIncident ? 'bg-amber-50' : 'bg-green-50'}`}
+                          whileHover={{ backgroundColor: hasRecentIncident ? "#FFFBEB" : "#F0FDF4" }}
+                        >
+                          <span className={`text-sm font-medium flex items-center ${hasRecentIncident ? 'text-amber-700' : 'text-green-700'}`}>
+                            <AlertTriangle className={`h-4 w-4 mr-1 ${hasRecentIncident ? 'text-amber-600' : 'text-green-600'}`} />
+                            최근 사고
+                          </span>
+                          <motion.span 
+                            className={`text-sm font-medium ${hasRecentIncident ? 'text-amber-800' : 'text-green-800'}`}
+                            whileHover={{ scale: 1.1 }}
+                          >
+                            {hasRecentIncident ? `${recentIncidentDays}일 전` : '없음'}
+                          </motion.span>
+                        </motion.div>
                       </div>
-                      <div className="flex justify-between">
-                        <span className="text-sm text-gray-600">최근 사고</span>
-                        <span className="text-sm font-medium">
-                          {Math.random() > 0.7 ? `${Math.floor(1 + Math.random() * 5)}일 전` : '없음'}
-                        </span>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              </motion.div>
-            ))}
+                      
+                      <motion.div 
+                        className="pt-3 mt-3 border-t border-gray-200"
+                        whileHover={{ x: 5 }}
+                        transition={{ type: "spring", stiffness: 400 }}
+                      >
+                        <a 
+                          href={`/rooms/${room}`}
+                          className="text-sm text-primary font-medium hover:underline flex items-center"
+                        >
+                          상세 정보 보기
+                          <motion.span 
+                            initial={{ x: 0 }}
+                            animate={{ x: [0, 5, 0] }}
+                            transition={{ 
+                              repeat: Infinity, 
+                              repeatType: "loop", 
+                              duration: 1.5,
+                              repeatDelay: 0.5
+                            }}
+                          >
+                            →
+                          </motion.span>
+                        </a>
+                      </motion.div>
+                    </CardContent>
+                  </Card>
+                </motion.div>
+              );
+            })}
           </div>
         </TabsContent>
 
