@@ -44,6 +44,7 @@ const profileFormSchema = z.object({
   email: z.string().email({
     message: "올바른 이메일 주소를 입력해주세요.",
   }),
+  phoneNumber: z.string().optional(),
   preferredLanguage: z.string().optional(),
 });
 
@@ -74,6 +75,7 @@ export default function MyPage() {
     defaultValues: {
       name: user?.name || "",
       email: user?.email || "",
+      phoneNumber: user?.phoneNumber || "",
       preferredLanguage: user?.preferredLanguage || "ko",
     },
   });
@@ -178,6 +180,12 @@ export default function MyPage() {
                 <p className="font-medium">{user.email}</p>
               </div>
               <div className="mb-4">
+                <p className="text-sm font-semibold text-gray-500">연락처</p>
+                <p className="font-medium">
+                  {user.phoneNumber || "등록된 연락처가 없습니다"}
+                </p>
+              </div>
+              <div className="mb-4">
                 <p className="text-sm font-semibold text-gray-500">가입일</p>
                 <p className="font-medium">
                   {new Date(user.createdAt || "").toLocaleDateString()}
@@ -227,6 +235,20 @@ export default function MyPage() {
                             <FormLabel>이메일</FormLabel>
                             <FormControl>
                               <Input placeholder="이메일" {...field} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      
+                      <FormField
+                        control={profileForm.control}
+                        name="phoneNumber"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>연락처</FormLabel>
+                            <FormControl>
+                              <Input placeholder="연락처 (예: 010-1234-5678)" {...field} />
                             </FormControl>
                             <FormMessage />
                           </FormItem>
