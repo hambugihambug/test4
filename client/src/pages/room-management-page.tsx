@@ -311,8 +311,9 @@ export default function RoomManagementPage() {
         return room;
       });
       
-      // dummyRooms 배열 업데이트
-      Object.assign(dummyRooms, updatedRooms);
+      // dummyRooms 배열 업데이트 (전체 배열 교체가 아닌 참조 업데이트)
+      // React 상태 업데이트를 위해 복사본 생성
+      setDummyRooms([...updatedRooms]);
       
       // 저장 성공 알림 표시
       toast({
@@ -876,12 +877,17 @@ export default function RoomManagementPage() {
                 const bedsArray = layout.beds as any[];
                 bedsArray.push(newBed);
                 
-                // 룸 업데이트
-                dummyRooms[roomIndex] = {
+                // 업데이트할 룸 데이터 생성
+                const updatedRoom = {
                   ...room,
                   layout: JSON.stringify(layout),
                   patients: [...room.patients, newPatient]
                 };
+                
+                // dummyRooms 배열 업데이트 (React 상태 업데이트를 위한 새 배열 생성)
+                const updatedRooms = [...dummyRooms];
+                updatedRooms[roomIndex] = updatedRoom;
+                setDummyRooms(updatedRooms);
                 
                 // UI 업데이트
                 toast({
@@ -894,18 +900,6 @@ export default function RoomManagementPage() {
                 
                 // 다이얼로그 닫기
                 setIsAddingBed(false);
-                
-                // 상태 강제 업데이트 (화면에 변경사항 반영)
-                // 타입스크립트 타입 문제로 데이터 변경 후 UI 업데이트를 위해 새로운 객체로 복사
-                const updatedRoom = JSON.parse(JSON.stringify(dummyRooms[roomIndex]));
-                
-                // 변경사항을 화면에 반영하기 위한 트릭
-                setSelectedRoomId(null);
-                setTimeout(() => {
-                  // 화면 갱신을 위해 원본 데이터 직접 수정
-                  Object.assign(roomsWithPatients?.find(r => r.id === selectedRoomId) || {}, updatedRoom);
-                  setSelectedRoomId(selectedRoomId);
-                }, 10);
               }}>침대 추가</Button>
             </div>
           </div>
