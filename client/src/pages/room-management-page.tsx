@@ -71,14 +71,82 @@ export default function RoomManagementPage() {
   // 사용자 정보는 위에서 이미 가져옴
   console.log("RoomManagementPage - 현재 사용자:", user?.username, "역할:", user?.role);
   
-  // Fetch all rooms with patients
-  const { data: roomsWithPatients, isLoading: roomsLoading, error: roomsError } = useQuery<RoomWithPatients[]>({
-    queryKey: ['/api/rooms/with-patients'],
-    enabled: !!user, // 사용자가 인증된 경우에만 쿼리 활성화
-  });
+  // 임시 병실 데이터 (API가 구현될 때까지 사용)
+  const dummyRooms: RoomWithPatients[] = [
+    {
+      id: 1,
+      name: "101호",
+      tempThreshold: 26.0,
+      humidityThreshold: 60.0,
+      currentTemp: 24.5,
+      currentHumidity: 55,
+      status: "normal",
+      layout: JSON.stringify({
+        beds: [
+          { id: 1, x: 10, y: 10, width: 80, height: 180, rotation: 0, patientId: 1 },
+          { id: 2, x: 110, y: 10, width: 80, height: 180, rotation: 0, patientId: 2 }
+        ],
+        objects: [
+          { id: 1, type: "cabinet", x: 200, y: 10, width: 50, height: 80, rotation: 0 }
+        ]
+      }),
+      patients: [
+        { id: 1, name: "김환자", age: 65, gender: "남", condition: "안정", fallRisk: "high", roomId: 1, bedNumber: 1 },
+        { id: 2, name: "이환자", age: 78, gender: "여", condition: "양호", fallRisk: "medium", roomId: 1, bedNumber: 2 }
+      ]
+    },
+    {
+      id: 2,
+      name: "102호",
+      tempThreshold: 26.0,
+      humidityThreshold: 60.0,
+      currentTemp: 25.8,
+      currentHumidity: 62,
+      status: "warning",
+      layout: JSON.stringify({
+        beds: [
+          { id: 1, x: 10, y: 10, width: 80, height: 180, rotation: 0, patientId: 3 },
+          { id: 2, x: 110, y: 10, width: 80, height: 180, rotation: 0, patientId: 4 },
+          { id: 3, x: 210, y: 10, width: 80, height: 180, rotation: 0, patientId: 5 }
+        ],
+        objects: [
+          { id: 1, type: "table", x: 150, y: 200, width: 100, height: 60, rotation: 0 }
+        ]
+      }),
+      patients: [
+        { id: 3, name: "박환자", age: 72, gender: "남", condition: "주의", fallRisk: "high", roomId: 2, bedNumber: 1 },
+        { id: 4, name: "최환자", age: 68, gender: "여", condition: "안정", fallRisk: "low", roomId: 2, bedNumber: 2 },
+        { id: 5, name: "정환자", age: 81, gender: "남", condition: "안정", fallRisk: "medium", roomId: 2, bedNumber: 3 }
+      ]
+    },
+    {
+      id: 3,
+      name: "103호",
+      tempThreshold: 26.0,
+      humidityThreshold: 60.0,
+      currentTemp: 26.5,
+      currentHumidity: 58,
+      status: "alert",
+      layout: JSON.stringify({
+        beds: [
+          { id: 1, x: 10, y: 10, width: 80, height: 180, rotation: 0, patientId: 6 },
+          { id: 2, x: 110, y: 10, width: 80, height: 180, rotation: 0, patientId: 7 }
+        ],
+        objects: []
+      }),
+      patients: [
+        { id: 6, name: "강환자", age: 75, gender: "여", condition: "안정", fallRisk: "low", roomId: 3, bedNumber: 1 },
+        { id: 7, name: "윤환자", age: 69, gender: "남", condition: "주의", fallRisk: "high", roomId: 3, bedNumber: 2 }
+      ]
+    }
+  ];
   
-  console.log("RoomManagementPage - 병실 데이터 로딩 상태:", roomsLoading ? "로딩 중" : "완료");
-  console.log("RoomManagementPage - 병실 데이터 오류:", roomsError ? roomsError.message : "없음");
+  // 실제 API로부터 데이터 가져오기 (추후 구현)
+  const { data: roomsWithPatients, isLoading: roomsLoading, error: roomsError } = {
+    data: dummyRooms,
+    isLoading: false,
+    error: null
+  };
   
   // Get the selected room data
   const selectedRoom = roomsWithPatients?.find(room => room.id === selectedRoomId);
