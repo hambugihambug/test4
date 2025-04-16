@@ -80,6 +80,7 @@ const userFormSchema = z.object({
   email: z.string().email({
     message: "올바른 이메일 주소를 입력해주세요.",
   }),
+  phoneNumber: z.string().optional(),
   role: z.enum([UserRole.DIRECTOR, UserRole.NURSE, UserRole.PATIENT, UserRole.GUARDIAN]),
   preferredLanguage: z.string().optional(),
 });
@@ -140,6 +141,7 @@ export default function AccountsManagementPage() {
       password: "",
       name: "",
       email: "",
+      phoneNumber: "",
       role: UserRole.NURSE,
       preferredLanguage: "ko",
     },
@@ -152,6 +154,7 @@ export default function AccountsManagementPage() {
       username: "",
       name: "",
       email: "",
+      phoneNumber: "",
       role: UserRole.NURSE,
       preferredLanguage: "ko",
     },
@@ -514,6 +517,20 @@ export default function AccountsManagementPage() {
                         {emailAvailable === false && (
                           <p className="text-sm text-red-600">이미 사용 중인 이메일입니다.</p>
                         )}
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  
+                  <FormField
+                    control={createForm.control}
+                    name="phoneNumber"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>연락처</FormLabel>
+                        <FormControl>
+                          <Input placeholder="연락처 (예: 010-1234-5678)" {...field} />
+                        </FormControl>
                         <FormMessage />
                       </FormItem>
                     )}
