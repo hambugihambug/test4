@@ -91,6 +91,9 @@ export default function RoomManagementPage() {
   // 환자 정보 수정을 위한 상태 추가
   const [isEditingBasicInfo, setIsEditingBasicInfo] = useState(false);
   const [isEditingGuardianInfo, setIsEditingGuardianInfo] = useState(false);
+  const [isEditingFallRisk, setIsEditingFallRisk] = useState(false);
+  const [isEditingVitalSigns, setIsEditingVitalSigns] = useState(false);
+  const [isEditingMedication, setIsEditingMedication] = useState(false);
   const [editedPatientDetails, setEditedPatientDetails] = useState<any>(null);
   
   // 사용자 정보는 위에서 이미 가져옴
@@ -1459,56 +1462,315 @@ export default function RoomManagementPage() {
                   <TabsContent value="fallRisk">
                     <Card>
                       <CardHeader>
-                        <CardTitle>{t('dashboard.fallRisk')}</CardTitle>
-                        <CardDescription>{t('common.fallRiskDesc')}</CardDescription>
+                        <div className="flex justify-between items-center">
+                          <div>
+                            <CardTitle>{t('dashboard.fallRisk')}</CardTitle>
+                            <CardDescription>{t('common.fallRiskDesc')}</CardDescription>
+                          </div>
+                          <Button 
+                            variant="ghost" 
+                            size="sm" 
+                            className="text-blue-600"
+                            onClick={() => {
+                              setEditedPatientDetails({
+                                ...editedPatientDetails,
+                                fallRisk: PATIENT_DETAILS[selectedPatientId].fallRisk,
+                                fallRiskScore: PATIENT_DETAILS[selectedPatientId].fallRiskScore,
+                                fallHistory: [...PATIENT_DETAILS[selectedPatientId].fallHistory]
+                              });
+                              setIsEditingFallRisk(true);
+                            }}
+                          >
+                            <Pencil className="h-4 w-4 mr-1" />
+                            {t('common.edit')}
+                          </Button>
+                        </div>
                       </CardHeader>
                       <CardContent>
-                        <div className="space-y-4">
-                          <div className="flex items-center justify-between">
-                            <span className="text-sm font-medium">{t('dashboard.riskLevel')}:</span>
-                            <span className={`px-2 py-1 text-xs rounded-full ${
-                              PATIENT_DETAILS[selectedPatientId].fallRisk === "high" ? "bg-red-100 text-red-800" : 
-                              PATIENT_DETAILS[selectedPatientId].fallRisk === "medium" ? "bg-yellow-100 text-yellow-800" : 
-                              "bg-green-100 text-green-800"
-                            }`}>
-                              {PATIENT_DETAILS[selectedPatientId].fallRisk === "high" ? t('dashboard.highRisk') :
-                               PATIENT_DETAILS[selectedPatientId].fallRisk === "medium" ? t('dashboard.mediumRisk') :
-                               t('dashboard.lowRisk')}
-                            </span>
-                          </div>
-                          
-                          <div>
-                            <div className="flex items-center justify-between mb-1">
-                              <span className="text-sm">{t('dashboard.riskScore')}: {PATIENT_DETAILS[selectedPatientId].fallRiskScore}/100</span>
+                        {isEditingFallRisk ? (
+                          // 낙상 위험 수정 폼
+                          <div className="space-y-4">
+                            <div className="space-y-2">
+                              <Label htmlFor="fallRisk">{t('dashboard.riskLevel')}</Label>
+                              <Select 
+                                defaultValue={editedPatientDetails?.fallRisk}
+                                onValueChange={(value) => setEditedPatientDetails({
+                                  ...editedPatientDetails,
+                                  fallRisk: value
+                                })}
+                              >
+                                <SelectTrigger id="fallRisk">
+                                  <SelectValue placeholder={t('dashboard.selectRisk')} />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  <SelectItem value="low">{t('dashboard.lowRisk')}</SelectItem>
+                                  <SelectItem value="medium">{t('dashboard.mediumRisk')}</SelectItem>
+                                  <SelectItem value="high">{t('dashboard.highRisk')}</SelectItem>
+                                </SelectContent>
+                              </Select>
                             </div>
-                            <Progress value={PATIENT_DETAILS[selectedPatientId].fallRiskScore} className="h-2" />
-                          </div>
-                          
-                          <div className="pt-2 border-t">
-                            <h4 className="text-sm font-medium mb-2">{t('dashboard.fallHistory')}</h4>
-                            {PATIENT_DETAILS[selectedPatientId].fallHistory.length > 0 ? (
-                              <div className="space-y-2">
-                                {PATIENT_DETAILS[selectedPatientId].fallHistory.map((fall: any, index: number) => (
-                                  <div key={index} className="bg-gray-50 p-2 rounded text-sm">
-                                    <div className="flex justify-between">
-                                      <span className="font-medium">{fall.date} {fall.time}</span>
-                                      <span className={`px-1.5 py-0.5 text-xs rounded-full ${
-                                        fall.severity === "중간" ? "bg-yellow-100 text-yellow-800" : 
-                                        fall.severity === "심각" ? "bg-red-100 text-red-800" :
-                                        "bg-blue-100 text-blue-800"
-                                      }`}>
-                                        {fall.severity}
-                                      </span>
-                                    </div>
-                                    <div className="mt-1">{fall.location}: {fall.description}</div>
-                                  </div>
-                                ))}
+
+                            <div className="space-y-2">
+                              <Label htmlFor="fallRiskScore">{t('dashboard.riskScore')} (0-100)</Label>
+                              <Input 
+                                id="fallRiskScore" 
+                                type="number" 
+                                min="0"
+                                max="100"
+                                value={editedPatientDetails?.fallRiskScore || 0} 
+                                onChange={(e) => setEditedPatientDetails({
+                                  ...editedPatientDetails,
+                                  fallRiskScore: parseInt(e.target.value)
+                                })}
+                              />
+                              <Progress value={editedPatientDetails?.fallRiskScore || 0} className="h-2" />
+                            </div>
+
+                            <div className="pt-4 border-t">
+                              <div className="flex justify-between items-center mb-3">
+                                <h4 className="text-sm font-medium">{t('dashboard.fallHistory')}</h4>
+                                <Button 
+                                  variant="outline" 
+                                  size="sm"
+                                  onClick={() => {
+                                    const today = new Date();
+                                    const dateStr = today.toISOString().split('T')[0];
+                                    const timeStr = today.toTimeString().substring(0, 5);
+                                    
+                                    const newFallHistory = [
+                                      ...(editedPatientDetails?.fallHistory || []),
+                                      { 
+                                        date: dateStr,
+                                        time: timeStr,
+                                        severity: "경미",
+                                        location: "",
+                                        description: ""
+                                      }
+                                    ];
+                                    
+                                    setEditedPatientDetails({
+                                      ...editedPatientDetails,
+                                      fallHistory: newFallHistory
+                                    });
+                                  }}
+                                >
+                                  <Plus className="h-3.5 w-3.5 mr-1" />
+                                  낙상 기록 추가
+                                </Button>
                               </div>
-                            ) : (
-                              <div className="text-gray-500 text-sm">{t('dashboard.noFallHistory')}</div>
-                            )}
+                              
+                              {editedPatientDetails?.fallHistory?.length > 0 ? (
+                                <div className="space-y-3">
+                                  {editedPatientDetails.fallHistory.map((fall: any, index: number) => (
+                                    <div key={index} className="bg-gray-50 p-3 rounded border">
+                                      <div className="grid grid-cols-2 gap-3 mb-2">
+                                        <div className="space-y-1">
+                                          <Label htmlFor={`fall-date-${index}`}>날짜</Label>
+                                          <Input 
+                                            id={`fall-date-${index}`} 
+                                            value={fall.date} 
+                                            onChange={(e) => {
+                                              const newHistory = [...editedPatientDetails.fallHistory];
+                                              newHistory[index] = {
+                                                ...newHistory[index],
+                                                date: e.target.value
+                                              };
+                                              setEditedPatientDetails({
+                                                ...editedPatientDetails,
+                                                fallHistory: newHistory
+                                              });
+                                            }}
+                                          />
+                                        </div>
+                                        <div className="space-y-1">
+                                          <Label htmlFor={`fall-time-${index}`}>시간</Label>
+                                          <Input 
+                                            id={`fall-time-${index}`} 
+                                            value={fall.time} 
+                                            onChange={(e) => {
+                                              const newHistory = [...editedPatientDetails.fallHistory];
+                                              newHistory[index] = {
+                                                ...newHistory[index],
+                                                time: e.target.value
+                                              };
+                                              setEditedPatientDetails({
+                                                ...editedPatientDetails,
+                                                fallHistory: newHistory
+                                              });
+                                            }}
+                                          />
+                                        </div>
+                                      </div>
+                                      <div className="grid grid-cols-2 gap-3 mb-2">
+                                        <div className="space-y-1">
+                                          <Label htmlFor={`fall-severity-${index}`}>심각도</Label>
+                                          <Select 
+                                            defaultValue={fall.severity}
+                                            onValueChange={(value) => {
+                                              const newHistory = [...editedPatientDetails.fallHistory];
+                                              newHistory[index] = {
+                                                ...newHistory[index],
+                                                severity: value
+                                              };
+                                              setEditedPatientDetails({
+                                                ...editedPatientDetails,
+                                                fallHistory: newHistory
+                                              });
+                                            }}
+                                          >
+                                            <SelectTrigger id={`fall-severity-${index}`}>
+                                              <SelectValue />
+                                            </SelectTrigger>
+                                            <SelectContent>
+                                              <SelectItem value="경미">경미</SelectItem>
+                                              <SelectItem value="중간">중간</SelectItem>
+                                              <SelectItem value="심각">심각</SelectItem>
+                                            </SelectContent>
+                                          </Select>
+                                        </div>
+                                        <div className="space-y-1">
+                                          <Label htmlFor={`fall-location-${index}`}>위치</Label>
+                                          <Input 
+                                            id={`fall-location-${index}`} 
+                                            value={fall.location} 
+                                            onChange={(e) => {
+                                              const newHistory = [...editedPatientDetails.fallHistory];
+                                              newHistory[index] = {
+                                                ...newHistory[index],
+                                                location: e.target.value
+                                              };
+                                              setEditedPatientDetails({
+                                                ...editedPatientDetails,
+                                                fallHistory: newHistory
+                                              });
+                                            }}
+                                          />
+                                        </div>
+                                      </div>
+                                      <div className="space-y-1">
+                                        <Label htmlFor={`fall-desc-${index}`}>설명</Label>
+                                        <Input 
+                                          id={`fall-desc-${index}`} 
+                                          value={fall.description} 
+                                          onChange={(e) => {
+                                            const newHistory = [...editedPatientDetails.fallHistory];
+                                            newHistory[index] = {
+                                              ...newHistory[index],
+                                              description: e.target.value
+                                            };
+                                            setEditedPatientDetails({
+                                              ...editedPatientDetails,
+                                              fallHistory: newHistory
+                                            });
+                                          }}
+                                        />
+                                      </div>
+                                      <div className="mt-2 text-right">
+                                        <Button 
+                                          variant="ghost" 
+                                          size="sm"
+                                          className="text-red-500 hover:text-red-700 hover:bg-red-50"
+                                          onClick={() => {
+                                            const newHistory = [...editedPatientDetails.fallHistory];
+                                            newHistory.splice(index, 1);
+                                            setEditedPatientDetails({
+                                              ...editedPatientDetails,
+                                              fallHistory: newHistory
+                                            });
+                                          }}
+                                        >
+                                          삭제
+                                        </Button>
+                                      </div>
+                                    </div>
+                                  ))}
+                                </div>
+                              ) : (
+                                <div className="text-gray-500 text-sm">{t('dashboard.noFallHistory')}</div>
+                              )}
+                            </div>
+                            
+                            <div className="pt-3 flex justify-end space-x-2">
+                              <Button 
+                                variant="outline"
+                                onClick={() => {
+                                  setIsEditingFallRisk(false);
+                                }}
+                              >
+                                취소
+                              </Button>
+                              <Button 
+                                onClick={() => {
+                                  if (!selectedPatientId || !editedPatientDetails) return;
+                                  
+                                  // 낙상 위험 데이터 업데이트
+                                  PATIENT_DETAILS[selectedPatientId].fallRisk = editedPatientDetails.fallRisk;
+                                  PATIENT_DETAILS[selectedPatientId].fallRiskScore = editedPatientDetails.fallRiskScore;
+                                  PATIENT_DETAILS[selectedPatientId].fallHistory = [...editedPatientDetails.fallHistory];
+                                  
+                                  // UI 업데이트
+                                  toast({
+                                    title: "낙상 위험도 정보가 업데이트되었습니다",
+                                    description: "환자의 낙상 위험 정보가 성공적으로 저장되었습니다."
+                                  });
+                                  
+                                  // 편집 모드 종료
+                                  setIsEditingFallRisk(false);
+                                }}
+                              >
+                                저장
+                              </Button>
+                            </div>
                           </div>
-                        </div>
+                        ) : (
+                          // 낙상 위험도 기본 정보 표시
+                          <div className="space-y-4">
+                            <div className="flex items-center justify-between">
+                              <span className="text-sm font-medium">{t('dashboard.riskLevel')}:</span>
+                              <span className={`px-2 py-1 text-xs rounded-full ${
+                                PATIENT_DETAILS[selectedPatientId].fallRisk === "high" ? "bg-red-100 text-red-800" : 
+                                PATIENT_DETAILS[selectedPatientId].fallRisk === "medium" ? "bg-yellow-100 text-yellow-800" : 
+                                "bg-green-100 text-green-800"
+                              }`}>
+                                {PATIENT_DETAILS[selectedPatientId].fallRisk === "high" ? t('dashboard.highRisk') :
+                                 PATIENT_DETAILS[selectedPatientId].fallRisk === "medium" ? t('dashboard.mediumRisk') :
+                                 t('dashboard.lowRisk')}
+                              </span>
+                            </div>
+                            
+                            <div>
+                              <div className="flex items-center justify-between mb-1">
+                                <span className="text-sm">{t('dashboard.riskScore')}: {PATIENT_DETAILS[selectedPatientId].fallRiskScore}/100</span>
+                              </div>
+                              <Progress value={PATIENT_DETAILS[selectedPatientId].fallRiskScore} className="h-2" />
+                            </div>
+                            
+                            <div className="pt-2 border-t">
+                              <h4 className="text-sm font-medium mb-2">{t('dashboard.fallHistory')}</h4>
+                              {PATIENT_DETAILS[selectedPatientId].fallHistory.length > 0 ? (
+                                <div className="space-y-2">
+                                  {PATIENT_DETAILS[selectedPatientId].fallHistory.map((fall: any, index: number) => (
+                                    <div key={index} className="bg-gray-50 p-2 rounded text-sm">
+                                      <div className="flex justify-between">
+                                        <span className="font-medium">{fall.date} {fall.time}</span>
+                                        <span className={`px-1.5 py-0.5 text-xs rounded-full ${
+                                          fall.severity === "중간" ? "bg-yellow-100 text-yellow-800" : 
+                                          fall.severity === "심각" ? "bg-red-100 text-red-800" :
+                                          "bg-blue-100 text-blue-800"
+                                        }`}>
+                                          {fall.severity}
+                                        </span>
+                                      </div>
+                                      <div className="mt-1">{fall.location}: {fall.description}</div>
+                                    </div>
+                                  ))}
+                                </div>
+                              ) : (
+                                <div className="text-gray-500 text-sm">{t('dashboard.noFallHistory')}</div>
+                              )}
+                            </div>
+                          </div>
+                        )}
                       </CardContent>
                     </Card>
                   </TabsContent>
@@ -1516,34 +1778,247 @@ export default function RoomManagementPage() {
                   <TabsContent value="vitalSigns">
                     <Card>
                       <CardHeader>
-                        <CardTitle>{t('common.vitalSigns')}</CardTitle>
-                        <CardDescription>{t('common.recentVitalSigns')}</CardDescription>
+                        <div className="flex justify-between items-center">
+                          <div>
+                            <CardTitle>{t('common.vitalSigns')}</CardTitle>
+                            <CardDescription>{t('common.recentVitalSigns')}</CardDescription>
+                          </div>
+                          <Button 
+                            variant="ghost" 
+                            size="sm" 
+                            className="text-blue-600"
+                            onClick={() => {
+                              setEditedPatientDetails({
+                                ...editedPatientDetails,
+                                vitalSigns: [...PATIENT_DETAILS[selectedPatientId].vitalSigns]
+                              });
+                              setIsEditingVitalSigns(true);
+                            }}
+                          >
+                            <Pencil className="h-4 w-4 mr-1" />
+                            {t('common.edit')}
+                          </Button>
+                        </div>
                       </CardHeader>
                       <CardContent>
-                        <div className="overflow-x-auto">
-                          <table className="w-full text-sm">
-                            <thead>
-                              <tr className="border-b">
-                                <th className="text-left p-2">{t('common.date')}</th>
-                                <th className="text-left p-2">{t('common.bloodPressure')}</th>
-                                <th className="text-left p-2">{t('common.heartRate')}</th>
-                                <th className="text-left p-2">{t('common.temperature')}</th>
-                                <th className="text-left p-2">{t('common.respRate')}</th>
-                              </tr>
-                            </thead>
-                            <tbody>
-                              {PATIENT_DETAILS[selectedPatientId].vitalSigns.map((vital: any, index: number) => (
-                                <tr key={index} className="border-b">
-                                  <td className="p-2">{vital.date}</td>
-                                  <td className="p-2">{vital.bloodPressure}</td>
-                                  <td className="p-2">{vital.heartRate} BPM</td>
-                                  <td className="p-2">{vital.temperature}°C</td>
-                                  <td className="p-2">{vital.respiratoryRate}/분</td>
+                        {isEditingVitalSigns ? (
+                          // 생체신호 수정 폼
+                          <div className="space-y-4">
+                            <div className="flex justify-between items-center mb-3">
+                              <h4 className="text-sm font-medium">생체 신호 기록</h4>
+                              <Button 
+                                variant="outline" 
+                                size="sm"
+                                onClick={() => {
+                                  // 현재 날짜 생성
+                                  const today = new Date();
+                                  const dateStr = today.toISOString().split('T')[0];
+                                  
+                                  // 새 생체신호 데이터 추가
+                                  const newVitalSigns = [
+                                    {
+                                      date: dateStr,
+                                      bloodPressure: "",
+                                      heartRate: 0,
+                                      temperature: 36.5,
+                                      respiratoryRate: 0
+                                    },
+                                    ...(editedPatientDetails?.vitalSigns || [])
+                                  ];
+                                  
+                                  setEditedPatientDetails({
+                                    ...editedPatientDetails,
+                                    vitalSigns: newVitalSigns
+                                  });
+                                }}
+                              >
+                                <Plus className="h-3.5 w-3.5 mr-1" />
+                                신규 측정 추가
+                              </Button>
+                            </div>
+                            
+                            {editedPatientDetails?.vitalSigns?.length > 0 ? (
+                              <div className="space-y-4">
+                                {editedPatientDetails.vitalSigns.map((vital: any, index: number) => (
+                                  <div key={index} className="bg-gray-50 p-3 rounded border">
+                                    <div className="space-y-2 mb-3">
+                                      <Label htmlFor={`vital-date-${index}`}>측정일</Label>
+                                      <Input 
+                                        id={`vital-date-${index}`} 
+                                        value={vital.date} 
+                                        onChange={(e) => {
+                                          const newVitalSigns = [...editedPatientDetails.vitalSigns];
+                                          newVitalSigns[index] = {
+                                            ...newVitalSigns[index],
+                                            date: e.target.value
+                                          };
+                                          setEditedPatientDetails({
+                                            ...editedPatientDetails,
+                                            vitalSigns: newVitalSigns
+                                          });
+                                        }}
+                                      />
+                                    </div>
+                                    <div className="grid grid-cols-2 gap-4">
+                                      <div className="space-y-2">
+                                        <Label htmlFor={`vital-bp-${index}`}>혈압 (mmHg)</Label>
+                                        <Input 
+                                          id={`vital-bp-${index}`} 
+                                          value={vital.bloodPressure} 
+                                          placeholder="120/80"
+                                          onChange={(e) => {
+                                            const newVitalSigns = [...editedPatientDetails.vitalSigns];
+                                            newVitalSigns[index] = {
+                                              ...newVitalSigns[index],
+                                              bloodPressure: e.target.value
+                                            };
+                                            setEditedPatientDetails({
+                                              ...editedPatientDetails,
+                                              vitalSigns: newVitalSigns
+                                            });
+                                          }}
+                                        />
+                                      </div>
+                                      <div className="space-y-2">
+                                        <Label htmlFor={`vital-hr-${index}`}>심박수 (BPM)</Label>
+                                        <Input 
+                                          id={`vital-hr-${index}`} 
+                                          type="number"
+                                          value={vital.heartRate} 
+                                          onChange={(e) => {
+                                            const newVitalSigns = [...editedPatientDetails.vitalSigns];
+                                            newVitalSigns[index] = {
+                                              ...newVitalSigns[index],
+                                              heartRate: parseInt(e.target.value)
+                                            };
+                                            setEditedPatientDetails({
+                                              ...editedPatientDetails,
+                                              vitalSigns: newVitalSigns
+                                            });
+                                          }}
+                                        />
+                                      </div>
+                                      <div className="space-y-2">
+                                        <Label htmlFor={`vital-temp-${index}`}>체온 (°C)</Label>
+                                        <Input 
+                                          id={`vital-temp-${index}`} 
+                                          type="number"
+                                          step="0.1"
+                                          value={vital.temperature} 
+                                          onChange={(e) => {
+                                            const newVitalSigns = [...editedPatientDetails.vitalSigns];
+                                            newVitalSigns[index] = {
+                                              ...newVitalSigns[index],
+                                              temperature: parseFloat(e.target.value)
+                                            };
+                                            setEditedPatientDetails({
+                                              ...editedPatientDetails,
+                                              vitalSigns: newVitalSigns
+                                            });
+                                          }}
+                                        />
+                                      </div>
+                                      <div className="space-y-2">
+                                        <Label htmlFor={`vital-resp-${index}`}>호흡수 (/분)</Label>
+                                        <Input 
+                                          id={`vital-resp-${index}`} 
+                                          type="number"
+                                          value={vital.respiratoryRate} 
+                                          onChange={(e) => {
+                                            const newVitalSigns = [...editedPatientDetails.vitalSigns];
+                                            newVitalSigns[index] = {
+                                              ...newVitalSigns[index],
+                                              respiratoryRate: parseInt(e.target.value)
+                                            };
+                                            setEditedPatientDetails({
+                                              ...editedPatientDetails,
+                                              vitalSigns: newVitalSigns
+                                            });
+                                          }}
+                                        />
+                                      </div>
+                                    </div>
+                                    <div className="mt-3 text-right">
+                                      <Button 
+                                        variant="ghost" 
+                                        size="sm"
+                                        className="text-red-500 hover:text-red-700 hover:bg-red-50"
+                                        onClick={() => {
+                                          const newVitalSigns = [...editedPatientDetails.vitalSigns];
+                                          newVitalSigns.splice(index, 1);
+                                          setEditedPatientDetails({
+                                            ...editedPatientDetails,
+                                            vitalSigns: newVitalSigns
+                                          });
+                                        }}
+                                      >
+                                        삭제
+                                      </Button>
+                                    </div>
+                                  </div>
+                                ))}
+                              </div>
+                            ) : (
+                              <div className="text-gray-500 text-sm">기록된 생체신호가 없습니다.</div>
+                            )}
+                            
+                            <div className="pt-3 flex justify-end space-x-2">
+                              <Button 
+                                variant="outline"
+                                onClick={() => {
+                                  setIsEditingVitalSigns(false);
+                                }}
+                              >
+                                취소
+                              </Button>
+                              <Button 
+                                onClick={() => {
+                                  if (!selectedPatientId || !editedPatientDetails) return;
+                                  
+                                  // 생체신호 데이터 업데이트
+                                  PATIENT_DETAILS[selectedPatientId].vitalSigns = [...editedPatientDetails.vitalSigns];
+                                  
+                                  // UI 업데이트
+                                  toast({
+                                    title: "생체신호 정보가 업데이트되었습니다",
+                                    description: "환자의 생체신호 정보가 성공적으로 저장되었습니다."
+                                  });
+                                  
+                                  // 편집 모드 종료
+                                  setIsEditingVitalSigns(false);
+                                }}
+                              >
+                                저장
+                              </Button>
+                            </div>
+                          </div>
+                        ) : (
+                          // 생체신호 기본 정보 표시
+                          <div className="overflow-x-auto">
+                            <table className="w-full text-sm">
+                              <thead>
+                                <tr className="border-b">
+                                  <th className="text-left p-2">{t('common.date')}</th>
+                                  <th className="text-left p-2">{t('common.bloodPressure')}</th>
+                                  <th className="text-left p-2">{t('common.heartRate')}</th>
+                                  <th className="text-left p-2">{t('common.temperature')}</th>
+                                  <th className="text-left p-2">{t('common.respRate')}</th>
                                 </tr>
-                              ))}
-                            </tbody>
-                          </table>
-                        </div>
+                              </thead>
+                              <tbody>
+                                {PATIENT_DETAILS[selectedPatientId].vitalSigns.map((vital: any, index: number) => (
+                                  <tr key={index} className="border-b">
+                                    <td className="p-2">{vital.date}</td>
+                                    <td className="p-2">{vital.bloodPressure}</td>
+                                    <td className="p-2">{vital.heartRate} BPM</td>
+                                    <td className="p-2">{vital.temperature}°C</td>
+                                    <td className="p-2">{vital.respiratoryRate}/분</td>
+                                  </tr>
+                                ))}
+                              </tbody>
+                            </table>
+                          </div>
+                        )}
                       </CardContent>
                     </Card>
                   </TabsContent>
@@ -1551,32 +2026,219 @@ export default function RoomManagementPage() {
                   <TabsContent value="medications">
                     <Card>
                       <CardHeader>
-                        <CardTitle>{t('common.medications')}</CardTitle>
-                        <CardDescription>{t('common.currentMedications')}</CardDescription>
+                        <div className="flex justify-between items-center">
+                          <div>
+                            <CardTitle>{t('common.medications')}</CardTitle>
+                            <CardDescription>{t('common.currentMedications')}</CardDescription>
+                          </div>
+                          <Button 
+                            variant="ghost" 
+                            size="sm" 
+                            className="text-blue-600"
+                            onClick={() => {
+                              setEditedPatientDetails({
+                                ...editedPatientDetails,
+                                medications: [...PATIENT_DETAILS[selectedPatientId].medications]
+                              });
+                              setIsEditingMedication(true);
+                            }}
+                          >
+                            <Pencil className="h-4 w-4 mr-1" />
+                            {t('common.edit')}
+                          </Button>
+                        </div>
                       </CardHeader>
                       <CardContent>
-                        <div className="overflow-x-auto">
-                          <table className="w-full text-sm">
-                            <thead>
-                              <tr className="border-b">
-                                <th className="text-left p-2">{t('common.name')}</th>
-                                <th className="text-left p-2">{t('common.dosage')}</th>
-                                <th className="text-left p-2">{t('common.frequency')}</th>
-                                <th className="text-left p-2">{t('common.timing')}</th>
-                              </tr>
-                            </thead>
-                            <tbody>
-                              {PATIENT_DETAILS[selectedPatientId].medications.map((med: any, index: number) => (
-                                <tr key={index} className="border-b">
-                                  <td className="p-2">{med.name}</td>
-                                  <td className="p-2">{med.dosage}</td>
-                                  <td className="p-2">{med.frequency}</td>
-                                  <td className="p-2">{med.timing}</td>
+                        {isEditingMedication ? (
+                          // 투약 정보 수정 폼
+                          <div className="space-y-4">
+                            <div className="flex justify-between items-center mb-3">
+                              <h4 className="text-sm font-medium">현재 처방 약물</h4>
+                              <Button 
+                                variant="outline" 
+                                size="sm"
+                                onClick={() => {
+                                  // 새 약물 정보 추가
+                                  const newMedications = [
+                                    ...(editedPatientDetails?.medications || []),
+                                    {
+                                      name: "",
+                                      dosage: "",
+                                      frequency: "",
+                                      timing: ""
+                                    }
+                                  ];
+                                  
+                                  setEditedPatientDetails({
+                                    ...editedPatientDetails,
+                                    medications: newMedications
+                                  });
+                                }}
+                              >
+                                <Plus className="h-3.5 w-3.5 mr-1" />
+                                약물 추가
+                              </Button>
+                            </div>
+                            
+                            {editedPatientDetails?.medications?.length > 0 ? (
+                              <div className="space-y-4">
+                                {editedPatientDetails.medications.map((med: any, index: number) => (
+                                  <div key={index} className="bg-gray-50 p-3 rounded border">
+                                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-2">
+                                      <div className="space-y-2">
+                                        <Label htmlFor={`med-name-${index}`}>약물명</Label>
+                                        <Input 
+                                          id={`med-name-${index}`} 
+                                          value={med.name} 
+                                          onChange={(e) => {
+                                            const newMedications = [...editedPatientDetails.medications];
+                                            newMedications[index] = {
+                                              ...newMedications[index],
+                                              name: e.target.value
+                                            };
+                                            setEditedPatientDetails({
+                                              ...editedPatientDetails,
+                                              medications: newMedications
+                                            });
+                                          }}
+                                        />
+                                      </div>
+                                      <div className="space-y-2">
+                                        <Label htmlFor={`med-dosage-${index}`}>용량</Label>
+                                        <Input 
+                                          id={`med-dosage-${index}`} 
+                                          value={med.dosage}
+                                          onChange={(e) => {
+                                            const newMedications = [...editedPatientDetails.medications];
+                                            newMedications[index] = {
+                                              ...newMedications[index],
+                                              dosage: e.target.value
+                                            };
+                                            setEditedPatientDetails({
+                                              ...editedPatientDetails,
+                                              medications: newMedications
+                                            });
+                                          }}
+                                        />
+                                      </div>
+                                      <div className="space-y-2">
+                                        <Label htmlFor={`med-frequency-${index}`}>빈도</Label>
+                                        <Input 
+                                          id={`med-frequency-${index}`}
+                                          value={med.frequency}
+                                          placeholder="예: 1일 3회"
+                                          onChange={(e) => {
+                                            const newMedications = [...editedPatientDetails.medications];
+                                            newMedications[index] = {
+                                              ...newMedications[index],
+                                              frequency: e.target.value
+                                            };
+                                            setEditedPatientDetails({
+                                              ...editedPatientDetails,
+                                              medications: newMedications
+                                            });
+                                          }}
+                                        />
+                                      </div>
+                                      <div className="space-y-2">
+                                        <Label htmlFor={`med-timing-${index}`}>복용 시점</Label>
+                                        <Input 
+                                          id={`med-timing-${index}`}
+                                          value={med.timing}
+                                          placeholder="예: 아침 식후, 취침 전"
+                                          onChange={(e) => {
+                                            const newMedications = [...editedPatientDetails.medications];
+                                            newMedications[index] = {
+                                              ...newMedications[index],
+                                              timing: e.target.value
+                                            };
+                                            setEditedPatientDetails({
+                                              ...editedPatientDetails,
+                                              medications: newMedications
+                                            });
+                                          }}
+                                        />
+                                      </div>
+                                    </div>
+                                    <div className="mt-2 text-right">
+                                      <Button 
+                                        variant="ghost" 
+                                        size="sm"
+                                        className="text-red-500 hover:text-red-700 hover:bg-red-50"
+                                        onClick={() => {
+                                          const newMedications = [...editedPatientDetails.medications];
+                                          newMedications.splice(index, 1);
+                                          setEditedPatientDetails({
+                                            ...editedPatientDetails,
+                                            medications: newMedications
+                                          });
+                                        }}
+                                      >
+                                        삭제
+                                      </Button>
+                                    </div>
+                                  </div>
+                                ))}
+                              </div>
+                            ) : (
+                              <div className="text-gray-500 text-sm">현재 처방된 약물이 없습니다.</div>
+                            )}
+                            
+                            <div className="pt-3 flex justify-end space-x-2">
+                              <Button 
+                                variant="outline"
+                                onClick={() => {
+                                  setIsEditingMedication(false);
+                                }}
+                              >
+                                취소
+                              </Button>
+                              <Button 
+                                onClick={() => {
+                                  if (!selectedPatientId || !editedPatientDetails) return;
+                                  
+                                  // 투약 정보 데이터 업데이트
+                                  PATIENT_DETAILS[selectedPatientId].medications = [...editedPatientDetails.medications];
+                                  
+                                  // UI 업데이트
+                                  toast({
+                                    title: "투약 정보가 업데이트되었습니다",
+                                    description: "환자의 투약 정보가 성공적으로 저장되었습니다."
+                                  });
+                                  
+                                  // 편집 모드 종료
+                                  setIsEditingMedication(false);
+                                }}
+                              >
+                                저장
+                              </Button>
+                            </div>
+                          </div>
+                        ) : (
+                          // 투약 정보 기본 보기
+                          <div className="overflow-x-auto">
+                            <table className="w-full text-sm">
+                              <thead>
+                                <tr className="border-b">
+                                  <th className="text-left p-2">{t('common.name')}</th>
+                                  <th className="text-left p-2">{t('common.dosage')}</th>
+                                  <th className="text-left p-2">{t('common.frequency')}</th>
+                                  <th className="text-left p-2">{t('common.timing')}</th>
                                 </tr>
-                              ))}
-                            </tbody>
-                          </table>
-                        </div>
+                              </thead>
+                              <tbody>
+                                {PATIENT_DETAILS[selectedPatientId].medications.map((med: any, index: number) => (
+                                  <tr key={index} className="border-b">
+                                    <td className="p-2">{med.name}</td>
+                                    <td className="p-2">{med.dosage}</td>
+                                    <td className="p-2">{med.frequency}</td>
+                                    <td className="p-2">{med.timing}</td>
+                                  </tr>
+                                ))}
+                              </tbody>
+                            </table>
+                          </div>
+                        )}
                       </CardContent>
                     </Card>
                   </TabsContent>
