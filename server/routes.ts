@@ -247,6 +247,30 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
       }
       
+  // API - 아이디 중복 체크
+  app.get('/api/users/check-username/:username', authenticateJWT, hasRole([UserRole.DIRECTOR, UserRole.NURSE]), async (req, res) => {
+    try {
+      const { username } = req.params;
+      const existingUser = await storage.getUserByUsername(username);
+      res.json({ exists: !!existingUser });
+    } catch (error) {
+      console.error('Error checking username:', error);
+      res.status(500).json({ message: "서버 오류가 발생했습니다" });
+    }
+  });
+  
+  // API - 이메일 중복 체크
+  app.get('/api/users/check-email/:email', authenticateJWT, hasRole([UserRole.DIRECTOR, UserRole.NURSE]), async (req, res) => {
+    try {
+      const { email } = req.params;
+      const existingUser = await storage.getUserByEmail(email);
+      res.json({ exists: !!existingUser });
+    } catch (error) {
+      console.error('Error checking email:', error);
+      res.status(500).json({ message: "서버 오류가 발생했습니다" });
+    }
+  });
+      
       // 비밀번호 필드 제외하고 반환
       const safeUsers = users.map(user => {
         const { password, ...userWithoutPassword } = user;
