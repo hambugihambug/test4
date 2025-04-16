@@ -491,158 +491,6 @@ const PATIENT_DATA: PatientDataMap = {
         content: "X-ray 검사 결과 골절 부위 안정적. 물리치료 시작 권장."
       }
     ]
-  },
-  6: {
-    id: 6,
-    name: "강환자",
-    age: 75,
-    gender: "남",
-    birthDate: "1950-10-05",
-    roomNumber: "103",
-    bedNumber: 1,
-    diagnosis: "심부전",
-    admissionDate: "2025-03-25",
-    expectedDischargeDate: "2025-04-20",
-    guardian: {
-      name: "강보호자",
-      relation: "배우자",
-      contact: "010-6789-0123"
-    },
-    address: "서울시 용산구 이태원동 567-89",
-    contact: "010-4321-0987",
-    condition: "주의",
-    assignedNurseId: 8,
-    fallRisk: "중간",
-    fallRiskScore: 50,
-    fallHistory: [],
-    vitalSigns: [
-      {
-        date: "2025-04-15 15:00",
-        bloodPressure: "150/90",
-        heartRate: 80,
-        temperature: 36.8,
-        respiratoryRate: 20
-      },
-      {
-        date: "2025-04-14 15:30",
-        bloodPressure: "155/92",
-        heartRate: 82,
-        temperature: 36.9,
-        respiratoryRate: 21
-      }
-    ],
-    medications: [
-      {
-        name: "이뇨제",
-        dosage: "40mg",
-        frequency: "1일 1회",
-        timing: "아침 식전"
-      },
-      {
-        name: "베타차단제",
-        dosage: "25mg",
-        frequency: "1일 2회",
-        timing: "아침, 저녁 식후"
-      },
-      {
-        name: "ACE억제제",
-        dosage: "10mg",
-        frequency: "1일 1회",
-        timing: "저녁 식후"
-      }
-    ],
-    notes: [
-      {
-        date: "2025-04-13",
-        author: "정간호사",
-        content: "호흡곤란 호소 감소. 부종 약간 감소."
-      },
-      {
-        date: "2025-04-09",
-        author: "최의사",
-        content: "심초음파 검사 결과 심기능 약간 호전. 약물 용량 조정함."
-      }
-    ]
-  },
-  7: {
-    id: 7,
-    name: "윤환자",
-    age: 69,
-    gender: "여",
-    birthDate: "1956-08-20",
-    roomNumber: "103",
-    bedNumber: 2,
-    diagnosis: "만성폐쇄성폐질환",
-    admissionDate: "2025-04-05",
-    expectedDischargeDate: "2025-04-25",
-    guardian: {
-      name: "윤보호자",
-      relation: "자녀",
-      contact: "010-7890-1234"
-    },
-    address: "서울시 중구 신당동 678-90",
-    contact: "010-3210-9876",
-    condition: "주의",
-    assignedNurseId: 8,
-    fallRisk: "높음",
-    fallRiskScore: 70,
-    fallHistory: [
-      {
-        date: "2025-04-08",
-        time: "11:20",
-        location: "병실",
-        severity: "경미",
-        description: "산소 튜브에 걸려 넘어질 뻔함"
-      }
-    ],
-    vitalSigns: [
-      {
-        date: "2025-04-15 16:00",
-        bloodPressure: "135/82",
-        heartRate: 85,
-        temperature: 37.1,
-        respiratoryRate: 22
-      },
-      {
-        date: "2025-04-14 16:30",
-        bloodPressure: "140/85",
-        heartRate: 88,
-        temperature: 37.2,
-        respiratoryRate: 24
-      }
-    ],
-    medications: [
-      {
-        name: "기관지확장제",
-        dosage: "18mcg",
-        frequency: "1일 2회",
-        timing: "아침, 저녁"
-      },
-      {
-        name: "코르티코스테로이드 흡입기",
-        dosage: "250mcg",
-        frequency: "1일 2회",
-        timing: "아침, 저녁"
-      },
-      {
-        name: "항생제",
-        dosage: "500mg",
-        frequency: "1일 2회",
-        timing: "아침, 저녁 식후"
-      }
-    ],
-    notes: [
-      {
-        date: "2025-04-14",
-        author: "김간호사",
-        content: "호흡곤란 지속. 산소포화도 모니터링 중."
-      },
-      {
-        date: "2025-04-10",
-        author: "박의사",
-        content: "흉부 X-ray 촬영 결과 폐렴 증상 감소. 항생제 유지."
-      }
-    ]
   }
 };
 
@@ -815,413 +663,570 @@ export default function PatientDetailPage() {
       title: "설정 저장 완료",
       description: message,
     });
+    
+    toast({
+      title: "설정 저장 완료",
+      description: message,
+    });
   };
 
   return (
-    <div className="p-4 md:p-6">
-      <div className="mb-6">
-        <Button 
-          variant="ghost" 
-          size="sm" 
-          className="gap-1" 
-          onClick={() => window.history.back()}
-        >
-          <ArrowLeft className="h-4 w-4" />
-          돌아가기
-        </Button>
+    <div className="container mx-auto p-4 md:p-6">
+      {/* 상단 헤더 섹션 */}
+      <div className="mb-8 flex flex-col md:flex-row md:items-center md:justify-between">
+        <div className="flex items-center mb-4 md:mb-0">
+          <Button 
+            variant="outline" 
+            size="sm" 
+            className="mr-4" 
+            onClick={() => window.history.back()}
+          >
+            <ArrowLeft className="h-4 w-4 mr-2" />
+            돌아가기
+          </Button>
+          <div>
+            <h1 className="text-2xl font-bold">{patient.name} 환자</h1>
+            <p className="text-muted-foreground">
+              {patient.age}세 · {patient.gender} · {patient.diagnosis} · {patient.roomNumber}호 {patient.bedNumber}번 침대
+            </p>
+          </div>
+        </div>
+        
+        {/* 상단 액션 버튼 */}
+        <div className="flex gap-2">
+          <Button 
+            variant="outline" 
+            size="sm" 
+            onClick={() => setMessageDialogOpen(true)}
+          >
+            <MessageCircle className="h-4 w-4 mr-2" />
+            메시지 보내기
+          </Button>
+          {canEdit && (
+            <Button 
+              variant="default" 
+              size="sm"
+              onClick={() => setEditDialogOpen(true)}
+            >
+              <Edit className="h-4 w-4 mr-2" />
+              환자 정보 수정
+            </Button>
+          )}
+        </div>
       </div>
       
-      <div className="flex flex-col space-y-6">
-        {/* 첫 번째 행: 환자 정보, 낙상 위험도 */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          {/* 환자 정보 */}
-          <div className="md:col-span-1">
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between">
-                <div>
-                  <CardTitle>환자 정보</CardTitle>
-                  <CardDescription>환자의 기본 정보</CardDescription>
-                </div>
+      {/* 주요 정보 요약 - 상태 카드 */}
+      <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-4 mb-8">
+        <Card className={`border-l-4 ${
+          patient.condition === "안정" ? "border-l-green-500" : 
+          patient.condition === "주의" ? "border-l-yellow-500" : 
+          "border-l-red-500"
+        }`}>
+          <CardContent className="p-4 flex items-center justify-between">
+            <div>
+              <p className="text-sm font-medium text-muted-foreground">현재 상태</p>
+              <p className="text-lg font-bold">{patient.condition}</p>
+            </div>
+            <div className={`p-2 rounded-full ${
+              patient.condition === "안정" ? "bg-green-100" : 
+              patient.condition === "주의" ? "bg-yellow-100" : 
+              "bg-red-100"
+            }`}>
+              <HeartPulse className={`h-5 w-5 ${
+                patient.condition === "안정" ? "text-green-600" : 
+                patient.condition === "주의" ? "text-yellow-600" : 
+                "text-red-600"
+              }`} />
+            </div>
+          </CardContent>
+        </Card>
+        
+        <Card className={`border-l-4 ${
+          patient.fallRisk === "낮음" ? "border-l-green-500" : 
+          patient.fallRisk === "중간" ? "border-l-yellow-500" : 
+          "border-l-red-500"
+        }`}>
+          <CardContent className="p-4 flex items-center justify-between">
+            <div>
+              <p className="text-sm font-medium text-muted-foreground">낙상 위험도</p>
+              <div className="flex items-center">
+                <p className="text-lg font-bold mr-2">{patient.fallRisk}</p>
+                <span className="text-sm text-muted-foreground">({patient.fallRiskScore}/100)</span>
+              </div>
+            </div>
+            <div className={`p-2 rounded-full ${
+              patient.fallRisk === "낮음" ? "bg-green-100" : 
+              patient.fallRisk === "중간" ? "bg-yellow-100" : 
+              "bg-red-100"
+            }`}>
+              <AlertTriangle className={`h-5 w-5 ${
+                patient.fallRisk === "낮음" ? "text-green-600" : 
+                patient.fallRisk === "중간" ? "text-yellow-600" : 
+                "text-red-600"
+              }`} />
+            </div>
+          </CardContent>
+        </Card>
+        
+        <Card>
+          <CardContent className="p-4 flex items-center justify-between">
+            <div>
+              <p className="text-sm font-medium text-muted-foreground">입원 일수</p>
+              <p className="text-lg font-bold">
+                {Math.floor((new Date().getTime() - new Date(patient.admissionDate).getTime()) / (1000 * 60 * 60 * 24))}일
+              </p>
+            </div>
+            <div className="p-2 rounded-full bg-blue-100">
+              <CalendarClock className="h-5 w-5 text-blue-600" />
+            </div>
+          </CardContent>
+        </Card>
+        
+        <Card>
+          <CardContent className="p-4 flex items-center justify-between">
+            <div>
+              <p className="text-sm font-medium text-muted-foreground">낙상 기록</p>
+              <p className="text-lg font-bold">{patient.fallHistory.length}건</p>
+            </div>
+            <div className="p-2 rounded-full bg-purple-100">
+              <AlertCircle className="h-5 w-5 text-purple-600" />
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+      
+      {/* 메인 콘텐츠 영역 */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        {/* 좌측 열 - 환자/보호자 정보 */}
+        <div className="md:col-span-1">
+          <Card className="mb-6">
+            <CardHeader className="pb-2">
+              <div className="flex justify-between items-center">
+                <CardTitle>환자 정보</CardTitle>
                 {canEdit && (
                   <Button 
                     onClick={() => setEditDialogOpen(true)}
-                    variant="outline" 
+                    variant="ghost" 
                     size="sm"
                     className="h-8"
                   >
-                    <Edit className="h-4 w-4 mr-1.5" />
-                    수정
+                    <Edit className="h-4 w-4" />
                   </Button>
                 )}
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-3">
-                  <div className="flex items-center">
-                    <User className="h-4 w-4 mr-2 text-gray-500" />
-                    <span className="text-sm font-medium mr-2">이름:</span>
-                    <span className="text-sm">{patient.name}</span>
-                  </div>
-                  <div className="flex items-center">
-                    <CalendarClock className="h-4 w-4 mr-2 text-gray-500" />
-                    <span className="text-sm font-medium mr-2">나이:</span>
-                    <span className="text-sm">{patient.age}세 ({patient.gender})</span>
-                  </div>
-                  <div className="flex items-center">
-                    <CalendarClock className="h-4 w-4 mr-2 text-gray-500" />
-                    <span className="text-sm font-medium mr-2">생년월일:</span>
-                    <span className="text-sm">{patient.birthDate}</span>
-                  </div>
-                  <div className="flex items-center">
-                    <BedDouble className="h-4 w-4 mr-2 text-gray-500" />
-                    <span className="text-sm font-medium mr-2">병실/침대:</span>
-                    <span className="text-sm">{patient.roomNumber}호 {patient.bedNumber}번 침대</span>
-                  </div>
-                  <div className="flex items-center">
-                    <FileText className="h-4 w-4 mr-2 text-gray-500" />
-                    <span className="text-sm font-medium mr-2">진단명:</span>
-                    <span className="text-sm">{patient.diagnosis}</span>
-                  </div>
-                  <div className="flex items-center">
-                    <CalendarClock className="h-4 w-4 mr-2 text-gray-500" />
-                    <span className="text-sm font-medium mr-2">입원일:</span>
-                    <span className="text-sm">{patient.admissionDate}</span>
-                  </div>
-                  <div className="flex items-center">
-                    <CalendarClock className="h-4 w-4 mr-2 text-gray-500" />
-                    <span className="text-sm font-medium mr-2">퇴원 예정일:</span>
-                    <span className="text-sm">{patient.expectedDischargeDate}</span>
-                  </div>
-                  <div className="flex items-center">
-                    <MapPin className="h-4 w-4 mr-2 text-gray-500" />
-                    <span className="text-sm font-medium mr-2">주소:</span>
-                    <span className="text-sm">{patient.address}</span>
-                  </div>
-                  <div className="flex items-center">
-                    <Phone className="h-4 w-4 mr-2 text-gray-500" />
-                    <span className="text-sm font-medium mr-2">연락처:</span>
-                    <span className="text-sm">{patient.contact}</span>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center">
-                      <Users className="h-4 w-4 mr-2 text-gray-500" />
-                      <span className="text-sm font-medium mr-2">보호자:</span>
-                      <span className="text-sm">{patient.guardian.name} ({patient.guardian.relation})</span>
-                    </div>
-                    {canEdit && (
-                      <Button 
-                        variant="ghost" 
-                        size="sm" 
-                        onClick={() => setEditGuardianDialogOpen(true)}
-                        className="h-6 px-2"
-                      >
-                        <Edit className="h-3 w-3 mr-1" /> 수정
-                      </Button>
-                    )}
-                  </div>
-                  <div className="flex items-center">
-                    <Phone className="h-4 w-4 mr-2 text-gray-500" />
-                    <span className="text-sm font-medium mr-2">보호자 연락처:</span>
-                    <span className="text-sm">{patient.guardian.contact}</span>
-                  </div>
+              </div>
+            </CardHeader>
+            <CardContent>
+              <dl className="space-y-4">
+                <div className="flex justify-between">
+                  <dt className="text-sm font-medium text-muted-foreground">생년월일</dt>
+                  <dd className="text-sm font-medium">{patient.birthDate}</dd>
                 </div>
-              </CardContent>
-            </Card>
-          </div>
-          
-          {/* 낙상 위험도 */}
-          <div className="md:col-span-1">
-            <Card>
-              <CardHeader className="pb-2">
-                <CardTitle>낙상 위험도</CardTitle>
-                <CardDescription>환자의 낙상 위험도 평가 결과</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm font-medium">위험도:</span>
-                    <span className={`px-2 py-1 text-xs rounded-full ${
-                      patient.fallRisk === "높음" ? "bg-red-100 text-red-800" : 
-                      patient.fallRisk === "중간" ? "bg-yellow-100 text-yellow-800" : 
-                      "bg-green-100 text-green-800"
-                    }`}>
-                      {patient.fallRisk}
-                    </span>
-                  </div>
-                  
-                  <div>
-                    <div className="flex items-center justify-between mb-1">
-                      <span className="text-sm">위험도 점수: {patient.fallRiskScore}/100</span>
-                    </div>
-                    <Progress value={patient.fallRiskScore} className="h-2" />
-                  </div>
-                  
-                  <div className="pt-2 border-t">
-                    <h4 className="text-sm font-medium mb-2">이전 낙상 기록</h4>
-                    {patient.fallHistory.length > 0 ? (
-                      <div className="space-y-2">
-                        {patient.fallHistory.map((fall: any, index: number) => (
-                          <div key={index} className="bg-gray-50 p-2 rounded text-sm">
-                            <div className="flex justify-between">
-                              <span className="font-medium">{fall.date} {fall.time}</span>
-                              <span className={`px-1.5 py-0.5 text-xs rounded-full ${
-                                fall.severity === "중간" ? "bg-yellow-100 text-yellow-800" : 
-                                fall.severity === "심각" ? "bg-red-100 text-red-800" :
-                                "bg-blue-100 text-blue-800"
-                              }`}>
-                                {fall.severity}
-                              </span>
-                            </div>
-                            <div className="mt-1">{fall.location}: {fall.description}</div>
-                          </div>
-                        ))}
-                      </div>
-                    ) : (
-                      <div className="text-gray-500 text-sm">낙상 기록이 없습니다.</div>
-                    )}
-                  </div>
+                <div className="flex justify-between">
+                  <dt className="text-sm font-medium text-muted-foreground">연락처</dt>
+                  <dd className="text-sm font-medium">{patient.contact}</dd>
                 </div>
-              </CardContent>
-            </Card>
-          </div>
+                <div className="flex justify-between">
+                  <dt className="text-sm font-medium text-muted-foreground">주소</dt>
+                  <dd className="text-sm font-medium text-right">{patient.address}</dd>
+                </div>
+                <div className="flex justify-between">
+                  <dt className="text-sm font-medium text-muted-foreground">입원일</dt>
+                  <dd className="text-sm font-medium">{patient.admissionDate}</dd>
+                </div>
+                <div className="flex justify-between">
+                  <dt className="text-sm font-medium text-muted-foreground">퇴원 예정일</dt>
+                  <dd className="text-sm font-medium">{patient.expectedDischargeDate}</dd>
+                </div>
+              </dl>
+            </CardContent>
+          </Card>
           
-          {/* 탭 컨테이너 */}
-          <div className="md:col-span-1">
-            <Tabs defaultValue="vital">
-              <TabsList className="grid grid-cols-4 mb-4">
-                <TabsTrigger value="vital">
-                  <HeartPulse className="h-4 w-4 mr-2" />
-                  <span className="hidden sm:inline">활력 징후</span>
-                </TabsTrigger>
-                <TabsTrigger value="medication">
-                  <Clipboard className="h-4 w-4 mr-2" />
-                  <span className="hidden sm:inline">투약 정보</span>
-                </TabsTrigger>
-                <TabsTrigger value="notes">
-                  <FileText className="h-4 w-4 mr-2" />
-                  <span className="hidden sm:inline">진료 기록</span>
-                </TabsTrigger>
-                <TabsTrigger value="monitoring">
-                  <AlertTriangle className="h-4 w-4 mr-2" />
-                  <span className="hidden sm:inline">모니터링</span>
-                </TabsTrigger>
-              </TabsList>
+          <Card>
+            <CardHeader className="pb-2">
+              <div className="flex justify-between items-center">
+                <CardTitle>보호자 정보</CardTitle>
+                {canEdit && (
+                  <Button 
+                    onClick={() => setEditGuardianDialogOpen(true)}
+                    variant="ghost" 
+                    size="sm"
+                    className="h-8"
+                  >
+                    <Edit className="h-4 w-4" />
+                  </Button>
+                )}
+              </div>
+            </CardHeader>
+            <CardContent>
+              <dl className="space-y-4">
+                <div className="flex justify-between">
+                  <dt className="text-sm font-medium text-muted-foreground">이름</dt>
+                  <dd className="text-sm font-medium">{patient.guardian.name}</dd>
+                </div>
+                <div className="flex justify-between">
+                  <dt className="text-sm font-medium text-muted-foreground">관계</dt>
+                  <dd className="text-sm font-medium">{patient.guardian.relation}</dd>
+                </div>
+                <div className="flex justify-between">
+                  <dt className="text-sm font-medium text-muted-foreground">연락처</dt>
+                  <dd className="text-sm font-medium">{patient.guardian.contact}</dd>
+                </div>
+              </dl>
               
-              <TabsContent value="vital">
-                <Card>
-                  <CardHeader className="flex flex-row items-center justify-between">
-                    <div>
-                      <CardTitle>활력 징후</CardTitle>
-                      <CardDescription>최근 활력 징후 기록</CardDescription>
-                    </div>
-                    {canEdit && (
-                      <Button 
-                        variant="outline" 
-                        size="sm" 
-                        onClick={() => setEditVitalSignsDialogOpen(true)}
-                        className="h-8"
-                      >
-                        <Edit className="h-4 w-4 mr-1" /> 수정
-                      </Button>
-                    )}
-                  </CardHeader>
-                  <CardContent>
-                    <div className="overflow-x-auto">
-                      <table className="w-full text-sm">
-                        <thead>
-                          <tr className="border-b">
-                            <th className="text-left p-2">날짜</th>
-                            <th className="text-left p-2">혈압</th>
-                            <th className="text-left p-2">심박수</th>
-                            <th className="text-left p-2">체온</th>
-                            <th className="text-left p-2">호흡수</th>
+              <Button 
+                variant="outline" 
+                size="sm" 
+                className="w-full mt-4"
+                onClick={() => setMessageDialogOpen(true)}
+              >
+                <MessageCircle className="h-4 w-4 mr-2" />
+                보호자에게 연락하기
+              </Button>
+            </CardContent>
+          </Card>
+        </div>
+        
+        {/* 우측 영역 - 탭 포함 */}
+        <div className="md:col-span-2">
+          <Tabs defaultValue="vital" className="w-full">
+            <TabsList className="grid grid-cols-5 mb-6">
+              <TabsTrigger value="vital">
+                <HeartPulse className="h-4 w-4 mr-2" />
+                <span>활력 징후</span>
+              </TabsTrigger>
+              <TabsTrigger value="medication">
+                <Clipboard className="h-4 w-4 mr-2" />
+                <span>투약 정보</span>
+              </TabsTrigger>
+              <TabsTrigger value="fall">
+                <AlertTriangle className="h-4 w-4 mr-2" />
+                <span>낙상 기록</span>
+              </TabsTrigger>
+              <TabsTrigger value="notes">
+                <FileText className="h-4 w-4 mr-2" />
+                <span>진료 기록</span>
+              </TabsTrigger>
+              <TabsTrigger value="monitoring">
+                <Settings className="h-4 w-4 mr-2" />
+                <span>모니터링</span>
+              </TabsTrigger>
+            </TabsList>
+            
+            {/* 활력 징후 탭 */}
+            <TabsContent value="vital">
+              <Card>
+                <CardHeader className="flex flex-row items-center justify-between pb-2">
+                  <div>
+                    <CardTitle>활력 징후</CardTitle>
+                    <CardDescription>최근 측정된 활력 징후 기록</CardDescription>
+                  </div>
+                  {canEdit && (
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      onClick={() => setEditVitalSignsDialogOpen(true)}
+                    >
+                      <Plus className="h-4 w-4 mr-2" />
+                      추가
+                    </Button>
+                  )}
+                </CardHeader>
+                <CardContent>
+                  {patient.vitalSigns.length > 0 ? (
+                    <div className="rounded-md border overflow-hidden">
+                      <table className="w-full">
+                        <thead className="bg-muted/50">
+                          <tr>
+                            <th className="text-left p-3 text-sm font-medium text-muted-foreground">측정일시</th>
+                            <th className="text-left p-3 text-sm font-medium text-muted-foreground">혈압</th>
+                            <th className="text-left p-3 text-sm font-medium text-muted-foreground">심박수</th>
+                            <th className="text-left p-3 text-sm font-medium text-muted-foreground">체온</th>
+                            <th className="text-left p-3 text-sm font-medium text-muted-foreground">호흡수</th>
                           </tr>
                         </thead>
                         <tbody>
                           {patient.vitalSigns.map((vital: any, index: number) => (
-                            <tr key={index} className="border-b">
-                              <td className="p-2">{vital.date}</td>
-                              <td className="p-2">{vital.bloodPressure}</td>
-                              <td className="p-2">{vital.heartRate} BPM</td>
-                              <td className="p-2">{vital.temperature}°C</td>
-                              <td className="p-2">{vital.respiratoryRate}/분</td>
+                            <tr key={index} className={index % 2 === 0 ? "bg-white" : "bg-muted/20"}>
+                              <td className="p-3 text-sm">{vital.date}</td>
+                              <td className="p-3 text-sm font-medium">{vital.bloodPressure}</td>
+                              <td className="p-3 text-sm">{vital.heartRate} BPM</td>
+                              <td className="p-3 text-sm">{vital.temperature}°C</td>
+                              <td className="p-3 text-sm">{vital.respiratoryRate}/분</td>
                             </tr>
                           ))}
                         </tbody>
                       </table>
                     </div>
-                  </CardContent>
-                </Card>
-              </TabsContent>
-              
-              <TabsContent value="medication">
-                <Card>
-                  <CardHeader className="flex flex-row items-center justify-between">
-                    <div>
-                      <CardTitle>투약 정보</CardTitle>
-                      <CardDescription>현재 처방된 약물 정보</CardDescription>
+                  ) : (
+                    <div className="text-center py-6 text-muted-foreground">
+                      기록된 활력 징후가 없습니다.
                     </div>
-                    {canEdit && (
-                      <Button 
-                        variant="outline" 
-                        size="sm" 
-                        onClick={() => setEditMedicationDialogOpen(true)}
-                        className="h-8"
-                      >
-                        <Edit className="h-4 w-4 mr-1" /> 수정
-                      </Button>
-                    )}
-                  </CardHeader>
-                  <CardContent>
-                    <div className="overflow-x-auto">
-                      <table className="w-full text-sm">
-                        <thead>
-                          <tr className="border-b">
-                            <th className="text-left p-2">약품명</th>
-                            <th className="text-left p-2">용량</th>
-                            <th className="text-left p-2">빈도</th>
-                            <th className="text-left p-2">투약 시간</th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          {patient.medications.map((med: any, index: number) => (
-                            <tr key={index} className="border-b">
-                              <td className="p-2">{med.name}</td>
-                              <td className="p-2">{med.dosage}</td>
-                              <td className="p-2">{med.frequency}</td>
-                              <td className="p-2">{med.timing}</td>
-                            </tr>
-                          ))}
-                        </tbody>
-                      </table>
-                    </div>
-                  </CardContent>
-                </Card>
-              </TabsContent>
-              
-              <TabsContent value="notes">
-                <Card>
-                  <CardHeader className="flex flex-row items-center justify-between">
-                    <div>
-                      <CardTitle>진료 기록</CardTitle>
-                      <CardDescription>의료진 노트 및 관찰 사항</CardDescription>
-                    </div>
-                    {canEdit && (
-                      <Button 
-                        variant="outline" 
-                        size="sm" 
-                        onClick={() => setEditNotesDialogOpen(true)}
-                        className="h-8"
-                      >
-                        <Edit className="h-4 w-4 mr-1" /> 수정
-                      </Button>
-                    )}
-                  </CardHeader>
-                  <CardContent>
-                    <div className="space-y-4">
-                      {patient.notes.map((note: any, index: number) => (
-                        <div key={index} className="p-3 rounded-md border">
-                          <div className="flex justify-between items-center mb-2">
-                            <span className="font-medium">{note.date}</span>
-                            <span className="text-sm text-gray-500">{note.author}</span>
+                  )}
+                </CardContent>
+              </Card>
+            </TabsContent>
+            
+            {/* 투약 정보 탭 */}
+            <TabsContent value="medication">
+              <Card>
+                <CardHeader className="flex flex-row items-center justify-between pb-2">
+                  <div>
+                    <CardTitle>투약 정보</CardTitle>
+                    <CardDescription>현재 투약 중인 약물 목록</CardDescription>
+                  </div>
+                  {canEdit && (
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      onClick={() => setEditMedicationDialogOpen(true)}
+                    >
+                      <Plus className="h-4 w-4 mr-2" />
+                      추가
+                    </Button>
+                  )}
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-3">
+                    {patient.medications.map((medication: any, index: number) => (
+                      <Card key={index} className="overflow-hidden">
+                        <div className="flex p-4">
+                          <div className="mr-4 bg-primary/10 rounded-full p-2 self-start">
+                            <Clipboard className="h-5 w-5 text-primary" />
                           </div>
-                          <p className="text-sm">{note.content}</p>
+                          <div className="flex-1">
+                            <h4 className="font-semibold">{medication.name} ({medication.dosage})</h4>
+                            <p className="text-sm text-muted-foreground">{medication.frequency} · {medication.timing}</p>
+                          </div>
+                          {canEdit && (
+                            <Button variant="ghost" size="sm" className="self-start">
+                              <Edit className="h-4 w-4" />
+                            </Button>
+                          )}
                         </div>
-                      ))}
-                    </div>
-                  </CardContent>
-                </Card>
-              </TabsContent>
-              
-              <TabsContent value="monitoring">
-                <Card>
-                  <CardHeader className="flex flex-row items-center justify-between">
+                      </Card>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+            </TabsContent>
+            
+            {/* 낙상 기록 탭 */}
+            <TabsContent value="fall">
+              <Card>
+                <CardHeader className="pb-2">
+                  <div className="flex items-center justify-between">
                     <div>
-                      <CardTitle>모니터링 설정</CardTitle>
-                      <CardDescription>낙상 감지 및 환경 모니터링 설정</CardDescription>
+                      <CardTitle>낙상 기록</CardTitle>
+                      <CardDescription>환자의 낙상 위험도 및 과거 기록</CardDescription>
                     </div>
-                    {canEdit && (
-                      <Button 
-                        variant="outline" 
-                        size="sm" 
-                        onClick={() => toast({
-                          title: "안내",
-                          description: "각 모니터링 설정의 개별 '설정' 버튼을 눌러 수정하세요.",
-                        })}
-                        className="h-8"
-                      >
-                        <Settings className="h-4 w-4 mr-1" /> 설정 도움말
-                      </Button>
+                    <div className={`px-3 py-1 rounded-full text-sm font-medium ${
+                      patient.fallRisk === "높음" ? "bg-red-100 text-red-800" : 
+                      patient.fallRisk === "중간" ? "bg-yellow-100 text-yellow-800" : 
+                      "bg-green-100 text-green-800"
+                    }`}>
+                      위험도: {patient.fallRisk}
+                    </div>
+                  </div>
+                </CardHeader>
+                <CardContent>
+                  <div className="mb-4">
+                    <div className="flex items-center justify-between mb-2">
+                      <span className="text-sm font-medium">위험도 점수: {patient.fallRiskScore}/100</span>
+                    </div>
+                    <Progress value={patient.fallRiskScore} className="h-3 rounded-full" />
+                  </div>
+                  
+                  <h4 className="text-sm font-semibold mb-3 mt-6">낙상 기록</h4>
+                  <div className="space-y-4">
+                    {patient.fallHistory.length > 0 ? (
+                      patient.fallHistory.map((fall: any, index: number) => (
+                        <Card key={index} className="overflow-hidden">
+                          <div className="bg-muted/20 px-4 py-2 flex justify-between items-center">
+                            <div className="flex items-center">
+                              <CalendarClock className="h-4 w-4 mr-2 text-muted-foreground" />
+                              <span className="text-sm font-medium">{fall.date} {fall.time}</span>
+                            </div>
+                            <span className={`px-2 py-0.5 text-xs rounded-full ${
+                              fall.severity === "중간" ? "bg-yellow-100 text-yellow-800" : 
+                              fall.severity === "심각" ? "bg-red-100 text-red-800" :
+                              "bg-blue-100 text-blue-800"
+                            }`}>
+                              {fall.severity}
+                            </span>
+                          </div>
+                          <div className="p-4">
+                            <div className="flex items-center mb-1">
+                              <MapPin className="h-4 w-4 mr-1 text-muted-foreground" />
+                              <span className="text-sm font-medium">{fall.location}</span>
+                            </div>
+                            <p className="text-sm">{fall.description}</p>
+                          </div>
+                        </Card>
+                      ))
+                    ) : (
+                      <div className="text-center py-6 text-muted-foreground">
+                        낙상 기록이 없습니다.
+                      </div>
                     )}
-                  </CardHeader>
-                  <CardContent>
-                    <div className="space-y-4">
-                      <div className="flex items-center justify-between p-3 rounded-md border">
-                        <div>
-                          <h3 className="font-medium">낙상 감지 알림</h3>
-                          <p className="text-sm text-gray-500">낙상 감지 시 알림을 설정합니다.</p>
+                  </div>
+                </CardContent>
+              </Card>
+            </TabsContent>
+            
+            {/* 진료 기록 탭 */}
+            <TabsContent value="notes">
+              <Card>
+                <CardHeader className="flex flex-row items-center justify-between pb-2">
+                  <div>
+                    <CardTitle>진료 기록</CardTitle>
+                    <CardDescription>의료진 기록 및 메모</CardDescription>
+                  </div>
+                  {canEdit && (
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      onClick={() => setEditNotesDialogOpen(true)}
+                    >
+                      <Plus className="h-4 w-4 mr-2" />
+                      추가
+                    </Button>
+                  )}
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-4">
+                    {patient.notes.map((note: any, index: number) => (
+                      <Card key={index} className="overflow-hidden border-l-4 border-l-primary">
+                        <div className="p-4">
+                          <div className="flex justify-between items-start mb-2">
+                            <div className="font-semibold">{note.date}</div>
+                            <div className="text-sm px-2 py-0.5 bg-primary/10 text-primary rounded-full">
+                              {note.author}
+                            </div>
+                          </div>
+                          <p className="text-sm whitespace-pre-wrap leading-relaxed">{note.content}</p>
                         </div>
-                        <div className="flex items-center gap-2">
-                          <span className={`px-2 py-1 text-xs rounded-full ${monitoringSettings.fallDetection ? "bg-green-100 text-green-800" : "bg-gray-100 text-gray-800"}`}>
-                            {monitoringSettings.fallDetection ? "활성화" : "비활성화"}
-                          </span>
-                          <Button size="sm" onClick={() => setFallDetectionDialogOpen(true)}>설정</Button>
+                      </Card>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+            </TabsContent>
+            
+            {/* 모니터링 설정 탭 */}
+            <TabsContent value="monitoring">
+              <Card>
+                <CardHeader className="pb-2">
+                  <CardTitle>모니터링 설정</CardTitle>
+                  <CardDescription>환자 모니터링 및 알림 설정</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-6">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <Card className="p-4 border-l-4 border-l-red-500">
+                        <div className="flex justify-between items-start mb-3">
+                          <div className="flex items-center">
+                            <AlertCircle className="h-5 w-5 mr-2 text-red-500" />
+                            <h4 className="font-semibold">낙상 감지</h4>
+                          </div>
+                          <Switch 
+                            checked={monitoringSettings.fallDetection} 
+                            onCheckedChange={() => {}} 
+                          />
                         </div>
-                      </div>
-                      
-                      <div className="flex items-center justify-between p-3 rounded-md border">
-                        <div>
-                          <h3 className="font-medium">침대 이탈 감지</h3>
-                          <p className="text-sm text-gray-500">침대 이탈 시 알림을 설정합니다.</p>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <span className={`px-2 py-1 text-xs rounded-full ${monitoringSettings.bedExit ? "bg-green-100 text-green-800" : "bg-gray-100 text-gray-800"}`}>
-                            {monitoringSettings.bedExit ? "활성화" : "비활성화"}
-                          </span>
-                          <Button size="sm" onClick={() => setBedExitDialogOpen(true)}>설정</Button>
-                        </div>
-                      </div>
-                      
-                      <div className="flex items-center justify-between p-3 rounded-md border">
-                        <div>
-                          <h3 className="font-medium">환경 모니터링</h3>
-                          <p className="text-sm text-gray-500">온도, 습도 등 환경 모니터링을 설정합니다.</p>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <span className={`px-2 py-1 text-xs rounded-full ${monitoringSettings.environmental ? "bg-green-100 text-green-800" : "bg-gray-100 text-gray-800"}`}>
-                            {monitoringSettings.environmental ? "활성화" : "비활성화"}
-                          </span>
-                          <Button size="sm" onClick={() => setEnvironmentalDialogOpen(true)}>설정</Button>
-                        </div>
-                      </div>
-                      
-                      <div className="flex items-center justify-between p-3 rounded-md border">
-                        <div>
-                          <h3 className="font-medium">보호자 알림 설정</h3>
-                          <p className="text-sm text-gray-500">보호자 알림 방식을 설정합니다.</p>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <span className={`px-2 py-1 text-xs rounded-full ${monitoringSettings.guardianNotify ? "bg-green-100 text-green-800" : "bg-gray-100 text-gray-800"}`}>
-                            {monitoringSettings.guardianNotify ? "활성화" : "비활성화"}
-                          </span>
-                          <Button size="sm" onClick={() => setGuardianNotifyDialogOpen(true)}>설정</Button>
-                        </div>
-                      </div>
-                      
-                      <div className="flex items-center justify-between p-3 rounded-md border">
-                        <div>
-                          <h3 className="font-medium">보호자에게 메시지 보내기</h3>
-                          <p className="text-sm text-gray-500">보호자에게 직접 메시지를 보냅니다.</p>
-                        </div>
-                        <Button size="sm" onClick={() => setMessageDialogOpen(true)}>
-                          <MessageCircle className="h-4 w-4 mr-1" /> 메시지 작성
+                        <p className="text-sm text-muted-foreground mb-3">
+                          AI 비전을 통한 실시간 낙상 감지 및 즉시 알림 기능
+                        </p>
+                        <Button 
+                          variant="outline" 
+                          size="sm" 
+                          className="w-full" 
+                          onClick={() => setFallDetectionDialogOpen(true)}
+                        >
+                          <Settings className="h-4 w-4 mr-2" />
+                          설정
                         </Button>
-                      </div>
+                      </Card>
+                      
+                      <Card className="p-4 border-l-4 border-l-amber-500">
+                        <div className="flex justify-between items-start mb-3">
+                          <div className="flex items-center">
+                            <BedDouble className="h-5 w-5 mr-2 text-amber-500" />
+                            <h4 className="font-semibold">침대 이탈 감지</h4>
+                          </div>
+                          <Switch 
+                            checked={monitoringSettings.bedExit} 
+                            onCheckedChange={() => {}} 
+                          />
+                        </div>
+                        <p className="text-sm text-muted-foreground mb-3">
+                          침대 센서를 통한 장시간 침대 이탈 감지 및 알림
+                        </p>
+                        <Button 
+                          variant="outline" 
+                          size="sm" 
+                          className="w-full"
+                          onClick={() => setBedExitDialogOpen(true)}
+                        >
+                          <Settings className="h-4 w-4 mr-2" />
+                          설정
+                        </Button>
+                      </Card>
+                      
+                      <Card className="p-4 border-l-4 border-l-blue-500">
+                        <div className="flex justify-between items-start mb-3">
+                          <div className="flex items-center">
+                            <RefreshCw className="h-5 w-5 mr-2 text-blue-500" />
+                            <h4 className="font-semibold">환경 모니터링</h4>
+                          </div>
+                          <Switch 
+                            checked={monitoringSettings.environmental} 
+                            onCheckedChange={() => {}} 
+                          />
+                        </div>
+                        <p className="text-sm text-muted-foreground mb-3">
+                          병실 온도, 습도 등 환경 모니터링 및 적정 범위 이탈 시 알림
+                        </p>
+                        <Button 
+                          variant="outline" 
+                          size="sm" 
+                          className="w-full"
+                          onClick={() => setEnvironmentalDialogOpen(true)}
+                        >
+                          <Settings className="h-4 w-4 mr-2" />
+                          설정
+                        </Button>
+                      </Card>
+                      
+                      <Card className="p-4 border-l-4 border-l-green-500">
+                        <div className="flex justify-between items-start mb-3">
+                          <div className="flex items-center">
+                            <Bell className="h-5 w-5 mr-2 text-green-500" />
+                            <h4 className="font-semibold">보호자 알림</h4>
+                          </div>
+                          <Switch 
+                            checked={monitoringSettings.guardianNotify} 
+                            onCheckedChange={() => {}} 
+                          />
+                        </div>
+                        <p className="text-sm text-muted-foreground mb-3">
+                          이상 상황 발생 시 보호자에게 문자/앱 알림 전송
+                        </p>
+                        <Button 
+                          variant="outline" 
+                          size="sm" 
+                          className="w-full"
+                          onClick={() => setGuardianNotifyDialogOpen(true)}
+                        >
+                          <Settings className="h-4 w-4 mr-2" />
+                          설정
+                        </Button>
+                      </Card>
                     </div>
-                  </CardContent>
-                </Card>
-              </TabsContent>
-            </Tabs>
-          </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </TabsContent>
+          </Tabs>
         </div>
       </div>
       
@@ -1233,112 +1238,75 @@ export default function PatientDetailPage() {
             <DialogDescription>환자 정보를 수정합니다.</DialogDescription>
           </DialogHeader>
           <div className="grid gap-4 py-4">
-            <div className="grid grid-cols-2 gap-3">
-              <div>
-                <label htmlFor="name" className="text-sm font-medium block mb-1">이름</label>
-                <Input 
-                  id="name" 
-                  value={formData.name} 
-                  onChange={(e) => setFormData({...formData, name: e.target.value})}
-                />
-              </div>
-              <div>
-                <label htmlFor="age" className="text-sm font-medium block mb-1">나이</label>
-                <Input 
-                  id="age" 
-                  type="number"
-                  value={formData.age} 
-                  onChange={(e) => setFormData({...formData, age: parseInt(e.target.value) || 0})}
-                />
-              </div>
+            <div className="grid grid-cols-4 items-center gap-4">
+              <label htmlFor="name" className="text-right text-sm">이름</label>
+              <Input
+                id="name"
+                value={formData.name}
+                onChange={(e) => setFormData({...formData, name: e.target.value})}
+                className="col-span-3"
+              />
             </div>
-            
-            <div className="grid grid-cols-2 gap-3">
-              <div>
-                <label htmlFor="gender" className="text-sm font-medium block mb-1">성별</label>
-                <Select value={formData.gender} onValueChange={(value) => setFormData({...formData, gender: value})}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="성별 선택" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="남">남</SelectItem>
-                    <SelectItem value="여">여</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <div>
-                <label htmlFor="birthDate" className="text-sm font-medium block mb-1">생년월일</label>
-                <Input 
-                  id="birthDate" 
-                  value={formData.birthDate} 
-                  onChange={(e) => setFormData({...formData, birthDate: e.target.value})}
-                />
-              </div>
+            <div className="grid grid-cols-4 items-center gap-4">
+              <label htmlFor="age" className="text-right text-sm">나이</label>
+              <Input
+                id="age"
+                type="number"
+                value={formData.age}
+                onChange={(e) => setFormData({...formData, age: parseInt(e.target.value)})}
+                className="col-span-3"
+              />
             </div>
-            
-            <div className="grid grid-cols-2 gap-3">
-              <div>
-                <label htmlFor="roomNumber" className="text-sm font-medium block mb-1">병실</label>
-                <Input 
-                  id="roomNumber" 
-                  value={formData.roomNumber} 
-                  onChange={(e) => setFormData({...formData, roomNumber: e.target.value})}
-                />
-              </div>
-              <div>
-                <label htmlFor="bedNumber" className="text-sm font-medium block mb-1">침대 번호</label>
-                <Input 
-                  id="bedNumber" 
-                  type="number"
-                  value={formData.bedNumber} 
-                  onChange={(e) => setFormData({...formData, bedNumber: parseInt(e.target.value) || 0})}
-                />
-              </div>
+            <div className="grid grid-cols-4 items-center gap-4">
+              <label htmlFor="gender" className="text-right text-sm">성별</label>
+              <Select 
+                value={formData.gender} 
+                onValueChange={(value) => setFormData({...formData, gender: value})}
+              >
+                <SelectTrigger className="col-span-3">
+                  <SelectValue placeholder="성별 선택" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="남">남</SelectItem>
+                  <SelectItem value="여">여</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
-            
-            <div>
-              <label htmlFor="diagnosis" className="text-sm font-medium block mb-1">진단명</label>
-              <Input 
-                id="diagnosis" 
-                value={formData.diagnosis} 
+            <div className="grid grid-cols-4 items-center gap-4">
+              <label htmlFor="birthDate" className="text-right text-sm">생년월일</label>
+              <Input
+                id="birthDate"
+                type="date"
+                value={formData.birthDate}
+                onChange={(e) => setFormData({...formData, birthDate: e.target.value})}
+                className="col-span-3"
+              />
+            </div>
+            <div className="grid grid-cols-4 items-center gap-4">
+              <label htmlFor="diagnosis" className="text-right text-sm">진단명</label>
+              <Input
+                id="diagnosis"
+                value={formData.diagnosis}
                 onChange={(e) => setFormData({...formData, diagnosis: e.target.value})}
+                className="col-span-3"
               />
             </div>
-            
-            <div className="grid grid-cols-2 gap-3">
-              <div>
-                <label htmlFor="admissionDate" className="text-sm font-medium block mb-1">입원일</label>
-                <Input 
-                  id="admissionDate" 
-                  value={formData.admissionDate} 
-                  onChange={(e) => setFormData({...formData, admissionDate: e.target.value})}
-                />
-              </div>
-              <div>
-                <label htmlFor="expectedDischargeDate" className="text-sm font-medium block mb-1">퇴원 예정일</label>
-                <Input 
-                  id="expectedDischargeDate" 
-                  value={formData.expectedDischargeDate} 
-                  onChange={(e) => setFormData({...formData, expectedDischargeDate: e.target.value})}
-                />
-              </div>
-            </div>
-            
-            <div>
-              <label htmlFor="address" className="text-sm font-medium block mb-1">주소</label>
-              <Input 
-                id="address" 
-                value={formData.address} 
-                onChange={(e) => setFormData({...formData, address: e.target.value})}
-              />
-            </div>
-            
-            <div>
-              <label htmlFor="contact" className="text-sm font-medium block mb-1">연락처</label>
-              <Input 
-                id="contact" 
-                value={formData.contact} 
+            <div className="grid grid-cols-4 items-center gap-4">
+              <label htmlFor="contact" className="text-right text-sm">연락처</label>
+              <Input
+                id="contact"
+                value={formData.contact}
                 onChange={(e) => setFormData({...formData, contact: e.target.value})}
+                className="col-span-3"
+              />
+            </div>
+            <div className="grid grid-cols-4 items-center gap-4">
+              <label htmlFor="address" className="text-right text-sm">주소</label>
+              <Input
+                id="address"
+                value={formData.address}
+                onChange={(e) => setFormData({...formData, address: e.target.value})}
+                className="col-span-3"
               />
             </div>
           </div>
@@ -1357,19 +1325,22 @@ export default function PatientDetailPage() {
             <DialogDescription>보호자 정보를 수정합니다.</DialogDescription>
           </DialogHeader>
           <div className="grid gap-4 py-4">
-            <div>
-              <label htmlFor="guardianName" className="text-sm font-medium block mb-1">보호자 성명</label>
-              <Input 
-                id="guardianName" 
-                value={guardianData.name} 
+            <div className="grid grid-cols-4 items-center gap-4">
+              <label htmlFor="guardianName" className="text-right text-sm">이름</label>
+              <Input
+                id="guardianName"
+                value={guardianData.name}
                 onChange={(e) => setGuardianData({...guardianData, name: e.target.value})}
+                className="col-span-3"
               />
             </div>
-            
-            <div>
-              <label htmlFor="relation" className="text-sm font-medium block mb-1">관계</label>
-              <Select value={guardianData.relation} onValueChange={(value) => setGuardianData({...guardianData, relation: value})}>
-                <SelectTrigger>
+            <div className="grid grid-cols-4 items-center gap-4">
+              <label htmlFor="relation" className="text-right text-sm">관계</label>
+              <Select 
+                value={guardianData.relation} 
+                onValueChange={(value) => setGuardianData({...guardianData, relation: value})}
+              >
+                <SelectTrigger className="col-span-3">
                   <SelectValue placeholder="관계 선택" />
                 </SelectTrigger>
                 <SelectContent>
@@ -1377,18 +1348,17 @@ export default function PatientDetailPage() {
                   <SelectItem value="자녀">자녀</SelectItem>
                   <SelectItem value="부모">부모</SelectItem>
                   <SelectItem value="형제/자매">형제/자매</SelectItem>
-                  <SelectItem value="친척">친척</SelectItem>
                   <SelectItem value="기타">기타</SelectItem>
                 </SelectContent>
               </Select>
             </div>
-            
-            <div>
-              <label htmlFor="guardianContact" className="text-sm font-medium block mb-1">보호자 연락처</label>
-              <Input 
-                id="guardianContact" 
-                value={guardianData.contact} 
+            <div className="grid grid-cols-4 items-center gap-4">
+              <label htmlFor="guardianContact" className="text-right text-sm">연락처</label>
+              <Input
+                id="guardianContact"
+                value={guardianData.contact}
                 onChange={(e) => setGuardianData({...guardianData, contact: e.target.value})}
+                className="col-span-3"
               />
             </div>
           </div>
@@ -1399,26 +1369,163 @@ export default function PatientDetailPage() {
         </DialogContent>
       </Dialog>
       
+      {/* 활력 징후 추가 다이얼로그 */}
+      <Dialog open={editVitalSignsDialogOpen} onOpenChange={setEditVitalSignsDialogOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>활력 징후 추가</DialogTitle>
+            <DialogDescription>새로운 활력 징후를 기록합니다.</DialogDescription>
+          </DialogHeader>
+          <div className="grid gap-4 py-4">
+            <div className="grid grid-cols-4 items-center gap-4">
+              <label htmlFor="bloodPressure" className="text-right text-sm">혈압</label>
+              <Input
+                id="bloodPressure"
+                value={vitalSignsData.bloodPressure}
+                onChange={(e) => setVitalSignsData({...vitalSignsData, bloodPressure: e.target.value})}
+                className="col-span-3"
+                placeholder="수축기/이완기 (예: 120/80)"
+              />
+            </div>
+            <div className="grid grid-cols-4 items-center gap-4">
+              <label htmlFor="heartRate" className="text-right text-sm">심박수</label>
+              <Input
+                id="heartRate"
+                type="number"
+                value={vitalSignsData.heartRate}
+                onChange={(e) => setVitalSignsData({...vitalSignsData, heartRate: parseInt(e.target.value)})}
+                className="col-span-3"
+                placeholder="BPM"
+              />
+            </div>
+            <div className="grid grid-cols-4 items-center gap-4">
+              <label htmlFor="temperature" className="text-right text-sm">체온</label>
+              <Input
+                id="temperature"
+                type="number"
+                step="0.1"
+                value={vitalSignsData.temperature}
+                onChange={(e) => setVitalSignsData({...vitalSignsData, temperature: parseFloat(e.target.value)})}
+                className="col-span-3"
+                placeholder="°C"
+              />
+            </div>
+            <div className="grid grid-cols-4 items-center gap-4">
+              <label htmlFor="respiratoryRate" className="text-right text-sm">호흡수</label>
+              <Input
+                id="respiratoryRate"
+                type="number"
+                value={vitalSignsData.respiratoryRate}
+                onChange={(e) => setVitalSignsData({...vitalSignsData, respiratoryRate: parseInt(e.target.value)})}
+                className="col-span-3"
+                placeholder="분당 호흡수"
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setEditVitalSignsDialogOpen(false)}>취소</Button>
+            <Button onClick={handleUpdateVitalSigns}>저장</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+      
+      {/* 진료 기록 추가 다이얼로그 */}
+      <Dialog open={editNotesDialogOpen} onOpenChange={setEditNotesDialogOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>진료 기록 추가</DialogTitle>
+            <DialogDescription>새로운 진료 기록을 추가합니다.</DialogDescription>
+          </DialogHeader>
+          <div className="grid gap-4 py-4">
+            <div className="grid grid-cols-4 items-center gap-4">
+              <label htmlFor="noteDate" className="text-right text-sm">날짜</label>
+              <Input
+                id="noteDate"
+                type="date"
+                value={notesData.date}
+                onChange={(e) => setNotesData({...notesData, date: e.target.value})}
+                className="col-span-3"
+              />
+            </div>
+            <div className="grid grid-cols-4 items-center gap-4">
+              <label htmlFor="author" className="text-right text-sm">작성자</label>
+              <Input
+                id="author"
+                value={notesData.author}
+                onChange={(e) => setNotesData({...notesData, author: e.target.value})}
+                className="col-span-3"
+              />
+            </div>
+            <div className="grid grid-cols-4 items-center gap-4">
+              <label htmlFor="content" className="text-right text-sm">내용</label>
+              <Textarea
+                id="content"
+                value={notesData.content}
+                onChange={(e) => setNotesData({...notesData, content: e.target.value})}
+                className="col-span-3"
+                rows={5}
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setEditNotesDialogOpen(false)}>취소</Button>
+            <Button onClick={handleUpdateNotes}>저장</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+      
+      {/* 메시지 전송 다이얼로그 */}
+      <Dialog open={messageDialogOpen} onOpenChange={setMessageDialogOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>메시지 전송</DialogTitle>
+            <DialogDescription>보호자에게 메시지를 전송합니다.</DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="rounded-lg p-3 bg-muted">
+              <p className="text-sm font-medium">수신자: {patient.guardian.name} ({patient.guardian.relation})</p>
+              <p className="text-sm text-muted-foreground">{patient.guardian.contact}</p>
+            </div>
+            <Textarea
+              value={messageText}
+              onChange={(e) => setMessageText(e.target.value)}
+              placeholder="메시지 내용을 입력하세요."
+              rows={5}
+            />
+            <div className="flex items-center space-x-2">
+              <Checkbox id="urgent" />
+              <label
+                htmlFor="urgent"
+                className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+              >
+                긴급 메시지로 전송
+              </label>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setMessageDialogOpen(false)}>취소</Button>
+            <Button onClick={handleSendMessage}>보내기</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+      
       {/* 낙상 감지 설정 다이얼로그 */}
       <Dialog open={fallDetectionDialogOpen} onOpenChange={setFallDetectionDialogOpen}>
         <DialogContent className="max-w-md">
           <DialogHeader>
             <DialogTitle>낙상 감지 설정</DialogTitle>
-            <DialogDescription>낙상 감지 알림 기능을 설정합니다.</DialogDescription>
+            <DialogDescription>낙상 감지 기능의 설정을 변경합니다.</DialogDescription>
           </DialogHeader>
-          <div className="grid gap-4 py-4">
+          <div className="space-y-4 py-4">
             <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <Switch 
-                  checked={fallDetectionSettings.enabled}
-                  onCheckedChange={(checked) => setFallDetectionSettings({...fallDetectionSettings, enabled: checked})}
-                />
-                <label className="text-sm font-medium">낙상 감지 활성화</label>
-              </div>
+              <span className="text-sm font-medium">낙상 감지 활성화</span>
+              <Switch 
+                checked={fallDetectionSettings.enabled}
+                onCheckedChange={(checked) => setFallDetectionSettings({...fallDetectionSettings, enabled: checked})}
+              />
             </div>
-            
-            <div>
-              <label className="text-sm font-medium block mb-1">감지 민감도</label>
+            <div className="space-y-2">
+              <label className="text-sm font-medium">감지 민감도</label>
               <Select 
                 value={fallDetectionSettings.sensitivity} 
                 onValueChange={(value) => setFallDetectionSettings({...fallDetectionSettings, sensitivity: value})}
@@ -1429,25 +1536,20 @@ export default function PatientDetailPage() {
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="low">낮음 (확실한 낙상만 감지)</SelectItem>
-                  <SelectItem value="medium">중간 (대부분의 낙상 감지)</SelectItem>
-                  <SelectItem value="high">높음 (의심스러운 동작도 감지)</SelectItem>
+                  <SelectItem value="medium">중간 (권장)</SelectItem>
+                  <SelectItem value="high">높음 (작은 움직임도 감지)</SelectItem>
                 </SelectContent>
               </Select>
             </div>
-            
-            <div>
-              <label className="text-sm font-medium block mb-1">알림 지연 시간 (초)</label>
-              <div className="flex items-center gap-2">
-                <Input 
-                  type="number" 
-                  min="0"
-                  value={fallDetectionSettings.delaySeconds} 
-                  onChange={(e) => setFallDetectionSettings({...fallDetectionSettings, delaySeconds: parseInt(e.target.value) || 0})}
-                  disabled={!fallDetectionSettings.enabled}
-                />
-                <span className="text-sm text-gray-500">초</span>
-              </div>
-              <p className="text-xs text-gray-500 mt-1">낙상 감지 후 알림을 보내기까지의 대기 시간입니다. 감지 오류를 줄이기 위해 사용됩니다.</p>
+            <div className="space-y-2">
+              <label className="text-sm font-medium">알림 대기 시간 (초)</label>
+              <Input 
+                type="number" 
+                value={fallDetectionSettings.delaySeconds}
+                onChange={(e) => setFallDetectionSettings({...fallDetectionSettings, delaySeconds: parseInt(e.target.value)})}
+                disabled={!fallDetectionSettings.enabled}
+              />
+              <p className="text-xs text-muted-foreground">낙상 감지 후 알림을 보내기까지의 대기 시간입니다. 오탐지를 줄이기 위해 사용됩니다.</p>
             </div>
           </div>
           <DialogFooter>
@@ -1462,21 +1564,18 @@ export default function PatientDetailPage() {
         <DialogContent className="max-w-md">
           <DialogHeader>
             <DialogTitle>침대 이탈 감지 설정</DialogTitle>
-            <DialogDescription>침대 이탈 감지 알림 기능을 설정합니다.</DialogDescription>
+            <DialogDescription>침대 이탈 감지 기능의 설정을 변경합니다.</DialogDescription>
           </DialogHeader>
-          <div className="grid gap-4 py-4">
+          <div className="space-y-4 py-4">
             <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <Switch 
-                  checked={bedExitSettings.enabled}
-                  onCheckedChange={(checked) => setBedExitSettings({...bedExitSettings, enabled: checked})}
-                />
-                <label className="text-sm font-medium">침대 이탈 감지 활성화</label>
-              </div>
+              <span className="text-sm font-medium">침대 이탈 감지 활성화</span>
+              <Switch 
+                checked={bedExitSettings.enabled}
+                onCheckedChange={(checked) => setBedExitSettings({...bedExitSettings, enabled: checked})}
+              />
             </div>
-            
-            <div>
-              <label className="text-sm font-medium block mb-1">감지 민감도</label>
+            <div className="space-y-2">
+              <label className="text-sm font-medium">감지 민감도</label>
               <Select 
                 value={bedExitSettings.sensitivity} 
                 onValueChange={(value) => setBedExitSettings({...bedExitSettings, sensitivity: value})}
@@ -1486,26 +1585,21 @@ export default function PatientDetailPage() {
                   <SelectValue placeholder="민감도 선택" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="low">낮음 (완전히 침대를 벗어났을 때만)</SelectItem>
-                  <SelectItem value="medium">중간 (일부 침대를 벗어났을 때)</SelectItem>
-                  <SelectItem value="high">높음 (침대 가장자리에 있을 때도)</SelectItem>
+                  <SelectItem value="low">낮음 (확실한 이탈만 감지)</SelectItem>
+                  <SelectItem value="medium">중간 (권장)</SelectItem>
+                  <SelectItem value="high">높음 (작은 움직임도 감지)</SelectItem>
                 </SelectContent>
               </Select>
             </div>
-            
-            <div>
-              <label className="text-sm font-medium block mb-1">알림 지연 시간 (분)</label>
-              <div className="flex items-center gap-2">
-                <Input 
-                  type="number" 
-                  min="0"
-                  value={bedExitSettings.delayMinutes} 
-                  onChange={(e) => setBedExitSettings({...bedExitSettings, delayMinutes: parseInt(e.target.value) || 0})}
-                  disabled={!bedExitSettings.enabled}
-                />
-                <span className="text-sm text-gray-500">분</span>
-              </div>
-              <p className="text-xs text-gray-500 mt-1">침대 이탈 후 설정한 시간 동안 돌아오지 않으면 알림이 발생합니다.</p>
+            <div className="space-y-2">
+              <label className="text-sm font-medium">알림 대기 시간 (분)</label>
+              <Input 
+                type="number" 
+                value={bedExitSettings.delayMinutes}
+                onChange={(e) => setBedExitSettings({...bedExitSettings, delayMinutes: parseInt(e.target.value)})}
+                disabled={!bedExitSettings.enabled}
+              />
+              <p className="text-xs text-muted-foreground">침대 이탈 후 몇 분이 지나면 알림을 보낼지 설정합니다. 짧은 이탈은 무시됩니다.</p>
             </div>
           </div>
           <DialogFooter>
@@ -1520,76 +1614,69 @@ export default function PatientDetailPage() {
         <DialogContent className="max-w-md">
           <DialogHeader>
             <DialogTitle>환경 모니터링 설정</DialogTitle>
-            <DialogDescription>온도, 습도 등 환경 모니터링 기능을 설정합니다.</DialogDescription>
+            <DialogDescription>환경 모니터링 기능의 설정을 변경합니다.</DialogDescription>
           </DialogHeader>
-          <div className="grid gap-4 py-4">
+          <div className="space-y-4 py-4">
             <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <Switch 
-                  checked={environmentalSettings.enabled}
-                  onCheckedChange={(checked) => setEnvironmentalSettings({...environmentalSettings, enabled: checked})}
-                />
-                <label className="text-sm font-medium">환경 모니터링 활성화</label>
-              </div>
+              <span className="text-sm font-medium">환경 모니터링 활성화</span>
+              <Switch 
+                checked={environmentalSettings.enabled}
+                onCheckedChange={(checked) => setEnvironmentalSettings({...environmentalSettings, enabled: checked})}
+              />
             </div>
-            
-            <div className="border rounded-md p-3">
-              <label className="text-sm font-medium block mb-2">온도 범위 (°C)</label>
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="text-xs text-gray-500 block mb-1">최저 온도</label>
-                  <Input 
-                    type="number" 
-                    value={environmentalSettings.tempMin} 
-                    onChange={(e) => setEnvironmentalSettings({...environmentalSettings, tempMin: parseInt(e.target.value) || 0})}
-                    disabled={!environmentalSettings.enabled}
-                  />
-                </div>
-                <div>
-                  <label className="text-xs text-gray-500 block mb-1">최고 온도</label>
-                  <Input 
-                    type="number" 
-                    value={environmentalSettings.tempMax} 
-                    onChange={(e) => setEnvironmentalSettings({...environmentalSettings, tempMax: parseInt(e.target.value) || 0})}
-                    disabled={!environmentalSettings.enabled}
-                  />
-                </div>
-              </div>
-            </div>
-            
-            <div className="border rounded-md p-3">
-              <label className="text-sm font-medium block mb-2">습도 범위 (%)</label>
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="text-xs text-gray-500 block mb-1">최저 습도</label>
-                  <Input 
-                    type="number" 
-                    value={environmentalSettings.humidityMin} 
-                    onChange={(e) => setEnvironmentalSettings({...environmentalSettings, humidityMin: parseInt(e.target.value) || 0})}
-                    disabled={!environmentalSettings.enabled}
-                  />
-                </div>
-                <div>
-                  <label className="text-xs text-gray-500 block mb-1">최고 습도</label>
-                  <Input 
-                    type="number" 
-                    value={environmentalSettings.humidityMax} 
-                    onChange={(e) => setEnvironmentalSettings({...environmentalSettings, humidityMax: parseInt(e.target.value) || 0})}
-                    disabled={!environmentalSettings.enabled}
-                  />
-                </div>
-              </div>
-            </div>
-            
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <Checkbox 
-                  checked={environmentalSettings.notifyChanges}
-                  onCheckedChange={(checked) => setEnvironmentalSettings({...environmentalSettings, notifyChanges: !!checked})}
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <label className="text-sm font-medium">최소 온도 (°C)</label>
+                <Input 
+                  type="number" 
+                  value={environmentalSettings.tempMin}
+                  onChange={(e) => setEnvironmentalSettings({...environmentalSettings, tempMin: parseInt(e.target.value)})}
                   disabled={!environmentalSettings.enabled}
                 />
-                <label className="text-sm">큰 변화가 있을 때 알림 받기</label>
               </div>
+              <div className="space-y-2">
+                <label className="text-sm font-medium">최대 온도 (°C)</label>
+                <Input 
+                  type="number" 
+                  value={environmentalSettings.tempMax}
+                  onChange={(e) => setEnvironmentalSettings({...environmentalSettings, tempMax: parseInt(e.target.value)})}
+                  disabled={!environmentalSettings.enabled}
+                />
+              </div>
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <label className="text-sm font-medium">최소 습도 (%)</label>
+                <Input 
+                  type="number" 
+                  value={environmentalSettings.humidityMin}
+                  onChange={(e) => setEnvironmentalSettings({...environmentalSettings, humidityMin: parseInt(e.target.value)})}
+                  disabled={!environmentalSettings.enabled}
+                />
+              </div>
+              <div className="space-y-2">
+                <label className="text-sm font-medium">최대 습도 (%)</label>
+                <Input 
+                  type="number" 
+                  value={environmentalSettings.humidityMax}
+                  onChange={(e) => setEnvironmentalSettings({...environmentalSettings, humidityMax: parseInt(e.target.value)})}
+                  disabled={!environmentalSettings.enabled}
+                />
+              </div>
+            </div>
+            <div className="flex items-center space-x-2">
+              <Checkbox 
+                id="notifyChanges" 
+                checked={environmentalSettings.notifyChanges}
+                onCheckedChange={(checked) => setEnvironmentalSettings({...environmentalSettings, notifyChanges: checked === true})}
+                disabled={!environmentalSettings.enabled}
+              />
+              <label
+                htmlFor="notifyChanges"
+                className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+              >
+                급격한 환경 변화 시 알림 활성화
+              </label>
             </div>
           </div>
           <DialogFooter>
@@ -1604,291 +1691,81 @@ export default function PatientDetailPage() {
         <DialogContent className="max-w-md">
           <DialogHeader>
             <DialogTitle>보호자 알림 설정</DialogTitle>
-            <DialogDescription>보호자에게 보내는 알림을 설정합니다.</DialogDescription>
+            <DialogDescription>보호자 알림 설정을 변경합니다.</DialogDescription>
           </DialogHeader>
-          <div className="grid gap-4 py-4">
+          <div className="space-y-4 py-4">
             <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <Switch 
-                  checked={guardianNotifySettings.enabled}
-                  onCheckedChange={(checked) => setGuardianNotifySettings({...guardianNotifySettings, enabled: checked})}
-                />
-                <label className="text-sm font-medium">보호자 알림 활성화</label>
-              </div>
+              <span className="text-sm font-medium">보호자 알림 활성화</span>
+              <Switch 
+                checked={guardianNotifySettings.enabled}
+                onCheckedChange={(checked) => setGuardianNotifySettings({...guardianNotifySettings, enabled: checked})}
+              />
             </div>
-            
-            <div className="pt-2 space-y-3">
-              <div className="flex items-center justify-between">
-                <label className="text-sm">낙상 감지 시 알림</label>
-                <Switch 
+            <p className="text-sm">
+              알림을 받을 이벤트를 선택하세요:
+            </p>
+            <div className="space-y-2">
+              <div className="flex items-center space-x-2">
+                <Checkbox 
+                  id="notifyFall" 
                   checked={guardianNotifySettings.notifyFall}
-                  onCheckedChange={(checked) => setGuardianNotifySettings({...guardianNotifySettings, notifyFall: checked})}
+                  onCheckedChange={(checked) => setGuardianNotifySettings({...guardianNotifySettings, notifyFall: checked === true})}
                   disabled={!guardianNotifySettings.enabled}
                 />
+                <label
+                  htmlFor="notifyFall"
+                  className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                >
+                  낙상 발생 시
+                </label>
               </div>
-              
-              <div className="flex items-center justify-between">
-                <label className="text-sm">침대 이탈 시 알림</label>
-                <Switch 
+              <div className="flex items-center space-x-2">
+                <Checkbox 
+                  id="notifyBedExit" 
                   checked={guardianNotifySettings.notifyBedExit}
-                  onCheckedChange={(checked) => setGuardianNotifySettings({...guardianNotifySettings, notifyBedExit: checked})}
+                  onCheckedChange={(checked) => setGuardianNotifySettings({...guardianNotifySettings, notifyBedExit: checked === true})}
                   disabled={!guardianNotifySettings.enabled}
                 />
+                <label
+                  htmlFor="notifyBedExit"
+                  className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                >
+                  침대 이탈 시
+                </label>
               </div>
-              
-              <div className="flex items-center justify-between">
-                <label className="text-sm">환경 이상 시 알림</label>
-                <Switch 
+              <div className="flex items-center space-x-2">
+                <Checkbox 
+                  id="notifyEnvironmental" 
                   checked={guardianNotifySettings.notifyEnvironmental}
-                  onCheckedChange={(checked) => setGuardianNotifySettings({...guardianNotifySettings, notifyEnvironmental: checked})}
+                  onCheckedChange={(checked) => setGuardianNotifySettings({...guardianNotifySettings, notifyEnvironmental: checked === true})}
                   disabled={!guardianNotifySettings.enabled}
                 />
+                <label
+                  htmlFor="notifyEnvironmental"
+                  className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                >
+                  환경 이상 발생 시
+                </label>
               </div>
-              
-              <div className="flex items-center justify-between">
-                <label className="text-sm">약물 투여 알림</label>
-                <Switch 
+              <div className="flex items-center space-x-2">
+                <Checkbox 
+                  id="notifyMedication" 
                   checked={guardianNotifySettings.notifyMedication}
-                  onCheckedChange={(checked) => setGuardianNotifySettings({...guardianNotifySettings, notifyMedication: checked})}
+                  onCheckedChange={(checked) => setGuardianNotifySettings({...guardianNotifySettings, notifyMedication: checked === true})}
                   disabled={!guardianNotifySettings.enabled}
                 />
+                <label
+                  htmlFor="notifyMedication"
+                  className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                >
+                  약물 투여 시
+                </label>
               </div>
             </div>
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setGuardianNotifyDialogOpen(false)}>취소</Button>
             <Button onClick={() => handleSaveMonitoringSettings('guardianNotify')}>저장</Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-      
-      {/* 메시지 다이얼로그 */}
-      <Dialog open={messageDialogOpen} onOpenChange={setMessageDialogOpen}>
-        <DialogContent className="max-w-md">
-          <DialogHeader>
-            <DialogTitle>보호자에게 메시지 전송</DialogTitle>
-            <DialogDescription>보호자({patient.guardian.name})에게 메시지를 전송합니다.</DialogDescription>
-          </DialogHeader>
-          <div className="grid gap-4 py-4">
-            <div>
-              <label htmlFor="message" className="text-sm font-medium block mb-1">메시지 내용</label>
-              <Textarea 
-                id="message" 
-                placeholder="메시지를 입력하세요..." 
-                className="min-h-[120px]"
-                value={messageText}
-                onChange={(e) => setMessageText(e.target.value)}
-              />
-            </div>
-          </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setMessageDialogOpen(false)}>취소</Button>
-            <Button onClick={handleSendMessage}>보내기</Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-      
-      {/* 약물 정보 수정 다이얼로그 */}
-      <Dialog open={editMedicationDialogOpen} onOpenChange={setEditMedicationDialogOpen}>
-        <DialogContent className="max-w-md">
-          <DialogHeader>
-            <DialogTitle>투약 정보 수정</DialogTitle>
-            <DialogDescription>환자의 약물 투여 정보를 수정합니다.</DialogDescription>
-          </DialogHeader>
-          <div className="grid gap-4 py-4">
-            <div className="overflow-x-auto">
-              <table className="w-full text-sm">
-                <thead>
-                  <tr className="border-b">
-                    <th className="text-left p-2">약품명</th>
-                    <th className="text-left p-2">용량</th>
-                    <th className="text-left p-2">빈도</th>
-                    <th className="text-left p-2">시간</th>
-                    <th className="text-left p-2"></th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {patient.medications.map((med: any, index: number) => (
-                    <tr key={index} className="border-b">
-                      <td className="p-2">
-                        <Input 
-                          value={med.name}
-                          className="w-full min-w-[120px]"
-                        />
-                      </td>
-                      <td className="p-2">
-                        <Input 
-                          value={med.dosage}
-                          className="w-full min-w-[80px]"
-                        />
-                      </td>
-                      <td className="p-2">
-                        <Input 
-                          value={med.frequency}
-                          className="w-full min-w-[80px]"
-                        />
-                      </td>
-                      <td className="p-2">
-                        <Input 
-                          value={med.timing}
-                          className="w-full min-w-[80px]"
-                        />
-                      </td>
-                      <td className="p-2">
-                        <Button variant="ghost" size="sm">
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-            <Button variant="outline" size="sm" className="mt-2">
-              <Plus className="h-4 w-4 mr-1" /> 약물 추가
-            </Button>
-          </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setEditMedicationDialogOpen(false)}>취소</Button>
-            <Button onClick={() => {
-              toast({
-                title: "투약 정보 업데이트",
-                description: "투약 정보가 성공적으로 업데이트되었습니다.",
-              });
-              setEditMedicationDialogOpen(false);
-            }}>저장</Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-      
-      {/* 활력 징후 수정 다이얼로그 */}
-      <Dialog open={editVitalSignsDialogOpen} onOpenChange={setEditVitalSignsDialogOpen}>
-        <DialogContent className="max-w-md">
-          <DialogHeader>
-            <DialogTitle>활력 징후 수정</DialogTitle>
-            <DialogDescription>환자의 활력 징후 기록을 수정합니다.</DialogDescription>
-          </DialogHeader>
-          <div className="grid gap-4 py-4">
-            <div className="overflow-x-auto">
-              <table className="w-full text-sm">
-                <thead>
-                  <tr className="border-b">
-                    <th className="text-left p-2">날짜</th>
-                    <th className="text-left p-2">혈압</th>
-                    <th className="text-left p-2">심박수</th>
-                    <th className="text-left p-2">체온</th>
-                    <th className="text-left p-2">호흡수</th>
-                    <th className="text-left p-2"></th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {patient.vitalSigns.map((vital: any, index: number) => (
-                    <tr key={index} className="border-b">
-                      <td className="p-2">
-                        <Input 
-                          value={vital.date}
-                          className="w-full min-w-[80px]"
-                        />
-                      </td>
-                      <td className="p-2">
-                        <Input 
-                          value={vital.bloodPressure}
-                          className="w-full min-w-[80px]"
-                        />
-                      </td>
-                      <td className="p-2">
-                        <Input 
-                          value={vital.heartRate}
-                          type="number"
-                          className="w-full min-w-[60px]"
-                        />
-                      </td>
-                      <td className="p-2">
-                        <Input 
-                          value={vital.temperature}
-                          type="number"
-                          step="0.1"
-                          className="w-full min-w-[60px]"
-                        />
-                      </td>
-                      <td className="p-2">
-                        <Input 
-                          value={vital.respiratoryRate}
-                          type="number"
-                          className="w-full min-w-[60px]"
-                        />
-                      </td>
-                      <td className="p-2">
-                        <Button variant="ghost" size="sm">
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-            <Button variant="outline" size="sm" className="mt-2">
-              <Plus className="h-4 w-4 mr-1" /> 기록 추가
-            </Button>
-          </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setEditVitalSignsDialogOpen(false)}>취소</Button>
-            <Button onClick={handleUpdateVitalSigns}>저장</Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-      
-      {/* 진료 기록 수정 다이얼로그 */}
-      <Dialog open={editNotesDialogOpen} onOpenChange={setEditNotesDialogOpen}>
-        <DialogContent className="max-w-md">
-          <DialogHeader>
-            <DialogTitle>진료 기록 수정</DialogTitle>
-            <DialogDescription>의료진 노트 및 관찰 사항을 수정합니다.</DialogDescription>
-          </DialogHeader>
-          <div className="grid gap-4 py-4">
-            <div className="space-y-4">
-              {patient.notes.map((note: any, index: number) => (
-                <div key={index} className="p-3 rounded-md border">
-                  <div className="flex justify-between items-center mb-2">
-                    <div className="grid grid-cols-2 gap-2 w-full">
-                      <div>
-                        <label className="text-xs text-gray-500">날짜</label>
-                        <Input 
-                          value={note.date}
-                          className="mt-1"
-                        />
-                      </div>
-                      <div>
-                        <label className="text-xs text-gray-500">작성자</label>
-                        <Input 
-                          value={note.author}
-                          className="mt-1"
-                        />
-                      </div>
-                    </div>
-                    <Button variant="ghost" size="sm" className="ml-2 mt-4">
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
-                  </div>
-                  <div className="mt-2">
-                    <label className="text-xs text-gray-500">내용</label>
-                    <Textarea 
-                      value={note.content}
-                      className="mt-1"
-                      rows={3}
-                    />
-                  </div>
-                </div>
-              ))}
-            </div>
-            <Button variant="outline" size="sm" className="mt-2">
-              <Plus className="h-4 w-4 mr-1" /> 기록 추가
-            </Button>
-          </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setEditNotesDialogOpen(false)}>취소</Button>
-            <Button onClick={handleUpdateNotes}>저장</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
