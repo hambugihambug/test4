@@ -158,8 +158,10 @@ function Sidebar() {
   return (
     <div className="hidden md:flex h-full w-60 flex-col bg-white border-r border-gray-200">
       <div className="p-4">
-        <h2 className="text-lg font-semibold">스마트 케어</h2>
-        <p className="text-sm text-gray-500">병원 관리 시스템</p>
+        <a href="/" className="cursor-pointer block">
+          <h2 className="text-lg font-semibold">스마트 케어</h2>
+          <p className="text-sm text-gray-500">병원 관리 시스템</p>
+        </a>
       </div>
       
       <div className="flex-1 px-3 py-2 space-y-1">
