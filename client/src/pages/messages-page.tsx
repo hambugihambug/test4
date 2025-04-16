@@ -1,8 +1,10 @@
 import { useState, useEffect } from "react";
 import { useAuth } from "@/hooks/use-auth";
 import { useToast } from "@/hooks/use-toast";
+import { useQuery, useMutation } from "@tanstack/react-query";
 import { UserRole } from "@shared/schema";
-import { apiRequest } from "@/lib/queryClient";
+import { apiRequest, queryClient } from "@/lib/queryClient";
+import { useI18n } from "@/contexts/I18nContext";
 
 import {
   Card,
@@ -10,6 +12,7 @@ import {
   CardDescription,
   CardHeader,
   CardTitle,
+  CardFooter,
 } from "@/components/ui/card";
 import {
   Select,
@@ -22,6 +25,15 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import {
   MessageCircle,
   Search,
   Send,
@@ -29,6 +41,8 @@ import {
   Users,
   Clock,
   CheckCheck,
+  Plus,
+  Loader2,
 } from "lucide-react";
 
 // 임시 사용자 데이터
@@ -82,6 +96,7 @@ const INITIAL_MESSAGES = [
 export default function MessagesPage() {
   const { user } = useAuth();
   const { toast } = useToast();
+  const { t } = useI18n();
   const [selectedContact, setSelectedContact] = useState<number | null>(null);
   const [message, setMessage] = useState("");
   const [searchTerm, setSearchTerm] = useState("");
@@ -89,6 +104,9 @@ export default function MessagesPage() {
   const [messages, setMessages] = useState(INITIAL_MESSAGES);
   const [filteredContacts, setFilteredContacts] = useState(contacts);
   const [currentChat, setCurrentChat] = useState<any[]>([]);
+  const [isNewMessageDialogOpen, setIsNewMessageDialogOpen] = useState(false);
+  const [newMessageRecipient, setNewMessageRecipient] = useState<string>("");
+  const [newMessageText, setNewMessageText] = useState("");
 
   // 검색어에 따라 연락처 필터링
   useEffect(() => {
@@ -197,10 +215,151 @@ export default function MessagesPage() {
       (msg) => msg.senderId === contactId && msg.receiverId === user?.id && !msg.read
     ).length;
   };
+  
+  // API에서 모든 가능한 수신자 가져오기 
+  const { data: availableRecipients, isLoading: isLoadingRecipients } = useQuery({
+    queryKey: ["/api/users"],
+    queryFn: async () => {
+      // 임시 데이터 반환 - 실제로는 API에서 가져와야 함
+      return USERS_DATA; 
+    },
+    enabled: isNewMessageDialogOpen, // 다이얼로그가 열릴 때만 실행
+  });
+  
+  // 새 메시지 전송 핸들러
+  const handleSendNewMessage = async () => {
+    if (!newMessageText.trim() || !newMessageRecipient) return;
+    
+    try {
+      const recipientId = parseInt(newMessageRecipient);
+      const recipient = contacts.find((c) => c.id === recipientId);
+      
+      if (!recipient) {
+        toast({
+          title: "수신자를 찾을 수 없음",
+          description: "선택된 수신자를 찾을 수 없습니다.",
+          variant: "destructive",
+        });
+        return;
+      }
+      
+      // 새 메시지 객체 생성
+      const newMessage = {
+        id: messages.length + 1,
+        senderId: user?.id || 0,
+        receiverId: recipientId,
+        senderName: "나",
+        message: newMessageText.trim(),
+        timestamp: new Date(),
+        read: false,
+      };
+      
+      // 메시지 목록에 추가
+      setMessages([...messages, newMessage]);
+      
+      // 다이얼로그 상태 초기화
+      setNewMessageText("");
+      setNewMessageRecipient("");
+      setIsNewMessageDialogOpen(false);
+      
+      // 새 대화를 선택
+      setSelectedContact(recipientId);
+      
+      toast({
+        title: "메시지 전송 완료",
+        description: "새 메시지가 성공적으로 전송되었습니다.",
+      });
+    } catch (error) {
+      toast({
+        title: "메시지 전송 실패",
+        description: "메시지 전송 중 오류가 발생했습니다.",
+        variant: "destructive",
+      });
+    }
+  };
 
   return (
     <div className="container mx-auto py-6 px-4">
-      <h1 className="text-2xl font-bold mb-6">메시지</h1>
+      <div className="flex justify-between items-center mb-6">
+        <h1 className="text-2xl font-bold">메시지</h1>
+        <Dialog open={isNewMessageDialogOpen} onOpenChange={setIsNewMessageDialogOpen}>
+          <DialogTrigger asChild>
+            <Button>
+              <Plus className="h-4 w-4 mr-2" />
+              새 메시지
+            </Button>
+          </DialogTrigger>
+          <DialogContent className="sm:max-w-md">
+            <DialogHeader>
+              <DialogTitle>새 메시지 작성</DialogTitle>
+              <DialogDescription>
+                메시지를 보낼 수신자를 선택하고 내용을 입력하세요.
+              </DialogDescription>
+            </DialogHeader>
+            <div className="space-y-4 py-4">
+              <div className="space-y-2">
+                <label htmlFor="recipient" className="text-sm font-medium">
+                  수신자 선택
+                </label>
+                {isLoadingRecipients ? (
+                  <div className="flex items-center justify-center p-2">
+                    <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
+                  </div>
+                ) : (
+                  <Select
+                    value={newMessageRecipient}
+                    onValueChange={setNewMessageRecipient}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="수신자 선택" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {availableRecipients?.map((recipient) => (
+                        <SelectItem key={recipient.id} value={recipient.id.toString()}>
+                          {recipient.name} ({recipient.role === UserRole.NURSE
+                            ? "간호사"
+                            : recipient.role === UserRole.DIRECTOR
+                            ? "병원장"
+                            : recipient.role === UserRole.PATIENT
+                            ? "환자"
+                            : "보호자"})
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                )}
+              </div>
+              <div className="space-y-2">
+                <label htmlFor="message" className="text-sm font-medium">
+                  메시지 내용
+                </label>
+                <Textarea
+                  id="message"
+                  placeholder="보낼 메시지를 입력하세요..."
+                  value={newMessageText}
+                  onChange={(e) => setNewMessageText(e.target.value)}
+                  rows={5}
+                />
+              </div>
+            </div>
+            <DialogFooter>
+              <Button 
+                variant="secondary" 
+                onClick={() => setIsNewMessageDialogOpen(false)}
+              >
+                취소
+              </Button>
+              <Button 
+                type="submit" 
+                disabled={!newMessageText.trim() || !newMessageRecipient}
+                onClick={handleSendNewMessage}
+              >
+                보내기
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+      </div>
       
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         {/* 연락처 목록 */}

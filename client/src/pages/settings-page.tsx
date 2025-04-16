@@ -264,8 +264,8 @@ export default function SettingsPage() {
               
               <Separator />
               
-              {/* Other system settings (only visible to admin) */}
-              {user?.role === UserRole.ADMIN && (
+              {/* Other system settings (only visible to director or nurse) */}
+              {(user?.role === UserRole.DIRECTOR || user?.role === UserRole.NURSE) && (
                 <>
                   <div className="space-y-4">
                     <h3 className="text-lg font-medium">{t('settings.fallThreshold')}</h3>
