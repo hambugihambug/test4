@@ -68,14 +68,16 @@ export function Sidebar({ onRoomSelect, onPatientSelect }: SidebarProps) {
     <aside className="w-60 bg-white border-r border-neutral-200 flex flex-col h-screen shadow-sm z-30">
       {/* Logo Area */}
       <div className="p-4 border-b border-neutral-200">
-        <div className="flex items-center">
-          <div className="w-10 h-10 rounded-md bg-primary flex items-center justify-center">
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
-            </svg>
-          </div>
-          <h1 className="ml-2 text-lg font-bold text-neutral-800">스마트 케어</h1>
-        </div>
+        <Link href="/">
+          <a className="flex items-center cursor-pointer">
+            <div className="w-10 h-10 rounded-md bg-primary flex items-center justify-center">
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+              </svg>
+            </div>
+            <h1 className="ml-2 text-lg font-bold text-neutral-800">스마트 케어</h1>
+          </a>
+        </Link>
       </div>
 
       {/* User Profile Area */}
@@ -115,79 +117,12 @@ export function Sidebar({ onRoomSelect, onPatientSelect }: SidebarProps) {
             </Link>
           </li>
           <li>
-            <div
-              className={`flex items-center justify-between px-4 py-2 cursor-pointer ${location === '/rooms' ? 'bg-blue-50 text-primary' : 'text-neutral-700'}`}
-            >
-              <Link href="/rooms">
-                <a className="flex items-center w-full">
-                  <Building2 className="h-5 w-5 mr-3" />
-                  {t('common.roomManagement')}
-                </a>
-              </Link>
-              <svg 
-                xmlns="http://www.w3.org/2000/svg" 
-                className={`h-4 w-4 transform ${expandedRoom !== null ? 'rotate-180' : ''}`} 
-                fill="none" 
-                viewBox="0 0 24 24" 
-                stroke="currentColor"
-                onClick={() => setExpandedRoom(expandedRoom !== null ? null : (roomsWithPatients?.[0]?.id || null))}
-              >
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-              </svg>
-            </div>
-            
-            {/* Room List */}
-            {expandedRoom !== null && (
-              <ul className="bg-neutral-50 py-1">
-                {isLoading ? (
-                  <li className="px-8 py-2 text-neutral-500 text-sm">Loading...</li>
-                ) : (
-                  roomsWithPatients?.map(room => (
-                    <li key={room.id}>
-                      <div 
-                        className={`flex items-center justify-between px-8 py-2 cursor-pointer ${expandedRoom === room.id ? 'text-primary bg-blue-50' : 'text-neutral-700 hover:bg-blue-50 hover:text-primary'}`}
-                        onClick={() => handleRoomClick(room.id)}
-                      >
-                        <div className="flex items-center text-sm">
-                          <span className="mr-2">{room.name}</span>
-                          {getStatusBadge(room.status)}
-                        </div>
-                        <svg 
-                          xmlns="http://www.w3.org/2000/svg" 
-                          className={`h-4 w-4 ${expandedRoom === room.id ? 'transform rotate-90' : ''}`} 
-                          fill="none" 
-                          viewBox="0 0 24 24" 
-                          stroke="currentColor"
-                        >
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                        </svg>
-                      </div>
-                      
-                      {/* Patient List */}
-                      {expandedRoom === room.id && (
-                        <ul className="bg-white">
-                          {room.patients.length === 0 ? (
-                            <li className="px-10 py-1.5 text-sm text-neutral-500 italic">
-                              No patients
-                            </li>
-                          ) : (
-                            room.patients.map(patient => (
-                              <li 
-                                key={patient.id}
-                                className={`px-10 py-1.5 text-sm ${selectedPatient === patient.id ? 'text-primary bg-blue-50 font-medium border-l-2 border-primary' : 'text-neutral-600 hover:bg-blue-50 hover:text-primary'} cursor-pointer`}
-                                onClick={() => handlePatientClick(patient.id)}
-                              >
-                                {patient.name} ({patient.age}세)
-                              </li>
-                            ))
-                          )}
-                        </ul>
-                      )}
-                    </li>
-                  ))
-                )}
-              </ul>
-            )}
+            <Link href="/rooms">
+              <a className={`flex items-center px-4 py-2 ${location === '/rooms' ? 'bg-blue-50 text-primary border-l-4 border-primary' : 'hover:bg-blue-50 text-neutral-700 hover:text-primary'}`}>
+                <Building2 className="h-5 w-5 mr-3" />
+                {t('common.roomManagement')}
+              </a>
+            </Link>
           </li>
           <li>
             <Link href="/users">
