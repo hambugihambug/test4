@@ -256,6 +256,393 @@ const PATIENT_DATA: PatientDataMap = {
         content: "MRI 결과 뇌 손상 부위 회복 중. 재활 치료 강화 필요."
       }
     ]
+  },
+  3: {
+    id: 3,
+    name: "이환자",
+    age: 78,
+    gender: "남",
+    birthDate: "1947-06-12",
+    roomNumber: "101",
+    bedNumber: 2,
+    diagnosis: "알츠하이머병",
+    admissionDate: "2025-02-20",
+    expectedDischargeDate: "2025-05-20",
+    guardian: {
+      name: "이보호자",
+      relation: "자녀",
+      contact: "010-3456-7890"
+    },
+    address: "서울시 마포구 합정동 789-12",
+    contact: "010-7654-3210",
+    condition: "주의",
+    assignedNurseId: 5,
+    fallRisk: "높음",
+    fallRiskScore: 85,
+    fallHistory: [
+      {
+        date: "2025-03-01",
+        time: "03:15",
+        location: "병실",
+        severity: "중간",
+        description: "야간에 일어나 방황하다 넘어짐"
+      },
+      {
+        date: "2025-02-25",
+        time: "14:20",
+        location: "복도",
+        severity: "경미",
+        description: "복도 걷다가 균형 잃음"
+      }
+    ],
+    vitalSigns: [
+      {
+        date: "2025-04-15 10:00",
+        bloodPressure: "138/82",
+        heartRate: 68,
+        temperature: 36.6,
+        respiratoryRate: 16
+      },
+      {
+        date: "2025-04-14 10:30",
+        bloodPressure: "140/85",
+        heartRate: 70,
+        temperature: 36.5,
+        respiratoryRate: 15
+      }
+    ],
+    medications: [
+      {
+        name: "도네페질",
+        dosage: "10mg",
+        frequency: "1일 1회",
+        timing: "아침 식후"
+      },
+      {
+        name: "수면제",
+        dosage: "5mg",
+        frequency: "1일 1회",
+        timing: "취침 전"
+      }
+    ],
+    notes: [
+      {
+        date: "2025-04-13",
+        author: "박간호사",
+        content: "야간 배회 증상 계속됨. 침대 센서 설치 제안함."
+      },
+      {
+        date: "2025-04-05",
+        author: "정의사",
+        content: "인지기능 평가 실시. 약간의 호전 보임."
+      }
+    ]
+  },
+  4: {
+    id: 4,
+    name: "최환자",
+    age: 68,
+    gender: "남",
+    birthDate: "1957-04-23",
+    roomNumber: "102",
+    bedNumber: 2,
+    diagnosis: "파킨슨병",
+    admissionDate: "2025-03-15",
+    expectedDischargeDate: "2025-04-30",
+    guardian: {
+      name: "최보호자",
+      relation: "배우자",
+      contact: "010-4567-8901"
+    },
+    address: "서울시 강서구 등촌동 345-67",
+    contact: "010-6543-2109",
+    condition: "양호",
+    assignedNurseId: 6,
+    fallRisk: "중간",
+    fallRiskScore: 60,
+    fallHistory: [
+      {
+        date: "2025-03-18",
+        time: "16:30",
+        location: "병실",
+        severity: "경미",
+        description: "침대에서 내려오다 떨림 증상으로 균형 상실"
+      }
+    ],
+    vitalSigns: [
+      {
+        date: "2025-04-15 11:00",
+        bloodPressure: "125/78",
+        heartRate: 72,
+        temperature: 36.4,
+        respiratoryRate: 16
+      },
+      {
+        date: "2025-04-14 11:30",
+        bloodPressure: "130/80",
+        heartRate: 75,
+        temperature: 36.5,
+        respiratoryRate: 17
+      }
+    ],
+    medications: [
+      {
+        name: "레보도파",
+        dosage: "100mg",
+        frequency: "1일 3회",
+        timing: "식사와 함께"
+      },
+      {
+        name: "아만타딘",
+        dosage: "100mg",
+        frequency: "1일 2회",
+        timing: "아침, 저녁 식후"
+      }
+    ],
+    notes: [
+      {
+        date: "2025-04-12",
+        author: "김간호사",
+        content: "떨림 증상 약간 감소. 보행훈련 진행 중."
+      },
+      {
+        date: "2025-04-08",
+        author: "이의사",
+        content: "약물 효과 확인. 용량 유지 결정."
+      }
+    ]
+  },
+  5: {
+    id: 5,
+    name: "정환자",
+    age: 81,
+    gender: "여",
+    birthDate: "1944-02-15",
+    roomNumber: "102",
+    bedNumber: 3,
+    diagnosis: "척추압박골절",
+    admissionDate: "2025-04-01",
+    expectedDischargeDate: "2025-05-15",
+    guardian: {
+      name: "정보호자",
+      relation: "자녀",
+      contact: "010-5678-9012"
+    },
+    address: "서울시 송파구 잠실동 234-56",
+    contact: "010-5432-1098",
+    condition: "안정",
+    assignedNurseId: 7,
+    fallRisk: "높음",
+    fallRiskScore: 75,
+    fallHistory: [
+      {
+        date: "2025-04-05",
+        time: "08:45",
+        location: "화장실",
+        severity: "심각",
+        description: "화장실에서 미끄러져 넘어짐"
+      }
+    ],
+    vitalSigns: [
+      {
+        date: "2025-04-15 14:00",
+        bloodPressure: "145/85",
+        heartRate: 68,
+        temperature: 36.7,
+        respiratoryRate: 18
+      },
+      {
+        date: "2025-04-14 14:30",
+        bloodPressure: "148/88",
+        heartRate: 70,
+        temperature: 36.6,
+        respiratoryRate: 17
+      }
+    ],
+    medications: [
+      {
+        name: "진통제",
+        dosage: "50mg",
+        frequency: "1일 3회",
+        timing: "식후"
+      },
+      {
+        name: "칼슘제",
+        dosage: "500mg",
+        frequency: "1일 2회",
+        timing: "아침, 저녁 식후"
+      },
+      {
+        name: "비타민D",
+        dosage: "1000IU",
+        frequency: "1일 1회",
+        timing: "아침 식후"
+      }
+    ],
+    notes: [
+      {
+        date: "2025-04-14",
+        author: "최간호사",
+        content: "통증 호소 감소. 보행기 사용하여 짧은 거리 이동 가능."
+      },
+      {
+        date: "2025-04-10",
+        author: "박의사",
+        content: "X-ray 검사 결과 골절 부위 안정적. 물리치료 시작 권장."
+      }
+    ]
+  },
+  6: {
+    id: 6,
+    name: "강환자",
+    age: 75,
+    gender: "남",
+    birthDate: "1950-10-05",
+    roomNumber: "103",
+    bedNumber: 1,
+    diagnosis: "심부전",
+    admissionDate: "2025-03-25",
+    expectedDischargeDate: "2025-04-20",
+    guardian: {
+      name: "강보호자",
+      relation: "배우자",
+      contact: "010-6789-0123"
+    },
+    address: "서울시 용산구 이태원동 567-89",
+    contact: "010-4321-0987",
+    condition: "주의",
+    assignedNurseId: 8,
+    fallRisk: "중간",
+    fallRiskScore: 50,
+    fallHistory: [],
+    vitalSigns: [
+      {
+        date: "2025-04-15 15:00",
+        bloodPressure: "150/90",
+        heartRate: 80,
+        temperature: 36.8,
+        respiratoryRate: 20
+      },
+      {
+        date: "2025-04-14 15:30",
+        bloodPressure: "155/92",
+        heartRate: 82,
+        temperature: 36.9,
+        respiratoryRate: 21
+      }
+    ],
+    medications: [
+      {
+        name: "이뇨제",
+        dosage: "40mg",
+        frequency: "1일 1회",
+        timing: "아침 식전"
+      },
+      {
+        name: "베타차단제",
+        dosage: "25mg",
+        frequency: "1일 2회",
+        timing: "아침, 저녁 식후"
+      },
+      {
+        name: "ACE억제제",
+        dosage: "10mg",
+        frequency: "1일 1회",
+        timing: "저녁 식후"
+      }
+    ],
+    notes: [
+      {
+        date: "2025-04-13",
+        author: "정간호사",
+        content: "호흡곤란 호소 감소. 부종 약간 감소."
+      },
+      {
+        date: "2025-04-09",
+        author: "최의사",
+        content: "심초음파 검사 결과 심기능 약간 호전. 약물 용량 조정함."
+      }
+    ]
+  },
+  7: {
+    id: 7,
+    name: "윤환자",
+    age: 69,
+    gender: "여",
+    birthDate: "1956-08-20",
+    roomNumber: "103",
+    bedNumber: 2,
+    diagnosis: "만성폐쇄성폐질환",
+    admissionDate: "2025-04-05",
+    expectedDischargeDate: "2025-04-25",
+    guardian: {
+      name: "윤보호자",
+      relation: "자녀",
+      contact: "010-7890-1234"
+    },
+    address: "서울시 중구 신당동 678-90",
+    contact: "010-3210-9876",
+    condition: "주의",
+    assignedNurseId: 8,
+    fallRisk: "높음",
+    fallRiskScore: 70,
+    fallHistory: [
+      {
+        date: "2025-04-08",
+        time: "11:20",
+        location: "병실",
+        severity: "경미",
+        description: "산소 튜브에 걸려 넘어질 뻔함"
+      }
+    ],
+    vitalSigns: [
+      {
+        date: "2025-04-15 16:00",
+        bloodPressure: "135/82",
+        heartRate: 85,
+        temperature: 37.1,
+        respiratoryRate: 22
+      },
+      {
+        date: "2025-04-14 16:30",
+        bloodPressure: "140/85",
+        heartRate: 88,
+        temperature: 37.2,
+        respiratoryRate: 24
+      }
+    ],
+    medications: [
+      {
+        name: "기관지확장제",
+        dosage: "18mcg",
+        frequency: "1일 2회",
+        timing: "아침, 저녁"
+      },
+      {
+        name: "코르티코스테로이드 흡입기",
+        dosage: "250mcg",
+        frequency: "1일 2회",
+        timing: "아침, 저녁"
+      },
+      {
+        name: "항생제",
+        dosage: "500mg",
+        frequency: "1일 2회",
+        timing: "아침, 저녁 식후"
+      }
+    ],
+    notes: [
+      {
+        date: "2025-04-14",
+        author: "김간호사",
+        content: "호흡곤란 지속. 산소포화도 모니터링 중."
+      },
+      {
+        date: "2025-04-10",
+        author: "박의사",
+        content: "흉부 X-ray 촬영 결과 폐렴 증상 감소. 항생제 유지."
+      }
+    ]
   }
 };
 
@@ -269,7 +656,12 @@ export default function PatientDetailPage() {
   
   // 환자 데이터 (실제 구현에서는 API에서 가져옴)
   const patientId = parseInt(id || "1");
-  const patient = PATIENT_DATA[patientId] || PATIENT_DATA[1];
+  
+  // 데이터 존재 여부 체크 (없을 경우 기본 데이터 사용)
+  const patientExists = Object.keys(PATIENT_DATA).includes(patientId.toString());
+  const patient = patientExists ? PATIENT_DATA[patientId] : PATIENT_DATA[1];
+  
+  console.log("환자 상세 페이지 - 요청된 환자 ID:", patientId, "데이터 존재:", patientExists);
   
   // 다이얼로그 상태
   const [editDialogOpen, setEditDialogOpen] = useState(false);
