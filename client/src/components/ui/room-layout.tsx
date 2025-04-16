@@ -174,8 +174,23 @@ export function RoomLayout({ roomId, layout, onSave, editable }: RoomLayoutProps
     if (editMode !== 'move' || !selectedBedId || !containerRef.current) return;
     
     const rect = containerRef.current.getBoundingClientRect();
-    const x = e.clientX - rect.left;
-    const y = e.clientY - rect.top;
+    const rawX = e.clientX - rect.left;
+    const rawY = e.clientY - rect.top;
+    
+    // 현재 선택된 침대 가져오기
+    const selectedBed = currentLayout.beds.find(bed => bed.id === selectedBedId);
+    if (!selectedBed) return;
+    
+    // 침대가 화면 밖으로 나가지 않도록 경계 설정
+    // 침대 중심 기준으로 각 방향 최대/최소값 계산
+    const minX = selectedBed.width / 2;
+    const maxX = currentLayout.roomWidth - (selectedBed.width / 2);
+    const minY = selectedBed.height / 2;
+    const maxY = currentLayout.roomHeight - (selectedBed.height / 2);
+    
+    // 경계 내로 제한
+    const x = Math.min(maxX, Math.max(minX, rawX));
+    const y = Math.min(maxY, Math.max(minY, rawY));
     
     setCurrentLayout(prev => ({
       ...prev,
@@ -185,6 +200,13 @@ export function RoomLayout({ roomId, layout, onSave, editable }: RoomLayoutProps
           : bed
       )
     }));
+  };
+  
+  // 마우스를 떼면 이동 종료 (선택 모드로 변경)
+  const endMove = () => {
+    if (editMode === 'move') {
+      setEditMode('select');
+    }
   };
   
   // 침대 크기 조정
@@ -338,6 +360,8 @@ export function RoomLayout({ roomId, layout, onSave, editable }: RoomLayoutProps
           }}
           onClick={addBed}
           onMouseMove={moveBed}
+          onMouseUp={endMove}
+          onMouseLeave={endMove}
         >
           {/* 벽 테두리 */}
           <div className="absolute inset-0 border-8 border-gray-200 pointer-events-none"></div>
