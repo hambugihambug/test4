@@ -761,8 +761,7 @@ export default function RoomManagementPage() {
                                   size="sm"
                                   onClick={(e) => {
                                     e.stopPropagation();
-                                    setEditingPatientId(patient.id);
-                                    setIsAssigningPatient(true);
+                                    assignPatientToRoom(selectedRoomId, patient.id);
                                   }}
                                 >
                                   환자 배정
@@ -1008,14 +1007,6 @@ export default function RoomManagementPage() {
               <Button onClick={() => {
                 if (!editingPatientId || !selectedRoomId) return;
                 
-                // 선택된 간호사 ID 가져오기
-                const nurseIdElement = document.querySelector('#nurseSelect [data-value]') as HTMLElement;
-                const nurseId = nurseIdElement?.getAttribute('data-value') || "none";
-                
-                // 선택된 환자 ID 가져오기
-                const patientIdElement = document.querySelector('#patientSelect [data-value]') as HTMLElement;
-                const patientUserId = patientIdElement?.getAttribute('data-value') || "none";
-                
                 // 현재 선택된 방의 인덱스 찾기
                 const roomIndex = dummyRooms.findIndex(r => r.id === selectedRoomId);
                 if (roomIndex === -1) return;
@@ -1023,6 +1014,16 @@ export default function RoomManagementPage() {
                 // 환자 인덱스 찾기
                 const patientIndex = dummyRooms[roomIndex].patients.findIndex(p => p.id === editingPatientId);
                 if (patientIndex === -1) return;
+                
+                // 선택된 값 가져오기
+                const nurseIdElement = document.getElementById("nurseSelect");
+                const patientIdElement = document.getElementById("patientSelect");
+                
+                const nurseId = nurseIdElement?.getAttribute('data-value') || "none";
+                const patientUserId = patientIdElement?.getAttribute('data-value') || "none";
+                
+                console.log("선택된 간호사 ID:", nurseId);
+                console.log("선택된 환자 ID:", patientUserId);
                 
                 // 환자 정보 업데이트
                 const assignedNurseId = nurseId === "none" ? null : parseInt(nurseId);
@@ -1063,7 +1064,6 @@ export default function RoomManagementPage() {
                 
                 // 다이얼로그 닫기
                 setIsAssigningPatient(false);
-                
 
               }}>저장</Button>
             </div>
