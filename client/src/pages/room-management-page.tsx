@@ -30,16 +30,19 @@ export default function RoomManagementPage() {
   
   const { t } = useI18n();
   
-  // 인증 없이도 사용할 수 있도록 변경
-  // const { user } = useAuth(); 
-  const user = { username: "게스트", role: "guest" };
+  const { user } = useAuth();
   
   console.log("RoomManagementPage 상태 초기화 중, 사용자:", user?.username);
   const [isAddingRoom, setIsAddingRoom] = useState(false);
   
-  // 디버깅: 페이지 로드 시 상태 확인
+  // 디버깅: 페이지 로드 시 인증 정보 확인
   useEffect(() => {
-    console.log("병실 관리 페이지 - 게스트 모드로 실행 중", user);
+    console.log("병실 관리 페이지 - 인증 상태:", !!user);
+    if (user) {
+      console.log("병실 관리 페이지 - 사용자 역할:", user.role);
+    } else {
+      console.log("병실 관리 페이지 - 사용자 인증 안 됨");
+    }
   }, [user]);
   const [editingRoom, setEditingRoom] = useState<Room | null>(null);
   const [selectedRoomId, setSelectedRoomId] = useState<number | null>(null);
