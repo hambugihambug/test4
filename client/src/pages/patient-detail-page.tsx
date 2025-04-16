@@ -17,12 +17,14 @@ import { useAuth } from "@/hooks/use-auth";
 import { UserRole } from "@shared/schema";
 import { Textarea } from "@/components/ui/textarea";
 import { 
-  Select, 
+  Select,
   SelectContent, 
   SelectItem, 
   SelectTrigger, 
   SelectValue 
 } from "@/components/ui/select";
+import { Label } from "@/components/ui/label";
+import { Slider } from "@/components/ui/slider";
 import { Switch } from "@/components/ui/switch";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
@@ -675,11 +677,6 @@ export default function PatientDetailPage() {
         setGuardianNotifyDialogOpen(false);
         break;
     }
-    
-    toast({
-      title: "설정 저장 완료",
-      description: message,
-    });
     
     toast({
       title: "설정 저장 완료",
@@ -1887,7 +1884,7 @@ export default function PatientDetailPage() {
                   max={100} 
                   step={1}
                   value={[fallRiskData.fallRiskScore]}
-                  onValueChange={([value]) => setFallRiskData({...fallRiskData, fallRiskScore: value})}
+                  onValueChange={(values) => setFallRiskData({...fallRiskData, fallRiskScore: values[0]})}
                 />
                 <div className="flex justify-between text-xs text-muted-foreground">
                   <span>0</span>
