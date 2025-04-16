@@ -26,8 +26,12 @@ const roomSchema = z.object({
 });
 
 export default function RoomManagementPage() {
+  console.log("RoomManagementPage 컴포넌트가 렌더링됨");
+  
   const { t } = useI18n();
   const { user } = useAuth();
+  
+  console.log("RoomManagementPage 상태 초기화 중, 사용자:", user?.username);
   const [isAddingRoom, setIsAddingRoom] = useState(false);
   
   // 디버깅: 페이지 로드 시 인증 정보 확인
