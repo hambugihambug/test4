@@ -899,6 +899,91 @@ export default function RoomManagementPage() {
         </DialogContent>
       </Dialog>
       
+      {/* 환자 배정 다이얼로그 */}
+      <Dialog open={isAssigningPatient} onOpenChange={(open) => {
+        if (!open) {
+          setIsAssigningPatient(false);
+          setEditingPatientId(null);
+        }
+      }}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>환자 배정</DialogTitle>
+            <DialogDescription>
+              {editingPatientId && selectedRoom?.patients.find(p => p.id === editingPatientId)?.name} 환자의 담당 간호사를 배정합니다.
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="space-y-4">
+            <div>
+              <Label htmlFor="nurseId">담당 간호사</Label>
+              <Select 
+                defaultValue={editingPatientId ? 
+                  String(selectedRoom?.patients.find(p => p.id === editingPatientId)?.assignedNurseId || "") : 
+                  ""
+                }
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="담당 간호사를 선택하세요" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="">미배정</SelectItem>
+                  {dummyNurses.map(nurse => (
+                    <SelectItem key={nurse.id} value={String(nurse.id)}>
+                      {nurse.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            
+            <div className="pt-4 flex justify-end space-x-2">
+              <Button variant="outline" onClick={() => setIsAssigningPatient(false)}>취소</Button>
+              <Button onClick={() => {
+                if (!editingPatientId || !selectedRoomId) return;
+                
+                // 선택된 간호사 ID 가져오기
+                const nurseIdElement = document.querySelector('[data-value]') as HTMLElement;
+                const nurseId = nurseIdElement?.getAttribute('data-value') || "";
+                
+                // 현재 선택된 방의 인덱스 찾기
+                const roomIndex = dummyRooms.findIndex(r => r.id === selectedRoomId);
+                if (roomIndex === -1) return;
+                
+                // 환자 인덱스 찾기
+                const patientIndex = dummyRooms[roomIndex].patients.findIndex(p => p.id === editingPatientId);
+                if (patientIndex === -1) return;
+                
+                // 환자 정보 업데이트
+                const assignedNurseId = nurseId === "" ? null : parseInt(nurseId);
+                dummyRooms[roomIndex].patients[patientIndex].assignedNurseId = assignedNurseId;
+                
+                // UI 업데이트
+                toast({
+                  title: "환자 배정 완료",
+                  description: `담당 간호사가 ${assignedNurseId ? getNurseName(assignedNurseId) : '미배정'}(으)로 설정되었습니다.`,
+                });
+                
+                // 다이얼로그 닫기
+                setIsAssigningPatient(false);
+                
+                // 상태 강제 업데이트 (화면에 변경사항 반영)
+                // 타입스크립트 타입 문제로 데이터 변경 후 UI 업데이트를 위해 새로운 객체로 복사
+                const updatedRoom = JSON.parse(JSON.stringify(dummyRooms[roomIndex]));
+                
+                // 변경사항을 화면에 반영하기 위한 트릭
+                setSelectedRoomId(null);
+                setTimeout(() => {
+                  // 화면 갱신을 위해 원본 데이터 직접 수정
+                  Object.assign(roomsWithPatients?.find(r => r.id === selectedRoomId) || {}, updatedRoom);
+                  setSelectedRoomId(selectedRoomId);
+                }, 10);
+              }}>저장</Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+      
       {/* Patient Details Dialog */}
       <Dialog open={isViewingPatientDetails} onOpenChange={(open) => {
         if (!open) {
