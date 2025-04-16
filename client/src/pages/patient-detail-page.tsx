@@ -869,12 +869,12 @@ export default function PatientDetailPage() {
             <CardContent>
               <dl className="space-y-4">
                 <div className="flex justify-between">
-                  <dt className="text-sm font-medium text-muted-foreground">진단명</dt>
-                  <dd className="text-sm font-medium">{patient.diagnosis}</dd>
-                </div>
-                <div className="flex justify-between">
                   <dt className="text-sm font-medium text-muted-foreground">생년월일</dt>
                   <dd className="text-sm font-medium">{patient.birthDate}</dd>
+                </div>
+                <div className="flex justify-between">
+                  <dt className="text-sm font-medium text-muted-foreground">진단명</dt>
+                  <dd className="text-sm font-medium">{patient.diagnosis}</dd>
                 </div>
                 <div className="flex justify-between">
                   <dt className="text-sm font-medium text-muted-foreground">연락처</dt>
