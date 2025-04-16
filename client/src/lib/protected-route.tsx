@@ -69,7 +69,11 @@ export function ProtectedRoute({
     // 역할 권한 확인
     let hasAccess = false;
     
+    // 디버깅 로그 추가
+    console.log(`권한 체크 중: 사용자 역할: "${user.role}", 필요한 역할:`, roles);
+    
     for (const role of roles) {
+      console.log(`비교: "${user.role}" === "${role}" => ${user.role === role}`);
       if (user.role === role) {
         hasAccess = true;
         break;
