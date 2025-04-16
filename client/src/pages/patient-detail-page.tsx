@@ -219,6 +219,8 @@ export default function PatientDetailPage() {
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [editGuardianDialogOpen, setEditGuardianDialogOpen] = useState(false);
   const [editMedicationDialogOpen, setEditMedicationDialogOpen] = useState(false);
+  const [editVitalSignsDialogOpen, setEditVitalSignsDialogOpen] = useState(false);
+  const [editNotesDialogOpen, setEditNotesDialogOpen] = useState(false);
   const [messageDialogOpen, setMessageDialogOpen] = useState(false);
   const [fallDetectionDialogOpen, setFallDetectionDialogOpen] = useState(false);
   const [bedExitDialogOpen, setBedExitDialogOpen] = useState(false);
@@ -228,6 +230,8 @@ export default function PatientDetailPage() {
   // 폼 상태
   const [formData, setFormData] = useState({ ...patient });
   const [guardianData, setGuardianData] = useState({ ...patient.guardian });
+  const [vitalSignsData, setVitalSignsData] = useState({ ...patient.vitalSigns[0] });
+  const [notesData, setNotesData] = useState(patient.notes.length > 0 ? { ...patient.notes[0] } : { date: '', author: '', content: '' });
   const [messageText, setMessageText] = useState("");
   
   // 모니터링 설정 상태
@@ -289,6 +293,26 @@ export default function PatientDetailPage() {
       description: "보호자 정보가 성공적으로 업데이트되었습니다.",
     });
     setEditGuardianDialogOpen(false);
+  };
+  
+  // 활력 징후 업데이트 처리
+  const handleUpdateVitalSigns = () => {
+    // 실제 구현에서는 API 호출
+    toast({
+      title: "활력 징후 업데이트",
+      description: "활력 징후 정보가 성공적으로 업데이트되었습니다.",
+    });
+    setEditVitalSignsDialogOpen(false);
+  };
+  
+  // 진료 기록 업데이트 처리
+  const handleUpdateNotes = () => {
+    // 실제 구현에서는 API 호출
+    toast({
+      title: "진료 기록 업데이트",
+      description: "진료 기록이 성공적으로 업데이트되었습니다.",
+    });
+    setEditNotesDialogOpen(false);
   };
   
   // 메시지 전송 처리
@@ -541,10 +565,7 @@ export default function PatientDetailPage() {
                     <Button 
                       variant="outline" 
                       size="sm" 
-                      onClick={() => toast({
-                        title: "안내",
-                        description: "활력 징후 기록 수정 기능은 곧 추가될 예정입니다.",
-                      })}
+                      onClick={() => setEditVitalSignsDialogOpen(true)}
                       className="h-8"
                     >
                       <Edit className="h-4 w-4 mr-1" /> 수정
@@ -636,10 +657,7 @@ export default function PatientDetailPage() {
                     <Button 
                       variant="outline" 
                       size="sm" 
-                      onClick={() => toast({
-                        title: "안내",
-                        description: "진료 기록 수정 기능은 곧 추가될 예정입니다.",
-                      })}
+                      onClick={() => setEditNotesDialogOpen(true)}
                       className="h-8"
                     >
                       <Edit className="h-4 w-4 mr-1" /> 수정
