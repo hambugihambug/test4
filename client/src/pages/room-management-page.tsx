@@ -19,6 +19,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { RoomLayout } from "@/components/ui/room-layout";
 import { Progress } from "@/components/ui/progress";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { Room, RoomWithPatients, Patient, InsertRoom } from "@shared/schema";
 import { Plus, Thermometer, Droplets, CheckCircle, AlertCircle, AlertTriangle, Pencil, HeartPulse, User, CalendarClock, Users, BedDouble, MapPin, FileText, Phone, Shield, Clipboard, ArrowLeft } from "lucide-react";
