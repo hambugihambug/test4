@@ -204,6 +204,8 @@ const getEventStatusColor = (status: string) => {
 };
 
 function EventsPage() {
+  console.error("이벤트 페이지 렌더링 시작");
+  
   const [events, setEvents] = useState<Event[]>(mockEvents);
   const [searchTerm, setSearchTerm] = useState("");
   const [filterType, setFilterType] = useState<string | null>(null);
@@ -213,9 +215,10 @@ function EventsPage() {
   const { user } = useAuth();
   
   // 콘솔 출력으로 디버깅 (실제 환경에서는 제거)
-  console.log("이벤트 페이지 렌더링 중...");
-  console.log("이벤트 데이터:", events);
-  console.log("현재 사용자:", user);
+  console.error("이벤트 페이지 렌더링 중...");
+  console.error("이벤트 데이터:", events ? events.length : 'undefined');
+  console.error("현재 사용자:", user ? user.username : 'undefined');
+  console.error("mockEvents 데이터:", mockEvents ? mockEvents.length : 'undefined');
 
   // 이벤트 필터링
   const filteredEvents = events.filter(event => {
