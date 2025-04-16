@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { useAuth } from "@/hooks/use-auth";
 import { UserRole } from "@shared/schema";
@@ -7,6 +7,7 @@ import { useToast } from "@/hooks/use-toast";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
+import { useI18n } from "@/contexts/I18nContext";
 
 import {
   Dialog,
@@ -109,11 +110,18 @@ function getRoleDisplay(role: UserRole) {
 export default function AccountsManagementPage() {
   const { user } = useAuth();
   const { toast } = useToast();
+  const { t } = useI18n();
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [selectedUser, setSelectedUser] = useState<any>(null);
   const [filter, setFilter] = useState<UserRole | "all">("all");
   const [searchTerm, setSearchTerm] = useState("");
+  
+  // 아이디/이메일 중복 체크 상태
+  const [usernameChecking, setUsernameChecking] = useState(false);
+  const [usernameAvailable, setUsernameAvailable] = useState<boolean | null>(null);
+  const [emailChecking, setEmailChecking] = useState(false);
+  const [emailAvailable, setEmailAvailable] = useState<boolean | null>(null);
 
   // 사용자 목록 조회
   const { data: users, isLoading } = useQuery({
@@ -220,8 +228,83 @@ export default function AccountsManagementPage() {
     },
   });
 
+  // 아이디 중복 체크 함수
+  async function checkUsername(username: string) {
+    if (!username || username.length < 3) return;
+    
+    setUsernameChecking(true);
+    try {
+      const res = await apiRequest("GET", `/api/users/check-username/${username}`);
+      const data = await res.json();
+      setUsernameAvailable(!data.exists);
+    } catch (error) {
+      console.error("아이디 중복 체크 오류:", error);
+      toast({
+        title: "아이디 중복 체크 실패",
+        description: "서버 오류가 발생했습니다. 다시 시도해주세요.",
+        variant: "destructive",
+      });
+    } finally {
+      setUsernameChecking(false);
+    }
+  }
+  
+  // 이메일 중복 체크 함수
+  async function checkEmail(email: string) {
+    if (!email || !email.includes('@')) return;
+    
+    setEmailChecking(true);
+    try {
+      const res = await apiRequest("GET", `/api/users/check-email/${email}`);
+      const data = await res.json();
+      setEmailAvailable(!data.exists);
+    } catch (error) {
+      console.error("이메일 중복 체크 오류:", error);
+      toast({
+        title: "이메일 중복 체크 실패",
+        description: "서버 오류가 발생했습니다. 다시 시도해주세요.",
+        variant: "destructive",
+      });
+    } finally {
+      setEmailChecking(false);
+    }
+  }
+  
+  // 폼 필드 값 변경 시 중복 체크 상태 초기화
+  useEffect(() => {
+    const usernameSubscription = createForm.watch((value, { name }) => {
+      if (name === 'username') {
+        setUsernameAvailable(null);
+      }
+      if (name === 'email') {
+        setEmailAvailable(null);
+      }
+    });
+    
+    return () => usernameSubscription.unsubscribe();
+  }, [createForm]);
+  
   // 사용자 생성 폼 제출 함수
   function onCreateSubmit(data: z.infer<typeof userFormSchema>) {
+    // 아이디와 이메일 중복 여부 확인
+    if (usernameAvailable === false) {
+      toast({
+        title: "아이디 중복",
+        description: "이미 사용 중인 아이디입니다. 다른 아이디를 입력해주세요.",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    if (emailAvailable === false) {
+      toast({
+        title: "이메일 중복",
+        description: "이미 사용 중인 이메일입니다. 다른 이메일을 입력해주세요.",
+        variant: "destructive",
+      });
+      return;
+    }
+    
     createMutation.mutate(data);
   }
 
@@ -349,9 +432,26 @@ export default function AccountsManagementPage() {
                     render={({ field }) => (
                       <FormItem>
                         <FormLabel>아이디</FormLabel>
-                        <FormControl>
-                          <Input placeholder="아이디" {...field} />
-                        </FormControl>
+                        <div className="flex gap-2">
+                          <FormControl>
+                            <Input placeholder="아이디" {...field} />
+                          </FormControl>
+                          <Button 
+                            type="button" 
+                            variant="outline"
+                            size="sm"
+                            disabled={!field.value || field.value.length < 3 || usernameChecking}
+                            onClick={() => checkUsername(field.value)}
+                          >
+                            {usernameChecking ? <Loader2 className="h-4 w-4 animate-spin" /> : "중복확인"}
+                          </Button>
+                        </div>
+                        {usernameAvailable === true && (
+                          <p className="text-sm text-green-600">사용 가능한 아이디입니다.</p>
+                        )}
+                        {usernameAvailable === false && (
+                          <p className="text-sm text-red-600">이미 사용 중인 아이디입니다.</p>
+                        )}
                         <FormMessage />
                       </FormItem>
                     )}
@@ -394,9 +494,26 @@ export default function AccountsManagementPage() {
                     render={({ field }) => (
                       <FormItem>
                         <FormLabel>이메일</FormLabel>
-                        <FormControl>
-                          <Input placeholder="이메일" {...field} />
-                        </FormControl>
+                        <div className="flex gap-2">
+                          <FormControl>
+                            <Input placeholder="이메일" {...field} />
+                          </FormControl>
+                          <Button 
+                            type="button" 
+                            variant="outline"
+                            size="sm"
+                            disabled={!field.value || !field.value.includes('@') || emailChecking}
+                            onClick={() => checkEmail(field.value)}
+                          >
+                            {emailChecking ? <Loader2 className="h-4 w-4 animate-spin" /> : "중복확인"}
+                          </Button>
+                        </div>
+                        {emailAvailable === true && (
+                          <p className="text-sm text-green-600">사용 가능한 이메일입니다.</p>
+                        )}
+                        {emailAvailable === false && (
+                          <p className="text-sm text-red-600">이미 사용 중인 이메일입니다.</p>
+                        )}
                         <FormMessage />
                       </FormItem>
                     )}
