@@ -172,12 +172,10 @@ export default function RoomManagementPage() {
   // 상태로 관리하도록 변경
   const [dummyRooms, setDummyRooms] = useState<RoomWithPatients[]>(initialRooms);
   
-  // 실제 API로부터 데이터 가져오기 (추후 구현)
-  const { data: roomsWithPatients, isLoading: roomsLoading, error: roomsError } = {
-    data: dummyRooms,
-    isLoading: false,
-    error: null
-  };
+  // UI에서 참조하는 데이터로 dummyRooms 상태를 직접 사용합니다.
+  const roomsWithPatients = dummyRooms;
+  const roomsLoading = false;
+  const roomsError = null;
   
   // 임시 간호사 데이터
   const dummyNurses = [
@@ -263,6 +261,7 @@ export default function RoomManagementPage() {
             ? { ...room, ...values } 
             : room
         );
+        setDummyRooms(updatedRooms);
       } else {
         // 새 방 추가 (로컬)
         const newRoom: RoomWithPatients = {
@@ -279,6 +278,7 @@ export default function RoomManagementPage() {
           }),
           patients: []
         };
+        setDummyRooms([...dummyRooms, newRoom]);
       }
       
       // Reset state
@@ -892,9 +892,7 @@ export default function RoomManagementPage() {
                 updatedRooms[roomIndex] = updatedRoom;
                 setDummyRooms(updatedRooms);
                 
-                // roomsWithPatients 데이터도 함께 업데이트 (UI 갱신을 위함)
-                const updatedRoomsData = [...updatedRooms];
-                Object.assign(roomsWithPatients, updatedRoomsData);
+                // 침대 추가 후 자동으로 UI가 갱신됩니다.
                 
                 // UI 업데이트
                 toast({
