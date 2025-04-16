@@ -181,9 +181,27 @@ export default function RoomManagementPage() {
   // Set initial selected room
   useEffect(() => {
     if (!selectedRoomId && roomsWithPatients && roomsWithPatients.length > 0) {
+      console.log("처음 마운트 시 병실 선택:", roomsWithPatients[0]);
       setSelectedRoomId(roomsWithPatients[0].id);
     }
   }, [roomsWithPatients, selectedRoomId]);
+  
+  // 선택된 병실이 변경될 때마다 로그 출력 (디버깅용)
+  useEffect(() => {
+    if (selectedRoomId) {
+      const currentRoom = roomsWithPatients?.find(room => room.id === selectedRoomId);
+      console.log("선택된 병실 변경:", selectedRoomId, currentRoom);
+      
+      if (currentRoom?.layout) {
+        try {
+          const parsedLayout = JSON.parse(currentRoom.layout);
+          console.log("병실 레이아웃 데이터:", parsedLayout);
+        } catch (e) {
+          console.error("레이아웃 파싱 오류:", e);
+        }
+      }
+    }
+  }, [selectedRoomId, roomsWithPatients]);
   
   // Update form values when editing a room
   useEffect(() => {
@@ -244,45 +262,52 @@ export default function RoomManagementPage() {
   
   // Handle saving room layout
   const handleSaveLayout = async (layout: any) => {
-    if (!selectedRoomId) return;
+    if (!selectedRoomId) {
+      console.error("선택된 병실 ID가 없습니다.");
+      return;
+    }
     
     try {
-      // 실제 API 호출은 아직 구현되지 않았으므로 임시로 상태 변경으로 처리
-      console.log("레이아웃 저장:", selectedRoomId, layout);
+      console.log("레이아웃 저장 요청:", selectedRoomId, layout);
       
-      // 레이아웃 즉시 반영 (임시)
-      const updatedRooms = roomsWithPatients?.map(room => 
-        room.id === selectedRoomId
-          ? { ...room, layout: JSON.stringify(layout) }
-          : room
-      );
+      // 현재 선택된 방을 찾아 레이아웃 업데이트
+      const updatedRooms = dummyRooms.map(room => {
+        if (room.id === selectedRoomId) {
+          console.log("이전 레이아웃:", room.layout);
+          const updatedRoom = { 
+            ...room, 
+            layout: JSON.stringify(layout) 
+          };
+          console.log("업데이트된 레이아웃:", updatedRoom.layout);
+          return updatedRoom;
+        }
+        return room;
+      });
+      
+      // dummyRooms 배열 업데이트
+      Object.assign(dummyRooms, updatedRooms);
       
       // 저장 성공 알림 표시
-      if (typeof toast === 'function') {
-        toast({
-          title: "저장되었습니다",
-          description: "병실 레이아웃이 성공적으로 저장되었습니다.",
-        });
-      } else {
-        console.log("저장 완료: 병실 레이아웃이 성공적으로 저장되었습니다.");
-      }
+      toast({
+        title: "저장되었습니다",
+        description: "병실 레이아웃이 성공적으로 저장되었습니다.",
+      });
+      
+      console.log("레이아웃 저장 완료:", selectedRoomId);
+      console.log("업데이트된 병실 데이터:", dummyRooms.find(r => r.id === selectedRoomId));
       
       // 나중에 실제 API 구현시 주석 해제
       // await apiRequest("PUT", `/api/rooms/${selectedRoomId}/layout`, layout);
       // queryClient.invalidateQueries({ queryKey: ['/api/rooms/with-patients'] });
       // queryClient.invalidateQueries({ queryKey: ['/api/rooms'] });
     } catch (error) {
-      console.error("Failed to save layout:", error);
+      console.error("레이아웃 저장 실패:", error);
       
-      if (typeof toast === 'function') {
-        toast({
-          title: "저장 실패",
-          description: "레이아웃 저장 중 오류가 발생했습니다.",
-          variant: "destructive"
-        });
-      } else {
-        console.error("저장 실패: 레이아웃 저장 중 오류가 발생했습니다.");
-      }
+      toast({
+        title: "저장 실패",
+        description: "레이아웃 저장 중 오류가 발생했습니다.",
+        variant: "destructive"
+      });
     }
   };
   
@@ -626,7 +651,7 @@ export default function RoomManagementPage() {
                   <div className="border rounded-md">
                     <RoomLayout
                       roomId={selectedRoom.id}
-                      layout={selectedRoom.layout ? JSON.parse(selectedRoom.layout) : undefined}
+                      layout={selectedRoom.layout ? JSON.parse(selectedRoom.layout) : {beds: []}}
                       onSave={handleSaveLayout}
                       editable={true}
                     />

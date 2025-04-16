@@ -127,10 +127,16 @@ export function RoomLayout({ roomId, layout, onSave, editable }: RoomLayoutProps
   
   // 초기 레이아웃 설정
   useEffect(() => {
+    console.log("레이아웃 변경 감지:", layout);
     if (layout) {
       setCurrentLayout(layout);
     }
   }, [layout]);
+  
+  // 디버깅용 - 레이아웃이 변경될 때마다 로그 출력
+  useEffect(() => {
+    console.log("현재 레이아웃 상태:", currentLayout);
+  }, [currentLayout]);
   
   // 병실 레이아웃 저장
   const saveLayout = () => {
