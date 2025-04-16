@@ -324,6 +324,7 @@ export default function AccountsManagementPage() {
       username: userData.username,
       name: userData.name,
       email: userData.email,
+      phoneNumber: userData.phoneNumber || "",
       role: userData.role,
       preferredLanguage: userData.preferredLanguage || "ko",
     });
@@ -624,6 +625,7 @@ export default function AccountsManagementPage() {
                   <TableHead>이름</TableHead>
                   <TableHead>아이디</TableHead>
                   <TableHead>이메일</TableHead>
+                  <TableHead>연락처</TableHead>
                   <TableHead>역할</TableHead>
                   <TableHead className="text-right">작업</TableHead>
                 </TableRow>
@@ -635,6 +637,7 @@ export default function AccountsManagementPage() {
                       <TableCell className="font-medium">{userData.name}</TableCell>
                       <TableCell>{userData.username}</TableCell>
                       <TableCell>{userData.email}</TableCell>
+                      <TableCell>{userData.phoneNumber || "-"}</TableCell>
                       <TableCell>{getRoleDisplay(userData.role)}</TableCell>
                       <TableCell className="text-right">
                         <div className="flex justify-end gap-2">
@@ -678,7 +681,7 @@ export default function AccountsManagementPage() {
                   ))
                 ) : (
                   <TableRow>
-                    <TableCell colSpan={5} className="text-center py-6">
+                    <TableCell colSpan={6} className="text-center py-6">
                       {searchTerm ? "검색 결과가 없습니다." : "사용자가 없습니다."}
                     </TableCell>
                   </TableRow>
@@ -759,6 +762,20 @@ export default function AccountsManagementPage() {
                     <FormLabel>이메일</FormLabel>
                     <FormControl>
                       <Input placeholder="이메일" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              
+              <FormField
+                control={editForm.control}
+                name="phoneNumber"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>연락처</FormLabel>
+                    <FormControl>
+                      <Input placeholder="연락처 (예: 010-1234-5678)" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
