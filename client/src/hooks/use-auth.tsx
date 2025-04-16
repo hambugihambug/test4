@@ -247,22 +247,45 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const logoutMutation = useMutation({
     mutationFn: async () => {
-      await apiRequest("POST", "/api/logout");
-      // 로그아웃 시 토큰 삭제
+      // 먼저 토큰 삭제하여 다음 요청에 토큰이 포함되지 않도록 함
       localStorage.removeItem('token');
+      
+      try {
+        await apiRequest("POST", "/api/logout");
+      } catch (error) {
+        console.error("로그아웃 API 호출 중 오류:", error);
+        // API 실패해도 계속 진행 (로컬 상태 리셋)
+      }
     },
     onSuccess: () => {
+      // 인증 상태를 즉시 null로 설정
       queryClient.setQueryData(["/api/user"], null);
+      
       toast({
         title: "로그아웃 되었습니다",
       });
+      
+      // 강제로 페이지 새로고침하여 모든 상태 초기화
+      console.log("로그아웃 성공, 상태 초기화 후 로그인 페이지로 이동");
+      setTimeout(() => {
+        window.location.href = "/auth";
+      }, 500);
     },
     onError: (error: Error) => {
+      // 오류가 발생해도 로컬 토큰은 이미 제거됨
+      console.error("로그아웃 처리 중 오류:", error);
+      
       toast({
-        title: "로그아웃 실패",
-        description: error.message,
+        title: "로그아웃 처리 중 문제가 발생했습니다",
+        description: "하지만 로그아웃은 완료되었습니다. 페이지를 새로고침해주세요.",
         variant: "destructive",
       });
+      
+      // 오류가 발생해도 인증 상태를 초기화하고 로그인 페이지로 리디렉션
+      queryClient.setQueryData(["/api/user"], null);
+      setTimeout(() => {
+        window.location.href = "/auth";
+      }, 1000);
     },
   });
 
