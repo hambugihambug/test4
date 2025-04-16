@@ -265,7 +265,7 @@ export default function PatientDetailPage() {
   const { user } = useAuth();
   
   // 권한 확인 (의사, 간호사, 병원장만 수정 가능)
-  const canEdit = user?.role === 'nurse' || user?.role === 'director';
+  const canEdit = user?.role === UserRole.NURSE || user?.role === UserRole.DIRECTOR;
   
   // 환자 데이터 (실제 구현에서는 API에서 가져옴)
   const patientId = parseInt(id || "1");

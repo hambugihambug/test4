@@ -466,7 +466,7 @@ function App() {
                 <ProtectedRoute path="/safety-dashboard" component={SafetyDashboardPage} />
                 <ProtectedRoute path="/fall-detection" component={FallDetectionPage} />
                 <ProtectedRoute path="/environment" component={EnvironmentPage} />
-                <ProtectedRoute path="/patients/:id" component={PatientDetailPage} />
+                <ProtectedRoute path="/patient-detail/:id" component={PatientDetailPage} />
                 <ProtectedRoute path="/mypage" component={MyPage} />
                 <ProtectedRoute 
                   path="/accounts" 
