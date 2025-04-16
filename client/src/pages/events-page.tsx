@@ -121,10 +121,10 @@ const EventsPage: React.FC = () => {
       event.roomNumber.includes(searchTerm) : true;
     
     // 유형 필터링
-    const matchesType = selectedType ? event.type === selectedType : true;
+    const matchesType = selectedType && selectedType !== "all" ? event.type === selectedType : true;
     
     // 상태 필터링
-    const matchesStatus = selectedStatus ? event.status === selectedStatus : true;
+    const matchesStatus = selectedStatus && selectedStatus !== "all" ? event.status === selectedStatus : true;
     
     // 날짜 필터링
     const matchesDate = selectedDate ? 
@@ -240,7 +240,7 @@ const EventsPage: React.FC = () => {
                     <SelectValue placeholder="모든 유형" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">모든 유형</SelectItem>
+                    <SelectItem value="all">모든 유형</SelectItem>
                     <SelectItem value="낙상">낙상</SelectItem>
                     <SelectItem value="약물투여">약물투여</SelectItem>
                     <SelectItem value="환경알림">환경알림</SelectItem>
@@ -257,7 +257,7 @@ const EventsPage: React.FC = () => {
                     <SelectValue placeholder="모든 상태" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">모든 상태</SelectItem>
+                    <SelectItem value="all">모든 상태</SelectItem>
                     <SelectItem value="완료">완료</SelectItem>
                     <SelectItem value="진행중">진행중</SelectItem>
                     <SelectItem value="예정">예정</SelectItem>
