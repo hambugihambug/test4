@@ -298,6 +298,16 @@ export default function RoomManagementPage() {
     }
   };
   
+  // 병실에 환자 배정 함수 - UI에서 호출
+  const assignPatientToRoom = (roomId: number, patientId: number) => {
+    if (!roomId || !patientId) return;
+    
+    // 편집 모드 활성화
+    setSelectedRoomId(roomId);
+    setEditingPatientId(patientId);
+    setIsAssigningPatient(true);
+  };
+  
   // Handle saving room layout
   const handleSaveLayout = async (layout: any) => {
     if (!selectedRoomId) {
@@ -942,6 +952,13 @@ export default function RoomManagementPage() {
                   String(selectedRoom?.patients.find(p => p.id === editingPatientId)?.assignedNurseId || "none") : 
                   "none"
                 }
+                onValueChange={(value) => {
+                  // 선택된 값을 직접 상태로 관리하여 참조할 수 있게 합니다
+                  const nurseIdElement = document.getElementById("nurseSelect");
+                  if (nurseIdElement) {
+                    nurseIdElement.setAttribute("data-value", value);
+                  }
+                }}
               >
                 <SelectTrigger id="nurseSelect">
                   <SelectValue placeholder="담당 간호사를 선택하세요" />
@@ -964,6 +981,13 @@ export default function RoomManagementPage() {
                   String(selectedRoom?.patients.find(p => p.id === editingPatientId)?.userId) : 
                   "none"
                 }
+                onValueChange={(value) => {
+                  // 선택된 값을 직접 상태로 관리하여 참조할 수 있게 합니다
+                  const patientIdElement = document.getElementById("patientSelect");
+                  if (patientIdElement) {
+                    patientIdElement.setAttribute("data-value", value);
+                  }
+                }}
               >
                 <SelectTrigger id="patientSelect">
                   <SelectValue placeholder="환자를 선택하세요" />
