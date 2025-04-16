@@ -28,11 +28,12 @@ const roomSchema = z.object({
 export default function RoomManagementPage() {
   console.log("RoomManagementPage 컴포넌트가 렌더링됨");
   
-  const { t } = useI18n();
-  
-  const { user } = useAuth();
-  
-  console.log("RoomManagementPage 상태 초기화 중, 사용자:", user?.username);
+  try {
+    console.log("RoomManagementPage에서 try 블록 시작");
+    const { t } = useI18n();
+    const { user } = useAuth();
+    
+    console.log("RoomManagementPage 상태 초기화 중, 사용자:", user?.username);
   const [isAddingRoom, setIsAddingRoom] = useState(false);
   
   // 디버깅: 페이지 로드 시 인증 정보 확인
@@ -532,4 +533,14 @@ export default function RoomManagementPage() {
       </Dialog>
     </div>
   );
+  } catch (error) {
+    console.error("RoomManagementPage에서 오류 발생:", error);
+    return <div className="p-6 text-center">
+      <h1 className="text-2xl font-bold text-red-500 mb-4">오류가 발생했습니다</h1>
+      <p className="text-gray-600 mb-4">병실 관리 페이지를 로드하는 중 문제가 발생했습니다.</p>
+      <pre className="bg-gray-100 p-4 rounded text-left text-sm overflow-auto">
+        {error instanceof Error ? error.message : JSON.stringify(error)}
+      </pre>
+    </div>;
+  }
 }
