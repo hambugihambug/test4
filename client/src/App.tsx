@@ -25,7 +25,8 @@ import {
   MessageCircle,
   Menu,
   LogOut,
-  ChevronDown
+  ChevronDown,
+  Activity
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -79,9 +80,14 @@ function Sidebar() {
   return (
     <div className="hidden md:flex h-full w-60 flex-col bg-white border-r border-gray-200">
       <div className="p-4">
-        <a href="/" className="cursor-pointer block">
-          <h2 className="text-lg font-semibold">스마트 케어</h2>
-          <p className="text-sm text-gray-500">병원 관리 시스템</p>
+        <a href="/" className="cursor-pointer flex items-center">
+          <div className="w-10 h-10 bg-primary/10 rounded-full flex items-center justify-center mr-3">
+            <Activity className="h-5 w-5 text-primary" />
+          </div>
+          <div>
+            <h2 className="text-lg font-semibold">스마트 케어</h2>
+            <p className="text-sm text-gray-500">병원 관리 시스템</p>
+          </div>
         </a>
       </div>
       
@@ -291,7 +297,12 @@ function Header() {
     <header className="bg-white border-b shadow-sm p-4 md:p-6">
       <div className="container mx-auto flex items-center">
         <MobileSidebar />
-        <a href="/" className="text-xl font-bold text-primary md:hidden">스마트 케어</a>
+        <a href="/" className="flex items-center text-primary md:hidden">
+          <div className="w-8 h-8 bg-primary/10 rounded-full flex items-center justify-center mr-2">
+            <Activity className="h-4 w-4 text-primary" />
+          </div>
+          <span className="text-xl font-bold">스마트 케어</span>
+        </a>
       </div>
     </header>
   );
