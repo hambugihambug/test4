@@ -19,9 +19,9 @@ import { useToast } from "@/hooks/use-toast";
 
 // Account settings schema
 const accountSettingsSchema = z.object({
-  name: z.string().min(1, "Name is required"),
-  currentPassword: z.string().min(1, "Current password is required"),
-  newPassword: z.string().min(6, "New password must be at least 6 characters").optional(),
+  name: z.string().min(1, "이름을 입력해주세요"),
+  currentPassword: z.string().min(1, "현재 비밀번호를 입력해주세요"),
+  newPassword: z.string().min(6, "새 비밀번호는 최소 6자 이상이어야 합니다").optional(),
   confirmPassword: z.string().optional(),
 }).refine((data) => {
   if (data.newPassword && data.newPassword !== data.confirmPassword) {
@@ -29,7 +29,7 @@ const accountSettingsSchema = z.object({
   }
   return true;
 }, {
-  message: "Passwords do not match",
+  message: "비밀번호가 일치하지 않습니다",
   path: ["confirmPassword"],
 });
 
