@@ -1,17 +1,34 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useAuth } from '@/hooks/use-auth';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
-import { Calendar as CalendarIcon, Clock, Search, Filter, AlertCircle, Pill, Thermometer, Stethoscope, Calendar } from 'lucide-react';
+import { 
+  Calendar as CalendarIcon, 
+  Clock, 
+  Search, 
+  Filter, 
+  AlertCircle, 
+  Pill, 
+  Thermometer, 
+  Stethoscope, 
+  Calendar,
+  PlusCircle,
+  Edit,
+  Trash2,
+  User
+} from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Calendar as CalendarComponent } from '@/components/ui/calendar';
 import { format } from 'date-fns';
 import { ko } from 'date-fns/locale';
 import { cn } from '@/lib/utils';
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { useToast } from '@/hooks/use-toast';
 
 // 이벤트 데이터 타입
 type EventType = '낙상' | '약물투여' | '환경알림' | '치료' | '검진';
@@ -26,10 +43,12 @@ interface Event {
   roomNumber: string;
   patientName?: string;
   description?: string;
+  createdBy?: string; // 작성자 정보 추가
+  createdAt?: string; // 생성 날짜/시간
 }
 
 // 이벤트 데이터
-const events: Event[] = [
+let events: Event[] = [
   {
     id: '1',
     title: '낙상 감지 알림',
@@ -38,7 +57,9 @@ const events: Event[] = [
     status: '완료',
     roomNumber: '304',
     patientName: '김환자',
-    description: '침대에서 내려오다 미끄러짐'
+    description: '침대에서 내려오다 미끄러짐',
+    createdBy: '김간호사',
+    createdAt: '2025-04-10 14:35'
   },
   {
     id: '2',
@@ -48,7 +69,9 @@ const events: Event[] = [
     status: '예정',
     roomNumber: '302',
     patientName: '이환자',
-    description: '혈압약 투여'
+    description: '혈압약 투여',
+    createdBy: '이간호사',
+    createdAt: '2025-04-14 09:15'
   },
   {
     id: '3',
@@ -57,7 +80,9 @@ const events: Event[] = [
     datetime: '2025-04-12 16:45',
     status: '완료',
     roomNumber: '305',
-    description: '실내 온도 과열 (30°C 초과)'
+    description: '실내 온도 과열 (30°C 초과)',
+    createdBy: '시스템',
+    createdAt: '2025-04-12 16:46'
   },
   {
     id: '4',
@@ -66,7 +91,9 @@ const events: Event[] = [
     datetime: '2025-04-18 10:30',
     status: '예정',
     roomNumber: '301',
-    patientName: '박환자'
+    patientName: '박환자',
+    createdBy: '박의사',
+    createdAt: '2025-04-13 15:20'
   },
   {
     id: '5',
@@ -76,7 +103,9 @@ const events: Event[] = [
     status: '완료',
     roomNumber: '304',
     patientName: '김환자',
-    description: '어깨 물리치료'
+    description: '어깨 물리치료',
+    createdBy: '최물리치료사',
+    createdAt: '2025-04-12 09:45'
   }
 ];
 
@@ -106,11 +135,91 @@ const getStatusColor = (status: EventStatus) => {
 // 이벤트 페이지 컴포넌트
 const EventsPage: React.FC = () => {
   const { user } = useAuth();
+  const { toast } = useToast();
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedType, setSelectedType] = useState<string | undefined>();
   const [selectedStatus, setSelectedStatus] = useState<string | undefined>();
   const [selectedDate, setSelectedDate] = useState<Date | undefined>();
   const [activeTab, setActiveTab] = useState("recent");
+  
+  // 이벤트 추가/수정 다이얼로그 상태
+  const [showAddEventDialog, setShowAddEventDialog] = useState(false);
+  const [showEditEventDialog, setShowEditEventDialog] = useState(false);
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [selectedEvent, setSelectedEvent] = useState<Event | null>(null);
+  
+  // 권한 확인 (관리자, 간호사, 의사만 수정 가능)
+  const canEdit = user?.role === 'director' || user?.role === 'nurse';
+  
+  // 이벤트 추가 처리
+  const handleAddEvent = (newEventData: Omit<Event, 'id'>) => {
+    // 실제 구현에서는 API 호출로 서버에 데이터 저장
+    // 현재는 임시 로컬 데이터로 구현
+    
+    // 새 ID 생성 (실제로는 서버에서 할당)
+    const newId = (parseInt(events[events.length - 1].id) + 1).toString();
+    
+    // 이벤트 추가
+    const newEvent = {
+      id: newId,
+      ...newEventData
+    };
+    
+    events = [newEvent, ...events];
+    
+    // 다이얼로그 닫기
+    setShowAddEventDialog(false);
+    
+    // 성공 메시지
+    toast({
+      title: "이벤트 추가 완료",
+      description: "새 이벤트가 성공적으로 추가되었습니다.",
+    });
+  };
+  
+  // 이벤트 수정 처리
+  const handleEditEvent = (updatedEvent: Event) => {
+    // 실제 구현에서는 API 호출로 서버에 데이터 업데이트
+    // 현재는 임시 로컬 데이터로 구현
+    
+    // 이벤트 업데이트
+    const eventIndex = events.findIndex(e => e.id === updatedEvent.id);
+    if (eventIndex !== -1) {
+      events[eventIndex] = updatedEvent;
+    }
+    
+    // 다이얼로그 닫기
+    setShowEditEventDialog(false);
+    
+    // 성공 메시지
+    toast({
+      title: "이벤트 수정 완료",
+      description: "이벤트가 성공적으로 수정되었습니다.",
+    });
+  };
+  
+  // 이벤트 삭제 처리
+  const handleDeleteEvent = () => {
+    if (!selectedEvent) return;
+    
+    // 실제 구현에서는 API 호출로 서버에서 데이터 삭제
+    // 현재는 임시 로컬 데이터로 구현
+    
+    // 이벤트 삭제
+    const eventIndex = events.findIndex(e => e.id === selectedEvent.id);
+    if (eventIndex !== -1) {
+      events.splice(eventIndex, 1);
+    }
+    
+    // 다이얼로그 닫기
+    setShowDeleteDialog(false);
+    
+    // 성공 메시지
+    toast({
+      title: "이벤트 삭제 완료",
+      description: "이벤트가 성공적으로 삭제되었습니다.",
+    });
+  };
   
   // 필터링된 이벤트 목록
   const filteredEvents = events.filter(event => {
@@ -156,8 +265,18 @@ const EventsPage: React.FC = () => {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
         <div className="lg:col-span-2">
           <Card>
-            <CardHeader className="pb-3">
+            <CardHeader className="pb-3 flex flex-row items-center justify-between">
               <CardTitle>이벤트 타임라인</CardTitle>
+              {canEdit && (
+                <Button 
+                  size="sm" 
+                  className="h-8 gap-1"
+                  onClick={() => setShowAddEventDialog(true)}
+                >
+                  <PlusCircle className="h-4 w-4" />
+                  이벤트 추가
+                </Button>
+              )}
             </CardHeader>
             <CardContent>
               <Tabs defaultValue="all" className="mb-4">
@@ -201,6 +320,46 @@ const EventsPage: React.FC = () => {
                           </div>
                           {event.description && (
                             <p className="text-xs text-gray-600 mt-1">{event.description}</p>
+                          )}
+                          {/* 작성자 정보 표시 */}
+                          {event.createdBy && (
+                            <div className="flex items-center text-xs text-gray-500 mt-2 pt-2 border-t">
+                              <User className="h-3 w-3 mr-1" />
+                              작성자: {event.createdBy}
+                              {event.createdAt && (
+                                <>
+                                  <span className="mx-2">•</span>
+                                  {event.createdAt}
+                                </>
+                              )}
+                            </div>
+                          )}
+                          {/* 수정/삭제 버튼 */}
+                          {canEdit && (
+                            <div className="flex gap-2 mt-2">
+                              <Button 
+                                variant="ghost" 
+                                size="sm" 
+                                className="h-7 px-2"
+                                onClick={() => {
+                                  setSelectedEvent(event);
+                                  setShowEditEventDialog(true);
+                                }}
+                              >
+                                <Edit className="h-3.5 w-3.5 mr-1" /> 수정
+                              </Button>
+                              <Button 
+                                variant="ghost" 
+                                size="sm" 
+                                className="h-7 px-2 text-red-500 hover:text-red-600"
+                                onClick={() => {
+                                  setSelectedEvent(event);
+                                  setShowDeleteDialog(true);
+                                }}
+                              >
+                                <Trash2 className="h-3.5 w-3.5 mr-1" /> 삭제
+                              </Button>
+                            </div>
                           )}
                         </div>
                       </div>
@@ -334,7 +493,378 @@ const EventsPage: React.FC = () => {
           </Card>
         </div>
       </div>
+      
+      {/* 이벤트 추가 다이얼로그 */}
+      <AddEventDialog 
+        open={showAddEventDialog}
+        onOpenChange={setShowAddEventDialog}
+        onSave={handleAddEvent}
+        user={user}
+      />
+      
+      {/* 이벤트 수정 다이얼로그 */}
+      <EditEventDialog 
+        open={showEditEventDialog}
+        onOpenChange={setShowEditEventDialog}
+        onSave={handleEditEvent}
+        event={selectedEvent}
+      />
+      
+      {/* 이벤트 삭제 확인 다이얼로그 */}
+      <DeleteEventDialog 
+        open={showDeleteDialog}
+        onOpenChange={setShowDeleteDialog}
+        onConfirm={handleDeleteEvent}
+        event={selectedEvent}
+      />
     </div>
+  );
+};
+
+// 이벤트 추가 다이얼로그
+const AddEventDialog: React.FC<{
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  onSave: (event: Omit<Event, 'id'>) => void;
+  user: any;
+}> = ({ open, onOpenChange, onSave, user }) => {
+  const [title, setTitle] = useState("");
+  const [type, setType] = useState<EventType | "">("");
+  const [datetime, setDatetime] = useState("");
+  const [status, setStatus] = useState<EventStatus | "">("");
+  const [roomNumber, setRoomNumber] = useState("");
+  const [patientName, setPatientName] = useState("");
+  const [description, setDescription] = useState("");
+  
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!title || !type || !datetime || !status || !roomNumber) {
+      return; // 필수 필드 검증
+    }
+    
+    const now = new Date();
+    const formattedDate = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')} ${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+    
+    onSave({
+      title,
+      type: type as EventType,
+      datetime,
+      status: status as EventStatus,
+      roomNumber,
+      patientName: patientName || undefined,
+      description: description || undefined,
+      createdBy: user?.username || '시스템',
+      createdAt: formattedDate
+    });
+    
+    // 폼 초기화
+    setTitle("");
+    setType("");
+    setDatetime("");
+    setStatus("");
+    setRoomNumber("");
+    setPatientName("");
+    setDescription("");
+  };
+  
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="max-w-md">
+        <DialogHeader>
+          <DialogTitle>새 이벤트 추가</DialogTitle>
+          <DialogDescription>새로운 이벤트를 생성합니다.</DialogDescription>
+        </DialogHeader>
+        <form onSubmit={handleSubmit}>
+          <div className="grid gap-4 py-4">
+            <div>
+              <label htmlFor="title" className="text-sm font-medium block mb-1">제목</label>
+              <Input
+                id="title"
+                value={title}
+                onChange={(e) => setTitle(e.target.value)}
+                placeholder="이벤트 제목"
+                required
+              />
+            </div>
+            
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label htmlFor="type" className="text-sm font-medium block mb-1">유형</label>
+                <Select value={type} onValueChange={(value) => setType(value as EventType)}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="유형 선택" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="낙상">낙상</SelectItem>
+                    <SelectItem value="약물투여">약물투여</SelectItem>
+                    <SelectItem value="환경알림">환경알림</SelectItem>
+                    <SelectItem value="치료">치료</SelectItem>
+                    <SelectItem value="검진">검진</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              
+              <div>
+                <label htmlFor="status" className="text-sm font-medium block mb-1">상태</label>
+                <Select value={status} onValueChange={(value) => setStatus(value as EventStatus)}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="상태 선택" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="완료">완료</SelectItem>
+                    <SelectItem value="진행중">진행중</SelectItem>
+                    <SelectItem value="예정">예정</SelectItem>
+                    <SelectItem value="취소">취소</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+            
+            <div>
+              <label htmlFor="datetime" className="text-sm font-medium block mb-1">날짜 및 시간</label>
+              <Input
+                id="datetime"
+                type="datetime-local"
+                value={datetime}
+                onChange={(e) => setDatetime(e.target.value)}
+                required
+              />
+            </div>
+            
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label htmlFor="roomNumber" className="text-sm font-medium block mb-1">병실 번호</label>
+                <Input
+                  id="roomNumber"
+                  value={roomNumber}
+                  onChange={(e) => setRoomNumber(e.target.value)}
+                  placeholder="예: 301"
+                  required
+                />
+              </div>
+              
+              <div>
+                <label htmlFor="patientName" className="text-sm font-medium block mb-1">환자 이름</label>
+                <Input
+                  id="patientName"
+                  value={patientName}
+                  onChange={(e) => setPatientName(e.target.value)}
+                  placeholder="(선택사항)"
+                />
+              </div>
+            </div>
+            
+            <div>
+              <label htmlFor="description" className="text-sm font-medium block mb-1">설명</label>
+              <Textarea
+                id="description"
+                value={description}
+                onChange={(e) => setDescription(e.target.value)}
+                placeholder="이벤트에 대한 상세 설명"
+                className="resize-none"
+                rows={3}
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>취소</Button>
+            <Button type="submit">저장</Button>
+          </DialogFooter>
+        </form>
+      </DialogContent>
+    </Dialog>
+  );
+};
+
+// 이벤트 수정 다이얼로그
+const EditEventDialog: React.FC<{
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  onSave: (event: Event) => void;
+  event: Event | null;
+}> = ({ open, onOpenChange, onSave, event }) => {
+  const [title, setTitle] = useState("");
+  const [type, setType] = useState<EventType | "">("");
+  const [datetime, setDatetime] = useState("");
+  const [status, setStatus] = useState<EventStatus | "">("");
+  const [roomNumber, setRoomNumber] = useState("");
+  const [patientName, setPatientName] = useState("");
+  const [description, setDescription] = useState("");
+  
+  // 이벤트 데이터로 폼 필드 초기화
+  useEffect(() => {
+    if (event) {
+      setTitle(event.title);
+      setType(event.type);
+      setDatetime(event.datetime);
+      setStatus(event.status);
+      setRoomNumber(event.roomNumber);
+      setPatientName(event.patientName || "");
+      setDescription(event.description || "");
+    }
+  }, [event]);
+  
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!event || !title || !type || !datetime || !status || !roomNumber) {
+      return; // 필수 필드 검증
+    }
+    
+    onSave({
+      ...event,
+      title,
+      type: type as EventType,
+      datetime,
+      status: status as EventStatus,
+      roomNumber,
+      patientName: patientName || undefined,
+      description: description || undefined,
+    });
+  };
+  
+  if (!event) return null;
+  
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="max-w-md">
+        <DialogHeader>
+          <DialogTitle>이벤트 수정</DialogTitle>
+          <DialogDescription>이벤트 정보를 수정합니다.</DialogDescription>
+        </DialogHeader>
+        <form onSubmit={handleSubmit}>
+          <div className="grid gap-4 py-4">
+            <div>
+              <label htmlFor="title" className="text-sm font-medium block mb-1">제목</label>
+              <Input
+                id="title"
+                value={title}
+                onChange={(e) => setTitle(e.target.value)}
+                placeholder="이벤트 제목"
+                required
+              />
+            </div>
+            
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label htmlFor="type" className="text-sm font-medium block mb-1">유형</label>
+                <Select value={type} onValueChange={(value) => setType(value as EventType)}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="유형 선택" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="낙상">낙상</SelectItem>
+                    <SelectItem value="약물투여">약물투여</SelectItem>
+                    <SelectItem value="환경알림">환경알림</SelectItem>
+                    <SelectItem value="치료">치료</SelectItem>
+                    <SelectItem value="검진">검진</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              
+              <div>
+                <label htmlFor="status" className="text-sm font-medium block mb-1">상태</label>
+                <Select value={status} onValueChange={(value) => setStatus(value as EventStatus)}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="상태 선택" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="완료">완료</SelectItem>
+                    <SelectItem value="진행중">진행중</SelectItem>
+                    <SelectItem value="예정">예정</SelectItem>
+                    <SelectItem value="취소">취소</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+            
+            <div>
+              <label htmlFor="datetime" className="text-sm font-medium block mb-1">날짜 및 시간</label>
+              <Input
+                id="datetime"
+                value={datetime}
+                onChange={(e) => setDatetime(e.target.value)}
+                required
+              />
+            </div>
+            
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label htmlFor="roomNumber" className="text-sm font-medium block mb-1">병실 번호</label>
+                <Input
+                  id="roomNumber"
+                  value={roomNumber}
+                  onChange={(e) => setRoomNumber(e.target.value)}
+                  placeholder="예: 301"
+                  required
+                />
+              </div>
+              
+              <div>
+                <label htmlFor="patientName" className="text-sm font-medium block mb-1">환자 이름</label>
+                <Input
+                  id="patientName"
+                  value={patientName}
+                  onChange={(e) => setPatientName(e.target.value)}
+                  placeholder="(선택사항)"
+                />
+              </div>
+            </div>
+            
+            <div>
+              <label htmlFor="description" className="text-sm font-medium block mb-1">설명</label>
+              <Textarea
+                id="description"
+                value={description}
+                onChange={(e) => setDescription(e.target.value)}
+                placeholder="이벤트에 대한 상세 설명"
+                className="resize-none"
+                rows={3}
+              />
+            </div>
+            
+            <div className="text-sm text-gray-500">
+              <p>작성자: {event.createdBy || '알 수 없음'}</p>
+              <p>생성일: {event.createdAt || '알 수 없음'}</p>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>취소</Button>
+            <Button type="submit">저장</Button>
+          </DialogFooter>
+        </form>
+      </DialogContent>
+    </Dialog>
+  );
+};
+
+// 이벤트 삭제 확인 다이얼로그
+const DeleteEventDialog: React.FC<{
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  onConfirm: () => void;
+  event: Event | null;
+}> = ({ open, onOpenChange, onConfirm, event }) => {
+  if (!event) return null;
+  
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="max-w-md">
+        <DialogHeader>
+          <DialogTitle>이벤트 삭제</DialogTitle>
+          <DialogDescription>이 이벤트를 정말로 삭제하시겠습니까? 이 작업은 되돌릴 수 없습니다.</DialogDescription>
+        </DialogHeader>
+        <div className="py-4">
+          <div className="bg-gray-50 p-3 rounded-md">
+            <p className="font-medium">{event.title}</p>
+            <p className="text-sm text-gray-600">{event.datetime} | {event.type} | {event.roomNumber}호실</p>
+          </div>
+        </div>
+        <DialogFooter>
+          <Button variant="outline" onClick={() => onOpenChange(false)}>취소</Button>
+          <Button variant="destructive" onClick={onConfirm}>삭제</Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   );
 };
 
