@@ -11,6 +11,7 @@ import RoomManagementPage from "@/pages/room-management-page";
 import { AuthProvider, useAuth } from "@/hooks/use-auth";
 import { ProtectedRoute } from "@/lib/protected-route";
 import { UserRole } from "@shared/schema";
+import { I18nProvider } from "@/contexts/I18nContext";
 import { useEffect } from "react";
 import { 
   Home, 
@@ -372,44 +373,46 @@ function App() {
   
   return (
     <AuthProvider>
-      <div className="min-h-screen bg-gray-50 flex">
-        <Sidebar />
-        
-        <div className="flex-1 flex flex-col">
-          <Header />
+      <I18nProvider>
+        <div className="min-h-screen bg-gray-50 flex">
+          <Sidebar />
           
-          <main className="flex-1 overflow-auto">
-            <Switch>
-              <Route path="/auth" component={AuthPage} />
-              <ProtectedRoute path="/" component={HomePage} />
-              <ProtectedRoute path="/dashboard" component={DashboardPage} />
-              <ProtectedRoute path="/fall-detection" component={FallDetectionPage} />
-              <ProtectedRoute path="/patients/:id" component={PatientDetailPage} />
-              <ProtectedRoute path="/mypage" component={MyPage} />
-              <ProtectedRoute 
-                path="/accounts" 
-                component={AccountsManagementPage} 
-                roles={[UserRole.DIRECTOR, UserRole.NURSE]} 
-              />
-              <ProtectedRoute 
-                path="/room-management" 
-                component={RoomManagementPage}
-                roles={[UserRole.DIRECTOR, UserRole.NURSE]}
-              />
-              <ProtectedRoute path="/messages" component={() => <div className="p-8">메시지 - 구현 중</div>} />
-              <ProtectedRoute path="/settings" component={() => <div className="p-8">설정 - 구현 중</div>} />
-              <Route component={NotFound} />
-            </Switch>
-          </main>
-          
-          <footer className="bg-white border-t py-4 mt-8">
-            <div className="container mx-auto px-4 text-center text-sm text-gray-500">
-              © 2025 스마트 케어 시스템. All rights reserved.
-            </div>
-          </footer>
+          <div className="flex-1 flex flex-col">
+            <Header />
+            
+            <main className="flex-1 overflow-auto">
+              <Switch>
+                <Route path="/auth" component={AuthPage} />
+                <ProtectedRoute path="/" component={HomePage} />
+                <ProtectedRoute path="/dashboard" component={DashboardPage} />
+                <ProtectedRoute path="/fall-detection" component={FallDetectionPage} />
+                <ProtectedRoute path="/patients/:id" component={PatientDetailPage} />
+                <ProtectedRoute path="/mypage" component={MyPage} />
+                <ProtectedRoute 
+                  path="/accounts" 
+                  component={AccountsManagementPage} 
+                  roles={[UserRole.DIRECTOR, UserRole.NURSE]} 
+                />
+                <ProtectedRoute 
+                  path="/room-management" 
+                  component={RoomManagementPage}
+                  roles={[UserRole.DIRECTOR, UserRole.NURSE]}
+                />
+                <ProtectedRoute path="/messages" component={() => <div className="p-8">메시지 - 구현 중</div>} />
+                <ProtectedRoute path="/settings" component={() => <div className="p-8">설정 - 구현 중</div>} />
+                <Route component={NotFound} />
+              </Switch>
+            </main>
+            
+            <footer className="bg-white border-t py-4 mt-8">
+              <div className="container mx-auto px-4 text-center text-sm text-gray-500">
+                © 2025 스마트 케어 시스템. All rights reserved.
+              </div>
+            </footer>
+          </div>
         </div>
-      </div>
-      <Toaster />
+        <Toaster />
+      </I18nProvider>
     </AuthProvider>
   );
 }
