@@ -5,6 +5,15 @@ import {
   Edit, Check, X, MessageCircle, Bell, RefreshCw, AlertCircle,
   Settings, Trash2, Plus
 } from "lucide-react";
+
+// 간호사 목록 데이터 (실제 구현에서는 API에서 가져옴)
+const NURSES_DATA = [
+  { id: 5, name: "김간호사" },
+  { id: 6, name: "이간호사" },
+  { id: 7, name: "박간호사" },
+  { id: 8, name: "최간호사" },
+  { id: 9, name: "정간호사" }
+];
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -504,6 +513,12 @@ export default function PatientDetailPage() {
   // 권한 확인 (의사, 간호사, 병원장만 수정 가능)
   const canEdit = user?.role === UserRole.NURSE || user?.role === UserRole.DIRECTOR;
   
+  // 간호사 ID로 간호사 이름 가져오는 함수
+  const getNurseName = (nurseId: number) => {
+    const nurse = NURSES_DATA.find(nurse => nurse.id === nurseId);
+    return nurse ? nurse.name : `${nurseId}번`;
+  };
+  
   // 환자 데이터 (실제 구현에서는 API에서 가져옴)
   const patientId = parseInt(id || "1");
   
@@ -701,7 +716,7 @@ export default function PatientDetailPage() {
           <div>
             <h1 className="text-2xl font-bold">{patient.name} 환자</h1>
             <p className="text-muted-foreground">
-              {patient.age}세 · {patient.gender} · {patient.diagnosis} · {patient.roomNumber}호 {patient.bedNumber}번 침대 · 담당간호사: {patient.assignedNurseId}번
+              {patient.age}세 · {patient.gender} · {patient.diagnosis} · {patient.roomNumber}호 {patient.bedNumber}번 침대 · 담당간호사: {getNurseName(patient.assignedNurseId)}
             </p>
           </div>
         </div>
@@ -1355,13 +1370,21 @@ export default function PatientDetailPage() {
             </div>
             <div className="grid grid-cols-4 items-center gap-4">
               <label htmlFor="assignedNurseId" className="text-right text-sm">담당 간호사</label>
-              <Input
-                id="assignedNurseId"
-                type="number"
-                value={formData.assignedNurseId}
-                onChange={(e) => setFormData({...formData, assignedNurseId: parseInt(e.target.value)})}
-                className="col-span-3"
-              />
+              <Select 
+                value={formData.assignedNurseId.toString()} 
+                onValueChange={(value) => setFormData({...formData, assignedNurseId: parseInt(value)})}
+              >
+                <SelectTrigger className="col-span-3">
+                  <SelectValue placeholder="담당 간호사 선택" />
+                </SelectTrigger>
+                <SelectContent>
+                  {NURSES_DATA.map((nurse) => (
+                    <SelectItem key={nurse.id} value={nurse.id.toString()}>
+                      {nurse.name} (ID: {nurse.id})
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
           </div>
           <DialogFooter>
