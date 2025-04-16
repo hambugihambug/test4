@@ -83,7 +83,8 @@ function Sidebar() {
   
   // 역할에 따른 메뉴 권한 설정
   const canAccessUserManagement = user.role === UserRole.DIRECTOR || user.role === UserRole.NURSE;
-  const canAccessRoomManagement = user.role === UserRole.DIRECTOR || user.role === UserRole.NURSE;
+  // 모든 사용자가 병실 및 환자 관리에 접근할 수 있도록 변경 (임시)
+  const canAccessRoomManagement = true;
   
   return (
     <div className="hidden md:flex h-full w-60 flex-col bg-white border-r border-gray-200">
@@ -227,7 +228,8 @@ function MobileSidebar() {
   if (!user) return null;
   
   const canAccessUserManagement = user.role === UserRole.DIRECTOR || user.role === UserRole.NURSE;
-  const canAccessRoomManagement = user.role === UserRole.DIRECTOR || user.role === UserRole.NURSE;
+  // 모든 사용자가 병실 및 환자 관리에 접근할 수 있도록 변경 (임시)
+  const canAccessRoomManagement = true;
   
   return (
     <div className="md:hidden">
@@ -476,7 +478,6 @@ function App() {
                 <ProtectedRoute 
                   path="/room-management" 
                   component={RoomManagementPage}
-                  roles={[UserRole.DIRECTOR, UserRole.NURSE]}
                 />
                 <ProtectedRoute path="/messages" component={MessagesPage} />
                 <ProtectedRoute path="/settings" component={SettingsPage} />
