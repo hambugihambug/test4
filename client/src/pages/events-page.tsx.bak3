@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { Calendar, Clock, Filter, Search, Users } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
@@ -112,6 +112,70 @@ const mockEvents: Event[] = [
     },
     status: "완료",
     assignedTo: ["김물리치료사"]
+  },
+  {
+    id: "6",
+    title: "가족 방문",
+    type: "방문",
+    date: new Date(2025, 3, 16, 15, 0),
+    time: "15:00",
+    description: "가족 방문 일정",
+    patient: {
+      id: "p2",
+      name: "정환자",
+      roomNumber: "302"
+    },
+    status: "예정"
+  },
+  {
+    id: "7",
+    title: "환자 회진",
+    type: "검진",
+    date: new Date(2025, 3, 13, 11, 0),
+    time: "11:00",
+    description: "3층 병동 회진",
+    status: "완료",
+    assignedTo: ["박의사", "김간호사"]
+  },
+  {
+    id: "8",
+    title: "산소포화도 저하 알림",
+    type: "기타",
+    date: new Date(2025, 3, 11, 22, 15),
+    time: "22:15",
+    description: "303호 1번 침대 환자의 산소포화도가 90% 이하로 감소",
+    patient: {
+      id: "p4",
+      name: "박환자",
+      roomNumber: "303"
+    },
+    status: "완료",
+    assignedTo: ["김간호사"]
+  },
+  {
+    id: "9",
+    title: "투약 거부",
+    type: "약물투여",
+    date: new Date(2025, 3, 14, 19, 30),
+    time: "19:30",
+    description: "환자가 약물 투여를 거부함",
+    patient: {
+      id: "p3",
+      name: "최환자",
+      roomNumber: "301"
+    },
+    status: "완료",
+    assignedTo: ["김간호사"]
+  },
+  {
+    id: "10",
+    title: "낙상 위험 평가",
+    type: "검진",
+    date: new Date(2025, 3, 17, 10, 0),
+    time: "10:00",
+    description: "모든 환자 낙상 위험 정기 평가",
+    status: "예정",
+    assignedTo: ["김간호사", "박의사"]
   }
 ];
 
@@ -139,94 +203,36 @@ const getEventStatusColor = (status: string) => {
   }
 };
 
-// 간단한 에러 표시 컴포넌트
-const ErrorDisplay = ({ error, details }: { error: string, details?: string }) => (
-  <div className="container mx-auto p-6 bg-red-50 border border-red-300 rounded-lg">
-    <h1 className="text-2xl font-bold mb-4 text-red-600">에러 발생</h1>
-    <div className="bg-white p-4 rounded shadow mb-4">
-      <p className="font-semibold mb-2">에러 메시지:</p>
-      <pre className="bg-red-50 p-3 rounded text-red-800 whitespace-pre-wrap">{error}</pre>
-    </div>
-
-    {details && (
-      <div className="bg-white p-4 rounded shadow">
-        <p className="font-semibold mb-2">디버깅 정보:</p>
-        <pre className="bg-gray-50 p-3 rounded whitespace-pre-wrap text-xs">{details}</pre>
-      </div>
-    )}
-
-    <button
-      onClick={() => window.location.reload()}
-      className="mt-4 px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
-    >
-      페이지 새로고침
-    </button>
-  </div>
-);
-
-// 메인 컴포넌트
 const EventsPage: React.FC = () => {
-  // 기본 상태 관리
-  const [eventData, setEventData] = useState<Event[]>([]);
-  const [searchTerm, setSearchTerm] = useState("");
-  const [filterType, setFilterType] = useState<string | null>(null);
-  const [filterStatus, setFilterStatus] = useState<string | null>(null);
-  const [filterDate, setFilterDate] = useState<Date | null>(null);
-  const [isCalendarOpen, setIsCalendarOpen] = useState(false);
-  
-  // 에러 상태 관리
   const [error, setError] = useState<string | null>(null);
-  const [debugInfo, setDebugInfo] = useState<any>({});
+  const [debugInfo, setDebugInfo] = useState<string>("");
   
-  // 인증 정보 가져오기
-  const { user } = useAuth();
-
-  // 컴포넌트 마운트 시 데이터 로드
-  useEffect(() => {
-    try {
-      console.log("이벤트 데이터 로드 중...");
-      // 목업 데이터 사용
-      setEventData(mockEvents || []);
-      
-      // 디버깅 정보 수집
-      const debugData = {
-        mockEventsLength: mockEvents?.length || 0,
-        user: user ? { 
-          id: user.id, 
-          username: user.username,
-          role: user.role 
-        } : 'not authenticated',
-        path: window.location.pathname
-      };
-      setDebugInfo(debugData);
-      console.log("디버깅 정보:", debugData);
-      
-    } catch (err) {
-      console.error("이벤트 데이터 로드 중 오류:", err);
-      setError(err instanceof Error ? err.message : String(err));
-    }
-  }, [user]);
-
-  // 에러가 있으면 에러 표시
-  if (error) {
-    return <ErrorDisplay error={error} details={JSON.stringify(debugInfo, null, 2)} />;
-  }
-
-  // 데이터가 없으면 로딩 표시
-  if (!eventData || eventData.length === 0) {
-    return (
-      <div className="flex flex-col items-center justify-center min-h-[50vh]">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mb-4"></div>
-        <p className="text-gray-500">데이터를 불러오는 중입니다...</p>
-        <pre className="mt-4 p-4 bg-gray-100 rounded text-xs overflow-auto max-w-full">
-          {JSON.stringify(debugInfo, null, 2)}
-        </pre>
-      </div>
-    );
-  }
+  try {
+    console.error("이벤트 페이지 렌더링 시작");
+    
+    const [events] = useState<Event[]>(mockEvents || []);
+    const [searchTerm, setSearchTerm] = useState("");
+    const [filterType, setFilterType] = useState<string | null>(null);
+    const [filterStatus, setFilterStatus] = useState<string | null>(null);
+    const [filterDate, setFilterDate] = useState<Date | null>(null);
+    const [isCalendarOpen, setIsCalendarOpen] = useState(false);
+    const { user } = useAuth();
+    
+    // 디버깅 정보 수집
+    const debugData = {
+      eventsLength: events ? events.length : 'undefined',
+      user: user ? JSON.stringify(user) : 'user is null',
+      mockEventsLength: mockEvents ? mockEvents.length : 'undefined',
+    };
+    
+    console.error("이벤트 페이지 렌더링 중...", debugData);
+    setDebugInfo(JSON.stringify(debugData, null, 2));
+    
+    // 이 코드가 실행되면 에러가 없는 것입니다
+    setError(null);
 
   // 이벤트 필터링
-  const filteredEvents = eventData.filter(event => {
+  const filteredEvents = events.filter(event => {
     // 검색어 필터링
     const matchesSearch = 
       event.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -281,6 +287,37 @@ const EventsPage: React.FC = () => {
     ? filteredEvents
     : guardianFilteredEvents;
 
+  } catch (err) {
+    console.error("이벤트 페이지 렌더링 중 오류 발생:", err);
+    setError(err instanceof Error ? err.message : String(err));
+  }
+
+  // 에러가 발생한 경우 에러 메시지와 디버깅 정보 표시
+  if (error) {
+    return (
+      <div className="container mx-auto p-6 bg-red-50 border border-red-300 rounded-lg">
+        <h1 className="text-2xl font-bold mb-4 text-red-600">에러 발생</h1>
+        <div className="bg-white p-4 rounded shadow mb-4">
+          <p className="font-semibold mb-2">에러 메시지:</p>
+          <pre className="bg-red-50 p-3 rounded text-red-800 whitespace-pre-wrap">{error}</pre>
+        </div>
+        
+        <div className="bg-white p-4 rounded shadow">
+          <p className="font-semibold mb-2">디버깅 정보:</p>
+          <pre className="bg-gray-50 p-3 rounded whitespace-pre-wrap text-xs">{debugInfo}</pre>
+        </div>
+        
+        <button 
+          onClick={() => window.location.reload()} 
+          className="mt-4 px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
+        >
+          페이지 새로고침
+        </button>
+      </div>
+    );
+  }
+
+  // 정상적인 렌더링
   return (
     <div className="container mx-auto p-6">
       <div className="mb-6">
@@ -364,12 +401,6 @@ const EventsPage: React.FC = () => {
             필터 초기화
           </Button>
         </div>
-      </div>
-
-      {/* 디버깅 정보 */}
-      <div className="mb-6 bg-yellow-50 p-4 rounded-lg shadow text-xs">
-        <h3 className="font-bold mb-2">디버깅 정보:</h3>
-        <pre className="whitespace-pre-wrap">{JSON.stringify(debugInfo, null, 2)}</pre>
       </div>
 
       {/* 이벤트 목록 */}
