@@ -81,9 +81,12 @@ export function ProtectedRoute({
       return (
         <Route path={path}>
           <div className="flex flex-col items-center justify-center min-h-screen p-4">
-            <h1 className="text-2xl font-bold mb-4">접근 권한이 없습니다</h1>
+            <h1 className="text-2xl font-bold mb-4">관리자 전용 페이지</h1>
             <p className="text-gray-500 mb-4">
-              이 페이지에 접근하기 위한 권한이 없습니다.
+              이 페이지는 관리자 권한이 있는 사용자만 접근할 수 있습니다.
+            </p>
+            <p className="text-gray-500 mb-4">
+              계정 권한: {user.role}
             </p>
           </div>
         </Route>
