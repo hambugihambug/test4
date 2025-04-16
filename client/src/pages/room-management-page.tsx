@@ -863,7 +863,9 @@ export default function RoomManagementPage() {
                   patientId: newPatientId
                 };
                 
-                layout.beds.push(newBed);
+                // 타입스크립트 오류를 우회하기 위해 any 타입으로 변환
+                const bedsArray = layout.beds as any[];
+                bedsArray.push(newBed);
                 
                 // 룸 업데이트
                 dummyRooms[roomIndex] = {
@@ -921,11 +923,11 @@ export default function RoomManagementPage() {
               <Label htmlFor="nurseId">담당 간호사</Label>
               <Select 
                 defaultValue={editingPatientId ? 
-                  String(selectedRoom?.patients.find(p => p.id === editingPatientId)?.assignedNurseId || "") : 
-                  ""
+                  String(selectedRoom?.patients.find(p => p.id === editingPatientId)?.assignedNurseId || "none") : 
+                  "none"
                 }
               >
-                <SelectTrigger>
+                <SelectTrigger id="nurseSelect">
                   <SelectValue placeholder="담당 간호사를 선택하세요" />
                 </SelectTrigger>
                 <SelectContent>
@@ -939,14 +941,40 @@ export default function RoomManagementPage() {
               </Select>
             </div>
             
+            <div>
+              <Label htmlFor="patientId">환자 배정</Label>
+              <Select 
+                defaultValue={editingPatientId && selectedRoom?.patients.find(p => p.id === editingPatientId)?.userId ? 
+                  String(selectedRoom?.patients.find(p => p.id === editingPatientId)?.userId) : 
+                  "none"
+                }
+              >
+                <SelectTrigger id="patientSelect">
+                  <SelectValue placeholder="환자를 선택하세요" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="none">미배정</SelectItem>
+                  {dummyPatients.map(patient => (
+                    <SelectItem key={patient.id} value={String(patient.id)}>
+                      {patient.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            
             <div className="pt-4 flex justify-end space-x-2">
               <Button variant="outline" onClick={() => setIsAssigningPatient(false)}>취소</Button>
               <Button onClick={() => {
                 if (!editingPatientId || !selectedRoomId) return;
                 
                 // 선택된 간호사 ID 가져오기
-                const nurseIdElement = document.querySelector('[data-value]') as HTMLElement;
-                const nurseId = nurseIdElement?.getAttribute('data-value') || "";
+                const nurseIdElement = document.querySelector('#nurseSelect [data-value]') as HTMLElement;
+                const nurseId = nurseIdElement?.getAttribute('data-value') || "none";
+                
+                // 선택된 환자 ID 가져오기
+                const patientIdElement = document.querySelector('#patientSelect [data-value]') as HTMLElement;
+                const patientUserId = patientIdElement?.getAttribute('data-value') || "none";
                 
                 // 현재 선택된 방의 인덱스 찾기
                 const roomIndex = dummyRooms.findIndex(r => r.id === selectedRoomId);
@@ -959,6 +987,16 @@ export default function RoomManagementPage() {
                 // 환자 정보 업데이트
                 const assignedNurseId = nurseId === "none" ? null : parseInt(nurseId);
                 dummyRooms[roomIndex].patients[patientIndex].assignedNurseId = assignedNurseId;
+                
+                // 환자 사용자 ID 업데이트
+                const assignedPatientId = patientUserId === "none" ? null : parseInt(patientUserId);
+                dummyRooms[roomIndex].patients[patientIndex].userId = assignedPatientId;
+                
+                // 이름 업데이트 - 환자가 배정되면 환자의 이름을 사용
+                if (assignedPatientId) {
+                  const patientName = dummyPatients.find(p => p.id === assignedPatientId)?.name || dummyRooms[roomIndex].patients[patientIndex].name;
+                  dummyRooms[roomIndex].patients[patientIndex].name = patientName;
+                }
                 
                 // UI 업데이트
                 toast({
@@ -1020,7 +1058,13 @@ export default function RoomManagementPage() {
               <div className="lg:col-span-1 space-y-6">
                 <Card>
                   <CardHeader className="pb-2">
+                    <div className="flex justify-between items-center">
                     <CardTitle>{t('common.basicInfo')}</CardTitle>
+                    <Button variant="ghost" size="sm" className="text-blue-600">
+                      <Pencil className="h-4 w-4 mr-1" />
+                      {t('common.edit')}
+                    </Button>
+                  </div>
                   </CardHeader>
                   <CardContent>
                     <div className="space-y-3">
@@ -1075,7 +1119,13 @@ export default function RoomManagementPage() {
                 
                 <Card>
                   <CardHeader className="pb-2">
-                    <CardTitle>{t('common.guardianInfo')}</CardTitle>
+                    <div className="flex justify-between items-center">
+                      <CardTitle>{t('common.guardianInfo')}</CardTitle>
+                      <Button variant="ghost" size="sm" className="text-blue-600">
+                        <Pencil className="h-4 w-4 mr-1" />
+                        {t('common.edit')}
+                      </Button>
+                    </div>
                   </CardHeader>
                   <CardContent>
                     <div className="space-y-3">
