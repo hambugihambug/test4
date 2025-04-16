@@ -59,6 +59,7 @@ export default function RoomManagementPage() {
     console.log("번역 함수 생성 완료");
     const { user } = useAuth();
     const { toast } = useToast();
+    const [, navigate] = useLocation();
     
     console.log("RoomManagementPage 상태 초기화 중, 사용자:", user?.username);
   const [isAddingRoom, setIsAddingRoom] = useState(false);
@@ -647,7 +648,11 @@ export default function RoomManagementPage() {
                       </TableHeader>
                       <TableBody>
                         {selectedRoom.patients.map((patient) => (
-                          <TableRow key={patient.id}>
+                          <TableRow 
+                            key={patient.id} 
+                            className="cursor-pointer hover:bg-gray-50"
+                            onClick={() => navigate(`/patient-detail/${patient.id}`)}
+                          >
                             <TableCell className="font-medium">{patient.name}</TableCell>
                             <TableCell>{patient.age}</TableCell>
                             <TableCell>
@@ -666,9 +671,9 @@ export default function RoomManagementPage() {
                               <Button 
                                 variant="outline" 
                                 size="sm"
-                                onClick={() => {
-                                  setSelectedPatientId(patient.id);
-                                  setIsViewingPatientDetails(true);
+                                onClick={(e) => {
+                                  e.stopPropagation(); // 이벤트 버블링 방지
+                                  navigate(`/patient-detail/${patient.id}`);
                                 }}
                               >
                                 {t('common.details')}
