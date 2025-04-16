@@ -522,6 +522,8 @@ export default function PatientDetailPage() {
   const [bedExitDialogOpen, setBedExitDialogOpen] = useState(false);
   const [environmentalDialogOpen, setEnvironmentalDialogOpen] = useState(false);
   const [guardianNotifyDialogOpen, setGuardianNotifyDialogOpen] = useState(false);
+  const [statusDialogOpen, setStatusDialogOpen] = useState(false);
+  const [fallRiskDialogOpen, setFallRiskDialogOpen] = useState(false);
   
   // 폼 상태
   const [formData, setFormData] = useState({ ...patient });
@@ -529,6 +531,11 @@ export default function PatientDetailPage() {
   const [vitalSignsData, setVitalSignsData] = useState({ ...patient.vitalSigns[0] });
   const [notesData, setNotesData] = useState(patient.notes.length > 0 ? { ...patient.notes[0] } : { date: '', author: '', content: '' });
   const [messageText, setMessageText] = useState("");
+  const [statusData, setStatusData] = useState({ condition: patient.condition });
+  const [fallRiskData, setFallRiskData] = useState({ 
+    fallRisk: patient.fallRisk,
+    fallRiskScore: patient.fallRiskScore
+  });
   
   // 모니터링 설정 상태
   const [monitoringSettings, setMonitoringSettings] = useState({
@@ -579,6 +586,16 @@ export default function PatientDetailPage() {
       description: "환자 정보가 성공적으로 업데이트되었습니다.",
     });
     setEditDialogOpen(false);
+  };
+  
+  // 환자 상태 정보 업데이트 처리
+  const handleUpdatePatientStatus = () => {
+    // 실제 구현에서는 API 호출
+    toast({
+      title: "환자 상태 업데이트",
+      description: "환자 상태 정보가 성공적으로 업데이트되었습니다.",
+    });
+    setStatusDialogOpen(false);
   };
   
   // 보호자 정보 업데이트 처리
@@ -725,7 +742,19 @@ export default function PatientDetailPage() {
           <CardContent className="p-4 flex items-center justify-between">
             <div>
               <p className="text-sm font-medium text-muted-foreground">현재 상태</p>
-              <p className="text-lg font-bold">{patient.condition}</p>
+              <div className="flex items-center">
+                <p className="text-lg font-bold">{patient.condition}</p>
+                {canEdit && (
+                  <Button 
+                    variant="ghost" 
+                    size="sm" 
+                    className="h-6 px-1 ml-2"
+                    onClick={() => setStatusDialogOpen(true)}
+                  >
+                    <Edit className="h-3 w-3" />
+                  </Button>
+                )}
+              </div>
             </div>
             <div className={`p-2 rounded-full ${
               patient.condition === "안정" ? "bg-green-100" : 
@@ -752,6 +781,16 @@ export default function PatientDetailPage() {
               <div className="flex items-center">
                 <p className="text-lg font-bold mr-2">{patient.fallRisk}</p>
                 <span className="text-sm text-muted-foreground">({patient.fallRiskScore}/100)</span>
+                {canEdit && (
+                  <Button 
+                    variant="ghost" 
+                    size="sm" 
+                    className="h-6 px-1 ml-2"
+                    onClick={() => setFallRiskDialogOpen(true)}
+                  >
+                    <Edit className="h-3 w-3" />
+                  </Button>
+                )}
               </div>
             </div>
             <div className={`p-2 rounded-full ${
@@ -817,6 +856,10 @@ export default function PatientDetailPage() {
             </CardHeader>
             <CardContent>
               <dl className="space-y-4">
+                <div className="flex justify-between">
+                  <dt className="text-sm font-medium text-muted-foreground">진단명</dt>
+                  <dd className="text-sm font-medium">{patient.diagnosis}</dd>
+                </div>
                 <div className="flex justify-between">
                   <dt className="text-sm font-medium text-muted-foreground">생년월일</dt>
                   <dd className="text-sm font-medium">{patient.birthDate}</dd>
@@ -1766,6 +1809,103 @@ export default function PatientDetailPage() {
           <DialogFooter>
             <Button variant="outline" onClick={() => setGuardianNotifyDialogOpen(false)}>취소</Button>
             <Button onClick={() => handleSaveMonitoringSettings('guardianNotify')}>저장</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* 환자 상태 업데이트 다이얼로그 */}
+      <Dialog open={statusDialogOpen} onOpenChange={setStatusDialogOpen}>
+        <DialogContent className="sm:max-w-[425px]">
+          <DialogHeader>
+            <DialogTitle>환자 상태 수정</DialogTitle>
+            <DialogDescription>
+              환자의 현재 상태를 수정합니다.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="grid gap-4 py-4">
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="patientCondition" className="text-right">
+                현재 상태
+              </Label>
+              <Select 
+                defaultValue={statusData.condition}
+                onValueChange={(value) => setStatusData({...statusData, condition: value})}
+              >
+                <SelectTrigger className="col-span-3">
+                  <SelectValue placeholder="상태 선택" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="안정">안정</SelectItem>
+                  <SelectItem value="주의">주의</SelectItem>
+                  <SelectItem value="위험">위험</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setStatusDialogOpen(false)}>취소</Button>
+            <Button onClick={handleUpdatePatientStatus}>저장</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+      
+      {/* 낙상 위험도 업데이트 다이얼로그 */}
+      <Dialog open={fallRiskDialogOpen} onOpenChange={setFallRiskDialogOpen}>
+        <DialogContent className="sm:max-w-[425px]">
+          <DialogHeader>
+            <DialogTitle>낙상 위험도 수정</DialogTitle>
+            <DialogDescription>
+              환자의 낙상 위험도를 수정합니다.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="grid gap-4 py-4">
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="fallRisk" className="text-right">
+                위험도
+              </Label>
+              <Select 
+                defaultValue={fallRiskData.fallRisk}
+                onValueChange={(value) => setFallRiskData({...fallRiskData, fallRisk: value})}
+              >
+                <SelectTrigger className="col-span-3">
+                  <SelectValue placeholder="위험도 선택" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="낮음">낮음</SelectItem>
+                  <SelectItem value="중간">중간</SelectItem>
+                  <SelectItem value="높음">높음</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="fallRiskScore" className="text-right">
+                위험 점수
+              </Label>
+              <div className="col-span-3 space-y-2">
+                <Slider 
+                  min={0} 
+                  max={100} 
+                  step={1}
+                  value={[fallRiskData.fallRiskScore]}
+                  onValueChange={([value]) => setFallRiskData({...fallRiskData, fallRiskScore: value})}
+                />
+                <div className="flex justify-between text-xs text-muted-foreground">
+                  <span>0</span>
+                  <span>{fallRiskData.fallRiskScore}</span>
+                  <span>100</span>
+                </div>
+              </div>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setFallRiskDialogOpen(false)}>취소</Button>
+            <Button onClick={() => {
+              toast({
+                title: "낙상 위험도 업데이트",
+                description: "낙상 위험도가 성공적으로 업데이트되었습니다.",
+              });
+              setFallRiskDialogOpen(false);
+            }}>저장</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
