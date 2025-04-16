@@ -717,7 +717,8 @@ export default function RoomManagementPage() {
                                 <Button 
                                   variant="outline" 
                                   size="sm"
-                                  onClick={() => {
+                                  onClick={(e) => {
+                                    e.stopPropagation();
                                     setSelectedPatientId(patient.id);
                                     setIsViewingPatientDetails(true);
                                   }}
@@ -727,7 +728,8 @@ export default function RoomManagementPage() {
                                 <Button 
                                   variant="default" 
                                   size="sm"
-                                  onClick={() => {
+                                  onClick={(e) => {
+                                    e.stopPropagation();
                                     setEditingPatientId(patient.id);
                                     setIsAssigningPatient(true);
                                   }}
@@ -927,7 +929,7 @@ export default function RoomManagementPage() {
                   <SelectValue placeholder="담당 간호사를 선택하세요" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">미배정</SelectItem>
+                  <SelectItem value="none">미배정</SelectItem>
                   {dummyNurses.map(nurse => (
                     <SelectItem key={nurse.id} value={String(nurse.id)}>
                       {nurse.name}
@@ -955,7 +957,7 @@ export default function RoomManagementPage() {
                 if (patientIndex === -1) return;
                 
                 // 환자 정보 업데이트
-                const assignedNurseId = nurseId === "" ? null : parseInt(nurseId);
+                const assignedNurseId = nurseId === "none" ? null : parseInt(nurseId);
                 dummyRooms[roomIndex].patients[patientIndex].assignedNurseId = assignedNurseId;
                 
                 // UI 업데이트
