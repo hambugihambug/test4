@@ -100,7 +100,7 @@ export default function RoomManagementPage() {
   ];
   
   // 임시 병실 데이터 (API가 구현될 때까지 사용)
-  const dummyRooms: RoomWithPatients[] = [
+  const initialRooms = [
     {
       id: 1,
       name: "101호",
@@ -168,6 +168,9 @@ export default function RoomManagementPage() {
       ]
     }
   ];
+  
+  // 상태로 관리하도록 변경
+  const [dummyRooms, setDummyRooms] = useState<RoomWithPatients[]>(initialRooms);
   
   // 실제 API로부터 데이터 가져오기 (추후 구현)
   const { data: roomsWithPatients, isLoading: roomsLoading, error: roomsError } = {
@@ -889,6 +892,10 @@ export default function RoomManagementPage() {
                 updatedRooms[roomIndex] = updatedRoom;
                 setDummyRooms(updatedRooms);
                 
+                // roomsWithPatients 데이터도 함께 업데이트 (UI 갱신을 위함)
+                const updatedRoomsData = [...updatedRooms];
+                Object.assign(roomsWithPatients, updatedRoomsData);
+                
                 // UI 업데이트
                 toast({
                   title: "침대 추가됨",
@@ -989,17 +996,34 @@ export default function RoomManagementPage() {
                 
                 // 환자 정보 업데이트
                 const assignedNurseId = nurseId === "none" ? null : parseInt(nurseId);
-                dummyRooms[roomIndex].patients[patientIndex].assignedNurseId = assignedNurseId;
-                
-                // 환자 사용자 ID 업데이트
                 const assignedPatientId = patientUserId === "none" ? null : parseInt(patientUserId);
-                dummyRooms[roomIndex].patients[patientIndex].userId = assignedPatientId;
                 
                 // 이름 업데이트 - 환자가 배정되면 환자의 이름을 사용
+                let patientName = "";
                 if (assignedPatientId) {
-                  const patientName = dummyPatients.find(p => p.id === assignedPatientId)?.name || dummyRooms[roomIndex].patients[patientIndex].name;
-                  dummyRooms[roomIndex].patients[patientIndex].name = patientName;
+                  patientName = dummyPatients.find(p => p.id === assignedPatientId)?.name || "";
                 }
+                
+                // 모든 방의 사본 만들기
+                const updatedRooms = [...dummyRooms];
+                
+                // 해당 환자 정보 업데이트
+                updatedRooms[roomIndex] = {
+                  ...updatedRooms[roomIndex],
+                  patients: updatedRooms[roomIndex].patients.map((p, idx) => 
+                    idx === patientIndex
+                      ? { 
+                          ...p, 
+                          assignedNurseId, 
+                          userId: assignedPatientId,
+                          name: assignedPatientId && patientName ? patientName : p.name 
+                        }
+                      : p
+                  )
+                };
+                
+                // 상태 업데이트
+                setDummyRooms(updatedRooms);
                 
                 // UI 업데이트
                 toast({
@@ -1010,17 +1034,7 @@ export default function RoomManagementPage() {
                 // 다이얼로그 닫기
                 setIsAssigningPatient(false);
                 
-                // 상태 강제 업데이트 (화면에 변경사항 반영)
-                // 타입스크립트 타입 문제로 데이터 변경 후 UI 업데이트를 위해 새로운 객체로 복사
-                const updatedRoom = JSON.parse(JSON.stringify(dummyRooms[roomIndex]));
-                
-                // 변경사항을 화면에 반영하기 위한 트릭
-                setSelectedRoomId(null);
-                setTimeout(() => {
-                  // 화면 갱신을 위해 원본 데이터 직접 수정
-                  Object.assign(roomsWithPatients?.find(r => r.id === selectedRoomId) || {}, updatedRoom);
-                  setSelectedRoomId(selectedRoomId);
-                }, 10);
+
               }}>저장</Button>
             </div>
           </div>
