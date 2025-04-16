@@ -3,6 +3,7 @@ import { Toaster } from "@/components/ui/toaster";
 import NotFound from "@/pages/not-found";
 import FallDetectionPage from "@/pages/fall-detection-page";
 import DashboardPage from "@/pages/dashboard-page";
+import SafetyDashboardPage from "@/pages/safety-dashboard";
 import PatientDetailPage from "@/pages/patient-detail-page";
 import AuthPage from "@/pages/auth-page";
 import MyPage from "@/pages/my-page";
@@ -110,6 +111,12 @@ function Sidebar() {
           label="대시보드" 
           href="/dashboard" 
           active={location === '/dashboard'} 
+        />
+        <SidebarMenuItem 
+          icon={Activity} 
+          label="환자 안전 대시보드" 
+          href="/safety-dashboard" 
+          active={location === '/safety-dashboard'} 
         />
         <SidebarMenuItem 
           icon={MonitorSmartphone} 
@@ -247,6 +254,12 @@ function MobileSidebar() {
               active={location === '/dashboard'} 
             />
             <SidebarMenuItem 
+              icon={Activity} 
+              label="환자 안전 대시보드" 
+              href="/safety-dashboard" 
+              active={location === '/safety-dashboard'} 
+            />
+            <SidebarMenuItem 
               icon={MonitorSmartphone} 
               label="낙상 감지" 
               href="/fall-detection" 
@@ -352,7 +365,7 @@ function HomePage() {
       <h1 className="text-2xl font-bold mb-4">병원 모니터링 시스템</h1>
       <p className="mb-6">환영합니다. 이 시스템은 환자의 낙상 사고를 감지하고 환경을 모니터링합니다.</p>
       
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
         <div className="bg-white p-4 rounded shadow-sm border">
           <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center mb-3">
             <MonitorSmartphone className="h-5 w-5 text-blue-600" />
@@ -372,8 +385,17 @@ function HomePage() {
         </div>
         
         <div className="bg-white p-4 rounded shadow-sm border">
+          <div className="w-10 h-10 bg-purple-100 rounded-full flex items-center justify-center mb-3">
+            <Activity className="h-5 w-5 text-purple-600" />
+          </div>
+          <h2 className="font-bold mb-2">환자 안전 대시보드</h2>
+          <p className="text-sm text-gray-600 mb-4">애니메이션 환자 안전 지표와 활동 수준을 표시합니다.</p>
+          <a href="/safety-dashboard" className="text-sm text-primary font-medium">안전 대시보드 &rarr;</a>
+        </div>
+        
+        <div className="bg-white p-4 rounded shadow-sm border">
           <div className="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center mb-3">
-            <Home className="h-5 w-5 text-green-600" />
+            <Thermometer className="h-5 w-5 text-green-600" />
           </div>
           <h2 className="font-bold mb-2">환경 모니터링</h2>
           <p className="text-sm text-gray-600 mb-4">병실 환경을 모니터링하고 이상 상황을 감지합니다.</p>
@@ -441,6 +463,7 @@ function App() {
                 <Route path="/auth" component={AuthPage} />
                 <ProtectedRoute path="/" component={HomePage} />
                 <ProtectedRoute path="/dashboard" component={DashboardPage} />
+                <ProtectedRoute path="/safety-dashboard" component={SafetyDashboardPage} />
                 <ProtectedRoute path="/fall-detection" component={FallDetectionPage} />
                 <ProtectedRoute path="/environment" component={EnvironmentPage} />
                 <ProtectedRoute path="/patients/:id" component={PatientDetailPage} />
