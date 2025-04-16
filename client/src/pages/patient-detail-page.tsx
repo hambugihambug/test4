@@ -2,7 +2,7 @@ import { useParams } from "wouter";
 import { 
   ArrowLeft, HeartPulse, User, CalendarClock, Users, BedDouble,
   MapPin, FileText, Phone, Shield, Clipboard, AlertTriangle,
-  Edit, Check, X, MessageCircle
+  Edit, Check, X, MessageCircle, Bell, RefreshCw, AlertCircle
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -24,6 +24,7 @@ import {
 } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
 // 임시 환자 상세 데이터
 const PATIENT_DATA = {
@@ -787,25 +788,62 @@ export default function PatientDetailPage() {
                 <h3 className="font-medium">침대 이탈 감지 알림 활성화</h3>
                 <p className="text-sm text-gray-500">침대 이탈 시 알림을 받습니다.</p>
               </div>
-              <Switch checked={monitoringSettings.bedExit} />
+              <Switch 
+                checked={bedExitSettings.enabled}
+                onCheckedChange={(checked) => 
+                  setBedExitSettings(prev => ({...prev, enabled: checked}))
+                }
+              />
             </div>
-            <div className="flex items-center justify-between border-b pb-3">
-              <div>
-                <h3 className="font-medium">감지 시간 설정</h3>
-                <p className="text-sm text-gray-500">몇 분 이상 이탈 시 알림을 보낼지 설정합니다.</p>
-              </div>
-              <Select defaultValue="1">
-                <SelectTrigger className="w-24">
-                  <SelectValue placeholder="시간 선택" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="1">1분</SelectItem>
-                  <SelectItem value="3">3분</SelectItem>
-                  <SelectItem value="5">5분</SelectItem>
-                  <SelectItem value="10">10분</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
+            
+            {bedExitSettings.enabled && (
+              <>
+                <div className="flex items-center justify-between border-b pb-3">
+                  <div>
+                    <h3 className="font-medium">감지 민감도</h3>
+                    <p className="text-sm text-gray-500">감지 민감도를 설정합니다.</p>
+                  </div>
+                  <Select 
+                    defaultValue={bedExitSettings.sensitivity}
+                    onValueChange={(value) => 
+                      setBedExitSettings(prev => ({...prev, sensitivity: value}))
+                    }
+                  >
+                    <SelectTrigger className="w-32">
+                      <SelectValue placeholder="민감도 선택" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="low">낮음</SelectItem>
+                      <SelectItem value="medium">중간</SelectItem>
+                      <SelectItem value="high">높음</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                
+                <div className="flex items-center justify-between border-b pb-3">
+                  <div>
+                    <h3 className="font-medium">감지 시간 설정</h3>
+                    <p className="text-sm text-gray-500">몇 분 이상 이탈 시 알림을 보낼지 설정합니다.</p>
+                  </div>
+                  <Select 
+                    defaultValue={bedExitSettings.delayMinutes.toString()}
+                    onValueChange={(value) => 
+                      setBedExitSettings(prev => ({...prev, delayMinutes: Number(value)}))
+                    }
+                  >
+                    <SelectTrigger className="w-24">
+                      <SelectValue placeholder="시간 선택" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="1">1분</SelectItem>
+                      <SelectItem value="3">3분</SelectItem>
+                      <SelectItem value="5">5분</SelectItem>
+                      <SelectItem value="10">10분</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </>
+            )}
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setBedExitDialogOpen(false)}>취소</Button>
@@ -827,26 +865,115 @@ export default function PatientDetailPage() {
                 <h3 className="font-medium">환경 모니터링 활성화</h3>
                 <p className="text-sm text-gray-500">환경 조건이 설정값을 벗어날 경우 알림을 받습니다.</p>
               </div>
-              <Switch checked={monitoringSettings.environmental} />
+              <Switch 
+                checked={environmentalSettings.enabled}
+                onCheckedChange={(checked) => 
+                  setEnvironmentalSettings(prev => ({...prev, enabled: checked}))
+                }
+              />
             </div>
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label className="text-sm font-medium">온도 범위 설정 (°C)</label>
-                <div className="flex items-center space-x-2 mt-2">
-                  <Input type="number" placeholder="최소" className="w-20" defaultValue="20" />
-                  <span className="text-sm">~</span>
-                  <Input type="number" placeholder="최대" className="w-20" defaultValue="26" />
+            
+            {environmentalSettings.enabled && (
+              <div className="space-y-4">
+                <div className="border-b pb-3">
+                  <h3 className="font-medium mb-2">온도 범위 설정 (°C)</h3>
+                  <div className="flex items-center space-x-2 mt-2">
+                    <div className="grid grid-cols-2 gap-3 w-full">
+                      <div>
+                        <label htmlFor="tempMin" className="text-xs text-gray-500 mb-1 block">최소</label>
+                        <Input
+                          id="tempMin"
+                          type="number"
+                          value={environmentalSettings.tempMin}
+                          onChange={(e) => 
+                            setEnvironmentalSettings(prev => ({
+                              ...prev, 
+                              tempMin: Number(e.target.value)
+                            }))
+                          }
+                          className="w-full"
+                        />
+                      </div>
+                      <div>
+                        <label htmlFor="tempMax" className="text-xs text-gray-500 mb-1 block">최대</label>
+                        <Input
+                          id="tempMax"
+                          type="number"
+                          value={environmentalSettings.tempMax}
+                          onChange={(e) => 
+                            setEnvironmentalSettings(prev => ({
+                              ...prev, 
+                              tempMax: Number(e.target.value)
+                            }))
+                          }
+                          className="w-full"
+                        />
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                
+                <div className="border-b pb-3">
+                  <h3 className="font-medium mb-2">습도 범위 설정 (%)</h3>
+                  <div className="flex items-center space-x-2 mt-2">
+                    <div className="grid grid-cols-2 gap-3 w-full">
+                      <div>
+                        <label htmlFor="humidityMin" className="text-xs text-gray-500 mb-1 block">최소</label>
+                        <Input
+                          id="humidityMin"
+                          type="number"
+                          value={environmentalSettings.humidityMin}
+                          onChange={(e) => 
+                            setEnvironmentalSettings(prev => ({
+                              ...prev, 
+                              humidityMin: Number(e.target.value)
+                            }))
+                          }
+                          className="w-full"
+                        />
+                      </div>
+                      <div>
+                        <label htmlFor="humidityMax" className="text-xs text-gray-500 mb-1 block">최대</label>
+                        <Input
+                          id="humidityMax"
+                          type="number"
+                          value={environmentalSettings.humidityMax}
+                          onChange={(e) => 
+                            setEnvironmentalSettings(prev => ({
+                              ...prev, 
+                              humidityMax: Number(e.target.value)
+                            }))
+                          }
+                          className="w-full"
+                        />
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h3 className="font-medium">현재 온습도 확인</h3>
+                    <p className="text-sm text-gray-500">최근 측정된 병실 온습도</p>
+                  </div>
+                  <Button variant="outline" size="sm">
+                    <RefreshCw className="h-4 w-4 mr-1" />
+                    새로고침
+                  </Button>
+                </div>
+                
+                <div className="grid grid-cols-2 gap-4 border p-3 rounded-md bg-gray-50">
+                  <div className="flex flex-col items-center">
+                    <div className="text-xs text-gray-500 mb-1">현재 온도</div>
+                    <div className="text-lg font-medium">23.5°C</div>
+                  </div>
+                  <div className="flex flex-col items-center">
+                    <div className="text-xs text-gray-500 mb-1">현재 습도</div>
+                    <div className="text-lg font-medium">45%</div>
+                  </div>
                 </div>
               </div>
-              <div>
-                <label className="text-sm font-medium">습도 범위 설정 (%)</label>
-                <div className="flex items-center space-x-2 mt-2">
-                  <Input type="number" placeholder="최소" className="w-20" defaultValue="40" />
-                  <span className="text-sm">~</span>
-                  <Input type="number" placeholder="최대" className="w-20" defaultValue="60" />
-                </div>
-              </div>
-            </div>
+            )}
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setEnvironmentalDialogOpen(false)}>취소</Button>
@@ -868,29 +995,88 @@ export default function PatientDetailPage() {
                 <h3 className="font-medium">보호자 알림 활성화</h3>
                 <p className="text-sm text-gray-500">선택한 이벤트 발생 시 보호자에게 알림을 보냅니다.</p>
               </div>
-              <Switch checked={monitoringSettings.guardianNotify} />
+              <Switch 
+                checked={guardianNotifySettings.enabled}
+                onCheckedChange={(checked) => 
+                  setGuardianNotifySettings(prev => ({...prev, enabled: checked}))
+                }
+              />
             </div>
-            <div className="space-y-2">
-              <label className="text-sm font-medium">알림 이벤트 선택</label>
-              <div className="space-y-1.5">
-                <div className="flex items-center space-x-2">
-                  <Checkbox id="notify-fall" defaultChecked />
-                  <label htmlFor="notify-fall" className="text-sm">낙상 감지</label>
+            
+            {guardianNotifySettings.enabled && (
+              <div className="space-y-3 pt-2">
+                <div className="border-b pb-3">
+                  <h3 className="font-medium mb-3">알림 이벤트 선택</h3>
+                  <div className="space-y-3">
+                    <div className="flex items-center justify-between">
+                      <label htmlFor="notify-fall" className="text-sm flex items-center">
+                        <Bell className="h-4 w-4 mr-2 text-gray-500" />
+                        낙상 감지 알림
+                      </label>
+                      <Switch 
+                        id="notify-fall"
+                        checked={guardianNotifySettings.notifyFallDetection}
+                        onCheckedChange={(checked) => 
+                          setGuardianNotifySettings(prev => ({...prev, notifyFallDetection: checked}))
+                        }
+                      />
+                    </div>
+                    
+                    <div className="flex items-center justify-between">
+                      <label htmlFor="notify-bed" className="text-sm flex items-center">
+                        <Bell className="h-4 w-4 mr-2 text-gray-500" />
+                        침대 이탈 알림
+                      </label>
+                      <Switch 
+                        id="notify-bed"
+                        checked={guardianNotifySettings.notifyBedExit}
+                        onCheckedChange={(checked) => 
+                          setGuardianNotifySettings(prev => ({...prev, notifyBedExit: checked}))
+                        }
+                      />
+                    </div>
+                    
+                    <div className="flex items-center justify-between">
+                      <label htmlFor="notify-env" className="text-sm flex items-center">
+                        <Bell className="h-4 w-4 mr-2 text-gray-500" />
+                        환경 조건 이상 알림
+                      </label>
+                      <Switch 
+                        id="notify-env"
+                        checked={guardianNotifySettings.notifyEnvironmental}
+                        onCheckedChange={(checked) => 
+                          setGuardianNotifySettings(prev => ({...prev, notifyEnvironmental: checked}))
+                        }
+                      />
+                    </div>
+                    
+                    <div className="flex items-center justify-between">
+                      <label htmlFor="notify-medication" className="text-sm flex items-center">
+                        <Bell className="h-4 w-4 mr-2 text-gray-500" />
+                        투약 알림
+                      </label>
+                      <Switch 
+                        id="notify-medication"
+                        checked={guardianNotifySettings.notifyMedication}
+                        onCheckedChange={(checked) => 
+                          setGuardianNotifySettings(prev => ({...prev, notifyMedication: checked}))
+                        }
+                      />
+                    </div>
+                  </div>
                 </div>
-                <div className="flex items-center space-x-2">
-                  <Checkbox id="notify-bed" defaultChecked />
-                  <label htmlFor="notify-bed" className="text-sm">침대 이탈</label>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <Checkbox id="notify-env" />
-                  <label htmlFor="notify-env" className="text-sm">환경 조건 이상</label>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <Checkbox id="notify-medication" />
-                  <label htmlFor="notify-medication" className="text-sm">투약 알림</label>
+                
+                <div className="pt-2">
+                  <Alert>
+                    <AlertCircle className="h-4 w-4" />
+                    <AlertTitle>알림 전송 설정</AlertTitle>
+                    <AlertDescription>
+                      보호자에게 문자 메시지와 앱 알림으로 설정한 이벤트 발생 시 알림이 전송됩니다.
+                    </AlertDescription>
+                  </Alert>
                 </div>
               </div>
-            </div>
+            )}
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setGuardianNotifyDialogOpen(false)}>취소</Button>
