@@ -920,6 +920,116 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
   
+  // 환자 모니터링 설정 관련 API
+  app.get('/api/patients/:id/monitoring-settings', authenticateJWT, hasRole([UserRole.DIRECTOR, UserRole.NURSE]), async (req, res) => {
+    try {
+      const patientId = parseInt(req.params.id);
+      const patient = await storage.getPatient(patientId);
+      
+      if (!patient) {
+        return res.status(404).json({ message: "환자를 찾을 수 없습니다." });
+      }
+      
+      // 환자 객체에서 모니터링 설정 필드를 추출하여 반환
+      // 실제 구현에서는 별도의 테이블이나 필드가 필요할 수 있음
+      const settings = {
+        fallDetection: patient.fallDetectionEnabled || false,
+        bedExit: patient.bedExitEnabled || false, 
+        environmental: patient.environmentalMonitoringEnabled || false,
+        guardianNotify: patient.guardianNotifyEnabled || false,
+        
+        // 상세 설정
+        fallDetectionSettings: patient.fallDetectionSettings || {
+          sensitivity: "medium",
+          alertDelay: 5
+        },
+        bedExitSettings: patient.bedExitSettings || {
+          sensitivity: "medium", 
+          confirmTimeoutSeconds: 10
+        },
+        environmentalSettings: patient.environmentalSettings || {
+          tempMin: 20,
+          tempMax: 26,
+          humidityMin: 40,
+          humidityMax: 60
+        },
+        guardianNotifySettings: patient.guardianNotifySettings || {
+          notifyFallDetection: true,
+          notifyBedExit: true,
+          notifyEnvironmental: false,
+          notifyMedication: false
+        }
+      };
+      
+      res.json(settings);
+    } catch (error) {
+      console.error("환자 모니터링 설정 조회 중 오류:", error);
+      res.status(500).json({ message: "환자 모니터링 설정 조회 중 오류가 발생했습니다." });
+    }
+  });
+  
+  app.patch('/api/patients/:id/monitoring-settings', authenticateJWT, hasRole([UserRole.DIRECTOR, UserRole.NURSE]), async (req, res) => {
+    try {
+      const patientId = parseInt(req.params.id);
+      const { type, enabled, settings } = req.body;
+      
+      if (!type || enabled === undefined) {
+        return res.status(400).json({ message: "필수 필드가 누락되었습니다: type, enabled" });
+      }
+      
+      const patient = await storage.getPatient(patientId);
+      if (!patient) {
+        return res.status(404).json({ message: "환자를 찾을 수 없습니다." });
+      }
+      
+      // 모니터링 타입에 따라 필드를 업데이트
+      const updateData: Partial<any> = {};
+      
+      if (type === 'fallDetection') {
+        updateData.fallDetectionEnabled = enabled;
+        if (settings) updateData.fallDetectionSettings = settings;
+      } else if (type === 'bedExit') {
+        updateData.bedExitEnabled = enabled;
+        if (settings) updateData.bedExitSettings = settings;
+      } else if (type === 'environmental') {
+        updateData.environmentalMonitoringEnabled = enabled;
+        if (settings) updateData.environmentalSettings = settings;
+      } else if (type === 'guardianNotify') {
+        updateData.guardianNotifyEnabled = enabled;
+        if (settings) updateData.guardianNotifySettings = settings;
+      } else {
+        return res.status(400).json({ message: "유효하지 않은 모니터링 타입입니다." });
+      }
+      
+      // 환자 정보 업데이트
+      const updatedPatient = await storage.updatePatient(patientId, updateData);
+      
+      // 변경사항 브로드캐스트
+      broadcast({
+        type: 'MONITORING_SETTINGS_CHANGED',
+        data: {
+          patientId: patientId,
+          settingType: type,
+          enabled: enabled,
+          settings: settings
+        }
+      });
+      
+      res.json({
+        success: true,
+        message: "모니터링 설정이 업데이트되었습니다.",
+        settings: {
+          type,
+          enabled,
+          ...(settings ? { settings } : {})
+        }
+      });
+    } catch (error) {
+      console.error("환자 모니터링 설정 업데이트 중 오류:", error);
+      res.status(500).json({ message: "환자 모니터링 설정 업데이트 중 오류가 발생했습니다." });
+    }
+  });
+
   // Statistics Routes
   app.get('/api/stats/dashboard', authenticateJWT, async (req, res) => {
     try {
