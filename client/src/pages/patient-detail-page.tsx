@@ -27,8 +27,63 @@ import { Switch } from "@/components/ui/switch";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
+// 타입 정의를 추가하여 인덱스 시그니처 처리
+interface PatientDetails {
+  id: number;
+  name: string;
+  age: number;
+  gender: string;
+  birthDate: string;
+  roomNumber: string;
+  bedNumber: number;
+  diagnosis: string;
+  admissionDate: string;
+  expectedDischargeDate: string;
+  guardian: {
+    name: string;
+    relation: string;
+    contact: string;
+  };
+  address: string;
+  contact: string;
+  condition: string;
+  assignedNurseId: number;
+  fallRisk: string;
+  fallRiskScore: number;
+  fallHistory: Array<{
+    date: string;
+    time: string;
+    location: string;
+    severity: string;
+    description: string;
+  }>;
+  vitalSigns: Array<{
+    date: string;
+    bloodPressure: string;
+    heartRate: number;
+    temperature: number;
+    respiratoryRate: number;
+  }>;
+  medications: Array<{
+    name: string;
+    dosage: string;
+    frequency: string;
+    timing: string;
+  }>;
+  notes: Array<{
+    date: string;
+    author: string;
+    content: string;
+  }>;
+}
+
+// 인덱스 시그니처로 숫자 키 허용
+interface PatientDataMap {
+  [key: number]: PatientDetails;
+}
+
 // 임시 환자 상세 데이터
-const PATIENT_DATA = {
+const PATIENT_DATA: PatientDataMap = {
   1: {
     id: 1,
     name: "김환자",
@@ -210,7 +265,7 @@ export default function PatientDetailPage() {
   const { user } = useAuth();
   
   // 권한 확인 (의사, 간호사, 병원장만 수정 가능)
-  const canEdit = user?.role === UserRole.NURSE || user?.role === UserRole.DIRECTOR;
+  const canEdit = user?.role === 'nurse' || user?.role === 'director';
   
   // 환자 데이터 (실제 구현에서는 API에서 가져옴)
   const patientId = parseInt(id || "1");
