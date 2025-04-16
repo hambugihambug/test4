@@ -7,6 +7,7 @@ import {
   Plus,
   Trash2,
   Users,
+  Search,
 } from "lucide-react";
 import { Calendar } from "@/components/ui/calendar";
 import {
@@ -27,7 +28,6 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import {
   Form,
   FormControl,
@@ -132,8 +132,15 @@ function SchedulePage() {
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [isDetailsDialogOpen, setIsDetailsDialogOpen] = useState(false);
   const [selectedSchedule, setSelectedSchedule] = useState<Schedule | null>(null);
+  const [participantSearch, setParticipantSearch] = useState("");
   const { toast } = useToast();
   const { user } = useAuth();
+  
+  // 검색어에 따라 필터링된 참가자 목록
+  const filteredParticipants = availableParticipants.filter(
+    p => p.name.toLowerCase().includes(participantSearch.toLowerCase()) || 
+    p.role.toLowerCase().includes(participantSearch.toLowerCase())
+  );
   
   // 폼 초기화
   const form = useForm<z.infer<typeof scheduleFormSchema>>({
@@ -455,55 +462,76 @@ function SchedulePage() {
                         render={({ field }) => (
                           <FormItem>
                             <FormLabel>참가자</FormLabel>
-                            <Select 
-                              onValueChange={(value) => {
-                                const currentValues = field.value || [];
-                                if (!currentValues.includes(value)) {
-                                  field.onChange([...currentValues, value]);
-                                }
-                              }}
-                            >
-                              <FormControl>
-                                <SelectTrigger>
-                                  <SelectValue placeholder="참가자 추가" />
-                                </SelectTrigger>
-                              </FormControl>
-                              <SelectContent>
-                                {availableParticipants.map(participant => (
-                                  <SelectItem 
-                                    key={participant.id} 
-                                    value={participant.id}
-                                  >
-                                    {participant.name} ({participant.role === "nurse" ? "간호사" : participant.role === "doctor" ? "의사" : "환자"})
-                                  </SelectItem>
-                                ))}
-                              </SelectContent>
-                            </Select>
-                            <div className="flex flex-wrap gap-2 mt-2">
-                              {(field.value || []).map(participantId => {
-                                const participant = availableParticipants.find(p => p.id === participantId);
-                                return (
-                                  <Badge 
-                                    key={participantId}
-                                    variant="secondary"
-                                    className="flex items-center"
-                                  >
-                                    {participant?.name || "알 수 없음"}
-                                    <button
-                                      type="button"
-                                      className="ml-1 text-xs"
-                                      onClick={() => {
-                                        const newValue = (field.value || []).filter(
-                                          id => id !== participantId
-                                        );
-                                        field.onChange(newValue);
-                                      }}
+                            <div className="space-y-2">
+                              {/* 참가자 검색 기능 */}
+                              <div className="relative">
+                                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+                                <Input
+                                  type="text" 
+                                  placeholder="이름 또는 역할로 검색..." 
+                                  className="pl-10"
+                                  value={participantSearch}
+                                  onChange={(e) => setParticipantSearch(e.target.value)}
+                                />
+                              </div>
+                              
+                              <Select 
+                                onValueChange={(value) => {
+                                  const currentValues = field.value || [];
+                                  if (!currentValues.includes(value)) {
+                                    field.onChange([...currentValues, value]);
+                                  }
+                                }}
+                              >
+                                <FormControl>
+                                  <SelectTrigger>
+                                    <SelectValue placeholder="참가자 추가" />
+                                  </SelectTrigger>
+                                </FormControl>
+                                <SelectContent>
+                                  {filteredParticipants.length > 0 ? (
+                                    filteredParticipants.map(participant => (
+                                      <SelectItem 
+                                        key={participant.id} 
+                                        value={participant.id}
+                                      >
+                                        {participant.name} ({participant.role === "nurse" ? "간호사" : participant.role === "doctor" ? "의사" : "환자"})
+                                      </SelectItem>
+                                    ))
+                                  ) : (
+                                    <div className="p-2 text-center text-sm text-gray-500">
+                                      검색 결과가 없습니다
+                                    </div>
+                                  )}
+                                </SelectContent>
+                              </Select>
+                              
+                              <div className="flex flex-wrap gap-2 mt-2">
+                                {(field.value || []).map(participantId => {
+                                  const participant = availableParticipants.find(p => p.id === participantId);
+                                  return (
+                                    <Badge 
+                                      key={participantId}
+                                      variant="secondary"
+                                      className="flex items-center"
                                     >
-                                      ✕
-                                    </button>
-                                  </Badge>
-                                );
-                              })}
+                                      {participant?.name || "알 수 없음"}
+                                      <button
+                                        type="button"
+                                        className="ml-1 text-xs"
+                                        onClick={() => {
+                                          const newValue = (field.value || []).filter(
+                                            id => id !== participantId
+                                          );
+                                          field.onChange(newValue);
+                                        }}
+                                      >
+                                        ✕
+                                      </button>
+                                    </Badge>
+                                  );
+                                })}
+                              </div>
                             </div>
                             <FormMessage />
                           </FormItem>

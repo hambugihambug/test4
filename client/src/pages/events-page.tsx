@@ -204,13 +204,18 @@ const getEventStatusColor = (status: string) => {
 };
 
 function EventsPage() {
-  const [events] = useState<Event[]>(mockEvents);
+  const [events, setEvents] = useState<Event[]>(mockEvents);
   const [searchTerm, setSearchTerm] = useState("");
   const [filterType, setFilterType] = useState<string | null>(null);
   const [filterStatus, setFilterStatus] = useState<string | null>(null);
   const [filterDate, setFilterDate] = useState<Date | null>(null);
   const [isCalendarOpen, setIsCalendarOpen] = useState(false);
   const { user } = useAuth();
+  
+  // 콘솔 출력으로 디버깅 (실제 환경에서는 제거)
+  console.log("이벤트 페이지 렌더링 중...");
+  console.log("이벤트 데이터:", events);
+  console.log("현재 사용자:", user);
 
   // 이벤트 필터링
   const filteredEvents = events.filter(event => {
@@ -336,7 +341,7 @@ function EventsPage() {
                   mode="single"
                   selected={filterDate || undefined}
                   onSelect={(date) => {
-                    setFilterDate(date);
+                    setFilterDate(date || null); // null 처리 추가
                     setIsCalendarOpen(false);
                   }}
                   locale={ko}
