@@ -39,6 +39,7 @@ export const translations: TranslationMap = {
       downloadReport: '보고서 다운로드',
       registerNewPatient: '신규 환자 등록',
       edit: '편집',
+      savedMessage: '저장되었습니다',
     },
     dashboard: {
       title: '대시보드',
@@ -191,6 +192,7 @@ export const translations: TranslationMap = {
       downloadReport: 'Download Report',
       registerNewPatient: 'Register New Patient',
       edit: 'Edit',
+      savedMessage: 'Saved successfully',
     },
     dashboard: {
       title: 'Dashboard',
