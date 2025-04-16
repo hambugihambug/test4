@@ -10,15 +10,7 @@ const SimpleEventsPage: React.FC = () => {
     <div className="container mx-auto p-6">
       <h1 className="text-3xl font-bold mb-6">이벤트 페이지</h1>
       
-      <div className="p-4 mb-4 bg-white rounded-lg shadow">
-        <h2 className="text-xl font-semibold mb-2">디버깅 정보</h2>
-        <div className="bg-gray-100 p-3 rounded">
-          <p><strong>접속 사용자:</strong> {user ? user.username : '인증되지 않음'}</p>
-          <p><strong>사용자 역할:</strong> {user ? user.role : '없음'}</p>
-          <p><strong>현재 페이지:</strong> /events</p>
-          <p><strong>날짜/시간:</strong> {new Date().toLocaleString()}</p>
-        </div>
-      </div>
+
       
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
         <div className="bg-white p-4 rounded-lg shadow">
