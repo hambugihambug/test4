@@ -1365,9 +1365,24 @@ export default function PatientDetailPage() {
             
             <TabsContent value="vital">
               <Card>
-                <CardHeader>
-                  <CardTitle>활력 징후</CardTitle>
-                  <CardDescription>최근 활력 징후 기록</CardDescription>
+                <CardHeader className="flex flex-row items-center justify-between">
+                  <div>
+                    <CardTitle>활력 징후</CardTitle>
+                    <CardDescription>최근 활력 징후 기록</CardDescription>
+                  </div>
+                  {canEdit && (
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      onClick={() => toast({
+                        title: "안내",
+                        description: "활력 징후 기록 수정 기능은 곧 추가될 예정입니다.",
+                      })}
+                      className="h-8"
+                    >
+                      <Edit className="h-4 w-4 mr-1" /> 수정
+                    </Button>
+                  )}
                 </CardHeader>
                 <CardContent>
                   <div className="overflow-x-auto">
@@ -1445,9 +1460,24 @@ export default function PatientDetailPage() {
             
             <TabsContent value="notes">
               <Card>
-                <CardHeader>
-                  <CardTitle>진료 기록</CardTitle>
-                  <CardDescription>의료진 노트 및 관찰 사항</CardDescription>
+                <CardHeader className="flex flex-row items-center justify-between">
+                  <div>
+                    <CardTitle>진료 기록</CardTitle>
+                    <CardDescription>의료진 노트 및 관찰 사항</CardDescription>
+                  </div>
+                  {canEdit && (
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      onClick={() => toast({
+                        title: "안내",
+                        description: "진료 기록 수정 기능은 곧 추가될 예정입니다.",
+                      })}
+                      className="h-8"
+                    >
+                      <Edit className="h-4 w-4 mr-1" /> 수정
+                    </Button>
+                  )}
                 </CardHeader>
                 <CardContent>
                   <div className="space-y-4">
@@ -1467,9 +1497,24 @@ export default function PatientDetailPage() {
             
             <TabsContent value="monitoring">
               <Card>
-                <CardHeader>
-                  <CardTitle>모니터링 설정</CardTitle>
-                  <CardDescription>낙상 감지 및 환경 모니터링 설정</CardDescription>
+                <CardHeader className="flex flex-row items-center justify-between">
+                  <div>
+                    <CardTitle>모니터링 설정</CardTitle>
+                    <CardDescription>낙상 감지 및 환경 모니터링 설정</CardDescription>
+                  </div>
+                  {canEdit && (
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      onClick={() => toast({
+                        title: "안내",
+                        description: "각 모니터링 설정의 개별 '설정' 버튼을 눌러 수정하세요.",
+                      })}
+                      className="h-8"
+                    >
+                      <Settings className="h-4 w-4 mr-1" /> 설정 도움말
+                    </Button>
+                  )}
                 </CardHeader>
                 <CardContent>
                   <div className="space-y-4">
