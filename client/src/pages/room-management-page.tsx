@@ -459,20 +459,44 @@ export default function RoomManagementPage() {
           <CardHeader className="pb-3">
             <div className="flex justify-between items-center">
               <CardTitle className="text-lg">{t('common.roomManagement')}</CardTitle>
-              <Button 
-                variant="outline" 
-                size="sm" 
-                onClick={() => setIsAddingFloor(true)}
-              >
-                <Plus className="h-4 w-4 mr-1" />
-                층 추가
-              </Button>
             </div>
           </CardHeader>
           <CardContent>
             {/* 층 선택 메뉴 */}
             <div className="mb-4">
-              <h3 className="text-sm font-medium mb-2">층 선택</h3>
+              <div className="flex justify-between items-center mb-2">
+                <h3 className="text-sm font-medium">층 선택</h3>
+                <div className="flex space-x-2">
+                  <Button 
+                    variant="outline" 
+                    size="sm"
+                    onClick={() => setIsAddingFloor(true)}
+                    className="px-2 h-8"
+                  >
+                    <Plus className="h-3.5 w-3.5 mr-1" />
+                    층 추가
+                  </Button>
+                  <Button 
+                    variant="outline" 
+                    size="sm"
+                    disabled={floors.length <= 1}
+                    onClick={() => {
+                      if (floors.length > 1) {
+                        const updatedFloors = floors.filter(f => f !== selectedFloor);
+                        setFloors(updatedFloors);
+                        setSelectedFloor(updatedFloors[0]);
+                        toast({
+                          title: "층 제거됨",
+                          description: `${selectedFloor}층이 제거되었습니다.`,
+                        });
+                      }
+                    }}
+                    className="px-2 h-8 text-red-500 hover:bg-red-50 hover:text-red-600 border-red-200 hover:border-red-300"
+                  >
+                    층 제거
+                  </Button>
+                </div>
+              </div>
               <div className="flex flex-wrap gap-2 mb-2">
                 {floors.map((floor) => (
                   <Button 
@@ -485,26 +509,6 @@ export default function RoomManagementPage() {
                     {floor}층
                   </Button>
                 ))}
-              </div>
-              <div className="flex justify-between items-center mt-2">
-                <Button 
-                  variant="destructive" 
-                  size="sm"
-                  disabled={floors.length <= 1}
-                  onClick={() => {
-                    if (floors.length > 1) {
-                      const updatedFloors = floors.filter(f => f !== selectedFloor);
-                      setFloors(updatedFloors);
-                      setSelectedFloor(updatedFloors[0]);
-                      toast({
-                        title: "층 제거됨",
-                        description: `${selectedFloor}층이 제거되었습니다.`,
-                      });
-                    }
-                  }}
-                >
-                  현재 층 제거
-                </Button>
               </div>
             </div>
 
