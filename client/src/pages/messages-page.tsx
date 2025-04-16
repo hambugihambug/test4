@@ -276,8 +276,8 @@ export default function MessagesPage() {
                         <CardDescription>
                           {contacts.find((c) => c.id === selectedContact)?.role === UserRole.NURSE
                             ? "간호사"
-                            : contacts.find((c) => c.id === selectedContact)?.role === "doctor"
-                            ? "의사"
+                            : contacts.find((c) => c.id === selectedContact)?.role === UserRole.DIRECTOR
+                            ? "병원장"
                             : contacts.find((c) => c.id === selectedContact)?.role === UserRole.PATIENT
                             ? "환자"
                             : "보호자"}

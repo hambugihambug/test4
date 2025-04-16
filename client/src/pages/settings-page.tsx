@@ -80,8 +80,8 @@ export default function SettingsPage() {
     onSuccess: (updatedUser: User) => {
       queryClient.setQueryData(["/api/user"], updatedUser);
       toast({
-        title: "Account updated",
-        description: "Your account information has been updated successfully.",
+        title: "계정 정보 업데이트 완료",
+        description: "계정 정보가 성공적으로 업데이트되었습니다.",
       });
       accountForm.reset({
         name: updatedUser.name,
@@ -92,7 +92,7 @@ export default function SettingsPage() {
     },
     onError: (error: Error) => {
       toast({
-        title: "Update failed",
+        title: "업데이트 실패",
         description: error.message,
         variant: "destructive",
       });
@@ -107,13 +107,13 @@ export default function SettingsPage() {
     },
     onSuccess: () => {
       toast({
-        title: "Notification settings updated",
-        description: "Your notification preferences have been saved.",
+        title: "알림 설정 업데이트 완료",
+        description: "알림 기본 설정이 저장되었습니다.",
       });
     },
     onError: (error: Error) => {
       toast({
-        title: "Update failed",
+        title: "업데이트 실패",
         description: error.message,
         variant: "destructive",
       });
@@ -182,7 +182,7 @@ export default function SettingsPage() {
                       name="currentPassword"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Current Password</FormLabel>
+                          <FormLabel>현재 비밀번호</FormLabel>
                           <FormControl>
                             <Input type="password" {...field} />
                           </FormControl>
@@ -196,12 +196,12 @@ export default function SettingsPage() {
                       name="newPassword"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>New Password</FormLabel>
+                          <FormLabel>새 비밀번호</FormLabel>
                           <FormControl>
                             <Input type="password" {...field} />
                           </FormControl>
                           <FormDescription>
-                            Leave blank if you don't want to change your password
+                            비밀번호를 변경하지 않으려면 빈칸으로 두세요
                           </FormDescription>
                           <FormMessage />
                         </FormItem>
@@ -213,7 +213,7 @@ export default function SettingsPage() {
                       name="confirmPassword"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Confirm New Password</FormLabel>
+                          <FormLabel>새 비밀번호 확인</FormLabel>
                           <FormControl>
                             <Input type="password" {...field} />
                           </FormControl>
@@ -224,7 +224,7 @@ export default function SettingsPage() {
                   </div>
                   
                   <Button type="submit" disabled={accountMutation.isPending}>
-                    {accountMutation.isPending ? "Saving..." : t('settings.saveSettings')}
+                    {accountMutation.isPending ? "저장 중..." : t('settings.saveSettings')}
                   </Button>
                 </form>
               </Form>
