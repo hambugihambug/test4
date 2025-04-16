@@ -36,35 +36,6 @@ import {
 } from "@/components/ui/collapsible";
 import { useState } from "react";
 
-// 임시 병실 및 환자 데이터
-const ROOMS_DATA = [
-  {
-    id: 1,
-    name: "101호",
-    patients: [
-      { id: 1, name: "김환자", age: 65, gender: "남", condition: "안정", fallRisk: "높음" },
-      { id: 2, name: "이환자", age: 78, gender: "여", condition: "양호", fallRisk: "중간" }
-    ]
-  },
-  {
-    id: 2,
-    name: "102호",
-    patients: [
-      { id: 3, name: "박환자", age: 72, gender: "남", condition: "주의", fallRisk: "높음" },
-      { id: 4, name: "최환자", age: 68, gender: "여", condition: "안정", fallRisk: "낮음" },
-      { id: 5, name: "정환자", age: 81, gender: "남", condition: "안정", fallRisk: "중간" }
-    ]
-  },
-  {
-    id: 3,
-    name: "103호",
-    patients: [
-      { id: 6, name: "강환자", age: 75, gender: "여", condition: "안정", fallRisk: "낮음" },
-      { id: 7, name: "윤환자", age: 69, gender: "남", condition: "주의", fallRisk: "높음" }
-    ]
-  }
-];
-
 function SidebarMenuItem({ icon: Icon, label, active, href, onClick }: { 
   icon: any, 
   label: string, 
@@ -89,57 +60,7 @@ function SidebarMenuItem({ icon: Icon, label, active, href, onClick }: {
   );
 }
 
-function RoomItem({ room }: { room: typeof ROOMS_DATA[0] }) {
-  const [isOpen, setIsOpen] = useState(false);
-  
-  return (
-    <div className="w-full">
-      <button 
-        onClick={() => setIsOpen(!isOpen)}
-        className="flex w-full items-center justify-between px-2 py-1.5 text-sm hover:bg-gray-100 rounded-md"
-      >
-        <div className="flex items-center">
-          <BedDouble className="mr-2 h-4 w-4 text-gray-500" />
-          <span>{room.name}</span>
-        </div>
-        <ChevronDown className={`h-4 w-4 text-gray-500 transition-transform ${isOpen ? 'rotate-180' : ''}`} />
-      </button>
-      
-      {isOpen && (
-        <div className="pl-6 mt-1 space-y-1">
-          {room.patients.map(patient => (
-            <a 
-              key={patient.id} 
-              href={`/patients/${patient.id}`}
-              className="flex items-center px-2 py-1.5 text-sm rounded-md text-gray-700 hover:bg-gray-100"
-            >
-              <UserRound className="mr-2 h-3.5 w-3.5 text-gray-500" />
-              <span>{patient.name}</span>
-              <span className={cn(
-                "ml-auto text-xs rounded-full px-1.5 py-0.5",
-                patient.fallRisk === "높음" ? "bg-red-100 text-red-800" :
-                patient.fallRisk === "중간" ? "bg-yellow-100 text-yellow-800" :
-                "bg-green-100 text-green-800"
-              )}>
-                {patient.fallRisk}
-              </span>
-            </a>
-          ))}
-        </div>
-      )}
-    </div>
-  );
-}
 
-function RoomList() {
-  return (
-    <div className="space-y-1 mt-2">
-      {ROOMS_DATA.map(room => (
-        <RoomItem key={room.id} room={room} />
-      ))}
-    </div>
-  );
-}
 
 function Sidebar() {
   const [location] = useLocation();
@@ -193,22 +114,14 @@ function Sidebar() {
         {canAccessRoomManagement && (
           <div className="mt-6 pt-4 border-t">
             <div className="px-2 mb-2 text-xs font-semibold text-gray-500 uppercase tracking-wider">
-              병실 및 환자 관리
+              병실 관리
             </div>
             <SidebarMenuItem
               icon={BedDouble}
               label="병실 관리"
               href="/room-management"
               active={location === '/room-management'}
-              onClick={() => {
-                console.log("병실 관리 클릭됨");
-                const token = localStorage.getItem('token');
-                console.log("현재 토큰 상태:", token ? "토큰 있음" : "토큰 없음");
-              }}
             />
-            <div className="mt-2">
-              <RoomList />
-            </div>
           </div>
         )}
         
@@ -270,14 +183,106 @@ function Sidebar() {
 
 function MobileSidebar() {
   const [isOpen, setIsOpen] = useState(false);
+  const [location] = useLocation();
+  const { user, logoutMutation } = useAuth();
+  
+  if (!user) return null;
+  
+  const canAccessUserManagement = user.role === UserRole.DIRECTOR || user.role === UserRole.NURSE;
+  const canAccessRoomManagement = user.role === UserRole.DIRECTOR || user.role === UserRole.NURSE;
   
   return (
-    <button 
-      className="md:hidden p-2 mr-2 rounded-md hover:bg-gray-100"
-      onClick={() => setIsOpen(!isOpen)}
-    >
-      <Menu className="h-5 w-5" />
-    </button>
+    <div className="md:hidden">
+      <button 
+        className="p-2 mr-2 rounded-md hover:bg-gray-100"
+        onClick={() => setIsOpen(!isOpen)}
+      >
+        <Menu className="h-5 w-5" />
+      </button>
+      
+      <Collapsible open={isOpen} onOpenChange={setIsOpen} className="md:hidden">
+        <CollapsibleContent className="fixed top-16 left-0 right-0 bg-white shadow-md z-20 py-2 px-4 border-b">
+          <div className="space-y-2">
+            <SidebarMenuItem 
+              icon={Home} 
+              label="홈" 
+              href="/" 
+              active={location === '/'} 
+            />
+            <SidebarMenuItem 
+              icon={LayoutDashboard} 
+              label="대시보드" 
+              href="/dashboard" 
+              active={location === '/dashboard'} 
+            />
+            <SidebarMenuItem 
+              icon={MonitorSmartphone} 
+              label="낙상 감지" 
+              href="/fall-detection" 
+              active={location === '/fall-detection'} 
+            />
+            <SidebarMenuItem 
+              icon={Thermometer} 
+              label="환경 모니터링" 
+              href="/environment" 
+              active={location === '/environment'} 
+            />
+            
+            {canAccessRoomManagement && (
+              <SidebarMenuItem
+                icon={BedDouble}
+                label="병실 관리"
+                href="/room-management"
+                active={location === '/room-management'}
+              />
+            )}
+            
+            {canAccessUserManagement && (
+              <SidebarMenuItem 
+                icon={Users} 
+                label="계정 관리" 
+                href="/accounts" 
+                active={location === '/accounts'} 
+              />
+            )}
+            
+            <SidebarMenuItem 
+              icon={UserRound} 
+              label="마이페이지" 
+              href="/mypage" 
+              active={location === '/mypage'} 
+            />
+            <SidebarMenuItem 
+              icon={MessageCircle} 
+              label="메시지" 
+              href="/messages" 
+              active={location === '/messages'} 
+            />
+            <SidebarMenuItem 
+              icon={Settings} 
+              label="설정" 
+              href="/settings" 
+              active={location === '/settings'} 
+            />
+            
+            <div className="pt-2 mt-2 border-t">
+              <Button 
+                variant="outline" 
+                className="w-full justify-start text-gray-700"
+                onClick={() => {
+                  setIsOpen(false);
+                  logoutMutation.mutate();
+                }}
+                disabled={logoutMutation.isPending}
+              >
+                <LogOut className="mr-2 h-4 w-4" />
+                {logoutMutation.isPending ? "로그아웃 중..." : "로그아웃"}
+              </Button>
+            </div>
+          </div>
+        </CollapsibleContent>
+      </Collapsible>
+    </div>
   );
 }
 
@@ -286,7 +291,7 @@ function Header() {
     <header className="bg-white border-b shadow-sm p-4 md:p-6">
       <div className="container mx-auto flex items-center">
         <MobileSidebar />
-        <span className="text-xl font-bold text-primary md:hidden">스마트 케어</span>
+        <a href="/" className="text-xl font-bold text-primary md:hidden">스마트 케어</a>
       </div>
     </header>
   );

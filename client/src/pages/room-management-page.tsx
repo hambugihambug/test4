@@ -692,7 +692,7 @@ export default function RoomManagementPage() {
                     <div className="space-y-3">
                       <div className="flex items-center">
                         <Users className="h-4 w-4 mr-2 text-gray-500" />
-                        <span className="text-sm font-medium mr-2">{t('common.guardian')}:</span>
+                        <span className="text-sm font-medium mr-2">{t('common.guardianName')}:</span>
                         <span className="text-sm">{PATIENT_DETAILS[selectedPatientId].guardian.name} ({PATIENT_DETAILS[selectedPatientId].guardian.relation})</span>
                       </div>
                       <div className="flex items-center">
