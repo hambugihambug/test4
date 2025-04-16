@@ -657,7 +657,27 @@ export default function PatientDetailPage() {
             <DialogDescription>보호자 및 의료진과 메시지를 주고받습니다.</DialogDescription>
           </DialogHeader>
           <div className="grid gap-4 py-4">
-            <div className="grid grid-cols-1 items-center gap-4">
+            <div className="grid grid-cols-4 items-center gap-4 mb-2">
+              <label htmlFor="recipient" className="text-sm font-medium">수신자 선택</label>
+              <div className="col-span-3">
+                <Select 
+                  value={messageRecipient}
+                  onValueChange={(value) => setMessageRecipient(value)}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="수신자 선택" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="nurse">담당 간호사</SelectItem>
+                    <SelectItem value="doctor">담당 의사</SelectItem>
+                    <SelectItem value="guardian">보호자</SelectItem>
+                    <SelectItem value="administrator">병원 관리자</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+            
+            <div className="grid grid-cols-1 items-center gap-2">
               <label htmlFor="message" className="text-sm font-medium">메시지 내용</label>
               <Textarea
                 id="message"
@@ -668,6 +688,28 @@ export default function PatientDetailPage() {
                 rows={4}
               />
             </div>
+            
+            <div className="bg-gray-50 p-3 rounded-md border mt-2">
+              <div className="flex items-center">
+                <div className="flex-grow">
+                  <span className="text-sm font-medium">수신자: </span>
+                  <span className="text-sm">
+                    {messageRecipient === 'nurse' ? '담당 간호사 (이간호사)' : 
+                     messageRecipient === 'doctor' ? '담당 의사 (박의사)' : 
+                     messageRecipient === 'guardian' ? '보호자 (김보호자)' : 
+                     '병원 관리자'}
+                  </span>
+                </div>
+              </div>
+            </div>
+            
+            <Alert className="mt-2">
+              <AlertCircle className="h-4 w-4" />
+              <AlertTitle>메시지 사용 안내</AlertTitle>
+              <AlertDescription>
+                긴급한 사항은 병원 대표번호로 전화하시기 바랍니다. 메시지는 근무 시간 내 확인됩니다.
+              </AlertDescription>
+            </Alert>
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setMessageDialogOpen(false)}>취소</Button>
