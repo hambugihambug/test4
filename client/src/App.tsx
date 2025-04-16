@@ -11,6 +11,7 @@ import RoomManagementPage from "@/pages/room-management-page";
 import { AuthProvider, useAuth } from "@/hooks/use-auth";
 import { ProtectedRoute } from "@/lib/protected-route";
 import { UserRole } from "@shared/schema";
+import { useEffect } from "react";
 import { 
   Home, 
   LayoutDashboard, 
@@ -326,7 +327,49 @@ function HomePage() {
   );
 }
 
+// 무한 리디렉션 방지를 위한 초기화 함수
+function clearRedirectState() {
+  try {
+    // 페이지 로드 시 리디렉션 시도 카운터 초기화
+    sessionStorage.removeItem('redirectAttempt');
+    
+    // 토큰 사전 확인 (로그인 화면/메인 화면 판단용)
+    const token = localStorage.getItem('token');
+    if (token) {
+      // JWT 디코딩 및 유효성 검사 (간단한 방법)
+      const parts = token.split('.');
+      if (parts.length === 3) {
+        try {
+          const payload = JSON.parse(atob(parts[1]));
+          const expiry = payload.exp * 1000; // 초를 밀리초로 변환
+          const now = Date.now();
+          
+          if (now >= expiry) {
+            // 만료된 토큰은 제거
+            console.log("만료된 토큰 발견, 제거함");
+            localStorage.removeItem('token');
+          }
+        } catch (e) {
+          // 토큰 구문 분석 실패 시 제거
+          console.error("토큰 디코딩 오류, 제거함:", e);
+          localStorage.removeItem('token');
+        }
+      } else {
+        // 잘못된 형식의 토큰은 제거
+        localStorage.removeItem('token');
+      }
+    }
+  } catch (error) {
+    console.error("초기화 중 오류:", error);
+  }
+}
+
 function App() {
+  // 앱 시작 시 무한 리디렉션 방지 로직 실행
+  useEffect(() => {
+    clearRedirectState();
+  }, []);
+  
   return (
     <AuthProvider>
       <div className="min-h-screen bg-gray-50 flex">
