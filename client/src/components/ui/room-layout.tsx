@@ -134,9 +134,12 @@ export function RoomLayout({ roomId, layout, onSave, editable }: RoomLayoutProps
   
   // 병실 레이아웃 저장
   const saveLayout = () => {
-    onSave(currentLayout);
+    const saveData = {
+      beds: currentLayout.beds
+    };
+    onSave(saveData);
     toast({
-      title: t('common.savedMessage'),
+      title: t('common.savedMessage') || '저장되었습니다',
       variant: "default",
       duration: 3000,
     });

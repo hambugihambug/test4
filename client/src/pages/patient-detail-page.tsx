@@ -210,10 +210,12 @@ export default function PatientDetailPage() {
   const [messageRecipient, setMessageRecipient] = useState("nurse"); // 기본값: 담당 간호사
   
   // 수정 권한 확인 (병원장 또는 담당 간호사만 수정 가능)
-  // 데이터에 assignedNurseId가 없으므로 현재는 병원장만 수정 가능하도록 설정
+  // 병원장과 간호사만 환자 정보를 수정할 수 있음
   const canEdit = user && (
     user.role === UserRole.DIRECTOR || 
     user.role === UserRole.NURSE
+    // 현재 데이터에 담당 간호사 필드가 없어 모든 간호사가 수정 가능
+    // 추후 API 구현 시 담당 간호사 확인 로직 추가 필요
   );
   
   // 초기 데이터 로드
@@ -254,7 +256,7 @@ export default function PatientDetailPage() {
   }, [currentPatient]);
   
   // 환자 기본 정보 수정 처리
-  const handleEditPatient = () => {
+  const handleEditPatient = async () => {
     try {
       // 입력값 검증
       if (!formData.name || !formData.age || !formData.roomNumber || !formData.bedNumber) {
@@ -266,7 +268,7 @@ export default function PatientDetailPage() {
         return;
       }
       
-      // 임시 데이터이므로 실제 데이터를 업데이트하는 대신 상태 변경
+      // 업데이트할 환자 데이터 생성
       const updatedPatient = {
         ...patient,
         name: formData.name,
@@ -283,21 +285,36 @@ export default function PatientDetailPage() {
         condition: formData.condition
       };
       
-      setPatient(updatedPatient);
-      
-      // 실제 API 호출 대신 상태 업데이트로 시뮬레이션 (성공 메시지 표시)
-      setTimeout(() => {
+      // 실제 API 호출 (구현 시 주석 해제)
+      try {
+        // API 호출이 구현될 때까지 임시로 시뮬레이션
+        // const response = await apiRequest("PUT", `/api/patients/${patientId}`, updatedPatient);
+        // const updatedData = await response.json();
+        
+        // 상태 업데이트
+        setPatient(updatedPatient);
+        
+        // 성공 메시지 표시
         toast({
           title: "정보 수정 완료",
           description: "환자 정보가 성공적으로 업데이트되었습니다.",
         });
+        
+        // API가 구현되면 아래 주석 해제
+        // queryClient.invalidateQueries({ queryKey: ['/api/patients', patientId] });
+        
+        // 다이얼로그 닫기
         setEditDialogOpen(false);
-      }, 500);
-      
-      // 실제 구현에서는 아래와 같이 API 호출 필요
-      // await apiRequest("PUT", `/api/patients/${patientId}`, formData);
-      // queryClient.invalidateQueries({ queryKey: ['/api/patients', patientId] });
+      } catch (apiError) {
+        console.error("API 오류:", apiError);
+        toast({
+          title: "서버 오류",
+          description: "서버와 통신 중 문제가 발생했습니다. 잠시 후 다시 시도해주세요.",
+          variant: "destructive"
+        });
+      }
     } catch (error) {
+      console.error("일반 오류:", error);
       toast({
         title: "오류 발생",
         description: "환자 정보 업데이트 중 문제가 발생했습니다.",
