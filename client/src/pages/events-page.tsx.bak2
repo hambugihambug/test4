@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import { useState } from "react";
 import { Calendar, Clock, Filter, Search, Users } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
@@ -203,10 +203,10 @@ const getEventStatusColor = (status: string) => {
   }
 };
 
-const EventsPage: React.FC = () => {
+function EventsPage() {
   console.error("이벤트 페이지 렌더링 시작");
   
-  const [events] = useState<Event[]>(mockEvents);
+  const [events, setEvents] = useState<Event[]>(mockEvents);
   const [searchTerm, setSearchTerm] = useState("");
   const [filterType, setFilterType] = useState<string | null>(null);
   const [filterStatus, setFilterStatus] = useState<string | null>(null);
@@ -214,9 +214,11 @@ const EventsPage: React.FC = () => {
   const [isCalendarOpen, setIsCalendarOpen] = useState(false);
   const { user } = useAuth();
   
+  // 콘솔 출력으로 디버깅 (실제 환경에서는 제거)
   console.error("이벤트 페이지 렌더링 중...");
   console.error("이벤트 데이터:", events ? events.length : 'undefined');
   console.error("현재 사용자:", user ? user.username : 'undefined');
+  console.error("mockEvents 데이터:", mockEvents ? mockEvents.length : 'undefined');
 
   // 이벤트 필터링
   const filteredEvents = events.filter(event => {
@@ -420,6 +422,6 @@ const EventsPage: React.FC = () => {
       </div>
     </div>
   );
-};
+}
 
 export default EventsPage;
