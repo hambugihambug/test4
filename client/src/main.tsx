@@ -3,6 +3,7 @@ import "./index.css";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { queryClient } from "./lib/queryClient";
 import App from "./App";
+import { I18nProvider } from "./contexts/I18nContext";
 
 // 토큰 디버깅: 앱 시작 시 토큰 확인
 const token = localStorage.getItem('token');
@@ -13,6 +14,8 @@ if (token) {
 
 createRoot(document.getElementById("root")!).render(
   <QueryClientProvider client={queryClient}>
-    <App />
+    <I18nProvider>
+      <App />
+    </I18nProvider>
   </QueryClientProvider>
 );

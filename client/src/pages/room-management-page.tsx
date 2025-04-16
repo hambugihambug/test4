@@ -31,6 +31,7 @@ export default function RoomManagementPage() {
   try {
     console.log("RoomManagementPage에서 try 블록 시작");
     const { t } = useI18n();
+    console.log("useI18n 호출 완료");
     const { user } = useAuth();
     
     console.log("RoomManagementPage 상태 초기화 중, 사용자:", user?.username);
