@@ -12,7 +12,7 @@ import EnvironmentPage from "@/pages/environment-page";
 import MessagesPage from "@/pages/messages-page";
 import SettingsPage from "@/pages/settings-page";
 import SchedulePage from "@/pages/schedule-page";
-import EventsPage from "@/pages/events-page";
+import SimpleEventsPage from "@/pages/SimpleEventsPage";
 import { AuthProvider, useAuth } from "@/hooks/use-auth";
 import { ProtectedRoute } from "@/lib/protected-route";
 import { UserRole } from "@shared/schema";
@@ -458,7 +458,7 @@ function App() {
                 <ProtectedRoute path="/messages" component={MessagesPage} />
                 <ProtectedRoute path="/settings" component={SettingsPage} />
                 <ProtectedRoute path="/schedule" component={SchedulePage} />
-                <ProtectedRoute path="/events" component={EventsPage} />
+                <ProtectedRoute path="/events" component={SimpleEventsPage} />
                 <Route component={NotFound} />
               </Switch>
             </main>
