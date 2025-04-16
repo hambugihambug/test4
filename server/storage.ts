@@ -281,6 +281,10 @@ export class MemStorage implements IStorage {
   async getPatientsByRoomId(roomId: number): Promise<Patient[]> {
     return Array.from(this.patients.values()).filter(patient => patient.roomId === roomId);
   }
+  
+  async getPatientsByAssignedNurse(nurseId: number): Promise<Patient[]> {
+    return Array.from(this.patients.values()).filter(patient => patient.assignedNurseId === nurseId);
+  }
 
   async getPatientWithDetails(id: number): Promise<PatientWithDetails | undefined> {
     const patient = this.patients.get(id);
@@ -660,6 +664,10 @@ export class DatabaseStorage implements IStorage {
 
   async getPatientsByRoomId(roomId: number): Promise<Patient[]> {
     return await db.select().from(patients).where(eq(patients.roomId, roomId));
+  }
+  
+  async getPatientsByAssignedNurse(nurseId: number): Promise<Patient[]> {
+    return await db.select().from(patients).where(eq(patients.assignedNurseId, nurseId));
   }
 
   async getPatientWithDetails(id: number): Promise<PatientWithDetails | undefined> {
