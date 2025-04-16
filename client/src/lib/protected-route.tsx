@@ -66,7 +66,9 @@ export function ProtectedRoute({
 
   // 특정 역할이 필요한 경우 역할 확인
   if (roles && roles.length > 0) {
+    // 역할 권한 확인
     let hasAccess = false;
+    
     for (const role of roles) {
       if (user.role === role) {
         hasAccess = true;
@@ -75,6 +77,7 @@ export function ProtectedRoute({
     }
     
     if (!hasAccess) {
+      console.log(`사용자 ${user.username}(${user.role})는 ${path} 페이지에 접근 권한이 없음`);
       return (
         <Route path={path}>
           <div className="flex flex-col items-center justify-center min-h-screen p-4">

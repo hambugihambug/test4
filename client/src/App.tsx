@@ -394,7 +394,6 @@ function App() {
               <ProtectedRoute 
                 path="/room-management" 
                 component={RoomManagementPage} 
-                roles={[UserRole.DIRECTOR, UserRole.NURSE]} 
               />
               <ProtectedRoute path="/messages" component={() => <div className="p-8">메시지 - 구현 중</div>} />
               <ProtectedRoute path="/settings" component={() => <div className="p-8">설정 - 구현 중</div>} />
