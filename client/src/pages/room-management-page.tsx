@@ -155,8 +155,8 @@ export default function RoomManagementPage() {
     if (editingRoom) {
       form.reset({
         name: editingRoom.name,
-        tempThreshold: editingRoom.tempThreshold,
-        humidityThreshold: editingRoom.humidityThreshold,
+        tempThreshold: editingRoom.tempThreshold || 26.0,
+        humidityThreshold: editingRoom.humidityThreshold || 60.0,
       });
     } else {
       form.reset({
@@ -298,13 +298,13 @@ export default function RoomManagementPage() {
                     <div className="flex justify-between items-center mt-2 text-sm">
                       <div className="flex items-center">
                         <Thermometer className="h-4 w-4 text-yellow-500 mr-1" />
-                        <span>{room.currentTemp?.toFixed(1)}°C</span>
+                        <span>{room.currentTemp ? room.currentTemp.toFixed(1) : "N/A"}°C</span>
                       </div>
                       <div className="flex items-center">
                         <Droplets className="h-4 w-4 text-blue-500 mr-1" />
-                        <span>{room.currentHumidity?.toFixed(0)}%</span>
+                        <span>{room.currentHumidity ? room.currentHumidity.toFixed(0) : "N/A"}%</span>
                       </div>
-                      {getRoomStatusBadge(room.status)}
+                      {room.status ? getRoomStatusBadge(room.status) : null}
                     </div>
                   </div>
                 ))}
@@ -338,7 +338,7 @@ export default function RoomManagementPage() {
                       <h3 className="text-sm font-medium text-neutral-500 mb-2">{t('rooms.temperature')}</h3>
                       <div className="flex items-center mb-2">
                         <Thermometer className="h-5 w-5 text-yellow-500 mr-2" />
-                        <span className="text-2xl font-bold">{selectedRoom.currentTemp?.toFixed(1)}°C</span>
+                        <span className="text-2xl font-bold">{selectedRoom.currentTemp ? selectedRoom.currentTemp.toFixed(1) : "N/A"}°C</span>
                       </div>
                       <div className="text-sm text-neutral-500">
                         {t('rooms.tempThreshold')}: {selectedRoom.tempThreshold}°C
@@ -349,7 +349,7 @@ export default function RoomManagementPage() {
                       <h3 className="text-sm font-medium text-neutral-500 mb-2">{t('rooms.humidity')}</h3>
                       <div className="flex items-center mb-2">
                         <Droplets className="h-5 w-5 text-blue-500 mr-2" />
-                        <span className="text-2xl font-bold">{selectedRoom.currentHumidity?.toFixed(0)}%</span>
+                        <span className="text-2xl font-bold">{selectedRoom.currentHumidity ? selectedRoom.currentHumidity.toFixed(0) : "N/A"}%</span>
                       </div>
                       <div className="text-sm text-neutral-500">
                         {t('rooms.humidityThreshold')}: {selectedRoom.humidityThreshold}%
@@ -360,7 +360,7 @@ export default function RoomManagementPage() {
                   <div className="border-t border-neutral-200 pt-4 mt-4">
                     <h3 className="text-sm font-medium text-neutral-500 mb-2">{t('common.status')}</h3>
                     <div className="p-3 rounded bg-neutral-50">
-                      {getRoomStatusBadge(selectedRoom.status)}
+                      {selectedRoom.status ? getRoomStatusBadge(selectedRoom.status) : null}
                     </div>
                   </div>
                 </TabsContent>
