@@ -894,7 +894,7 @@ export default function PatientDetailPage() {
                 </div>
                 <div className="flex justify-between">
                   <dt className="text-sm font-medium text-muted-foreground">담당 간호사</dt>
-                  <dd className="text-sm font-medium">{patient.assignedNurseId}번</dd>
+                  <dd className="text-sm font-medium">{getNurseName(patient.assignedNurseId)}</dd>
                 </div>
               </dl>
             </CardContent>
