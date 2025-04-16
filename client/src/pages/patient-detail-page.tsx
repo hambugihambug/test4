@@ -450,8 +450,19 @@ export default function PatientDetailPage() {
                   <CardTitle>환자 정보</CardTitle>
                   <CardDescription>환자의 기본 정보</CardDescription>
                 </div>
+                {canEdit && (
+                  <Button 
+                    onClick={() => setEditDialogOpen(true)}
+                    variant="outline" 
+                    size="sm"
+                    className="h-8"
+                  >
+                    <Edit className="h-4 w-4 mr-1.5" />
+                    수정
+                  </Button>
+                )}
               </CardHeader>
-              <CardContent className="pb-12 relative">
+              <CardContent>
                 <div className="space-y-3">
                   <div className="flex items-center">
                     <User className="h-4 w-4 mr-2 text-gray-500" />
@@ -521,20 +532,6 @@ export default function PatientDetailPage() {
                     <span className="text-sm">{patient.guardian.contact}</span>
                   </div>
                 </div>
-                
-                {canEdit && (
-                  <div className="absolute bottom-3 right-4">
-                    <Button 
-                      onClick={() => setEditDialogOpen(true)}
-                      variant="outline" 
-                      size="sm"
-                      className="shadow-sm"
-                    >
-                      <Edit className="h-4 w-4 mr-1.5" />
-                      환자 정보 수정
-                    </Button>
-                  </div>
-                )}
               </CardContent>
             </Card>
           </div>
