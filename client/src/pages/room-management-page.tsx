@@ -61,6 +61,7 @@ export default function RoomManagementPage() {
     
     console.log("RoomManagementPage 상태 초기화 중, 사용자:", user?.username);
   const [isAddingRoom, setIsAddingRoom] = useState(false);
+  const [isAddingFloor, setIsAddingFloor] = useState(false);
   
   // 디버깅: 페이지 로드 시 인증 정보 확인
   useEffect(() => {
@@ -76,6 +77,9 @@ export default function RoomManagementPage() {
   const [selectedPatientId, setSelectedPatientId] = useState<number | null>(null);
   const [isViewingPatientDetails, setIsViewingPatientDetails] = useState(false);
   const [activeTab, setActiveTab] = useState<string>("details");
+  const [selectedFloor, setSelectedFloor] = useState<number>(1);
+  const [floorInput, setFloorInput] = useState<string>("");
+  const [floors, setFloors] = useState<number[]>([1, 2, 3]);
   
   // 사용자 정보는 위에서 이미 가져옴
   console.log("RoomManagementPage - 현재 사용자:", user?.username, "역할:", user?.role);
@@ -450,45 +454,112 @@ export default function RoomManagementPage() {
       
       {/* Room Management Interface */}
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
-        {/* Room List */}
+        {/* Floor & Room Management */}
         <Card className="lg:col-span-1">
           <CardHeader className="pb-3">
-            <CardTitle className="text-lg">{t('common.roomManagement')}</CardTitle>
+            <div className="flex justify-between items-center">
+              <CardTitle className="text-lg">{t('common.roomManagement')}</CardTitle>
+              <Button 
+                variant="outline" 
+                size="sm" 
+                onClick={() => setIsAddingFloor(true)}
+              >
+                <Plus className="h-4 w-4 mr-1" />
+                층 추가
+              </Button>
+            </div>
           </CardHeader>
-          <CardContent className="p-0">
-            {roomsLoading ? (
-              <div className="flex justify-center items-center p-8">
-                <div className="animate-spin h-8 w-8 border-4 border-primary border-t-transparent rounded-full"></div>
-              </div>
-            ) : (
-              <div className="divide-y">
-                {roomsWithPatients?.map((room) => (
-                  <div 
-                    key={room.id}
-                    className={`p-3 cursor-pointer transition-colors ${selectedRoomId === room.id ? 'bg-blue-50' : 'hover:bg-neutral-50'}`}
-                    onClick={() => selectRoom(room.id)}
+          <CardContent>
+            {/* 층 선택 메뉴 */}
+            <div className="mb-4">
+              <h3 className="text-sm font-medium mb-2">층 선택</h3>
+              <div className="flex flex-wrap gap-2 mb-2">
+                {floors.map((floor) => (
+                  <Button 
+                    key={floor}
+                    variant={selectedFloor === floor ? "default" : "outline"}
+                    size="sm"
+                    onClick={() => setSelectedFloor(floor)}
+                    className="min-w-[40px]"
                   >
-                    <div className="flex justify-between items-center">
-                      <h3 className="font-medium">{room.name}</h3>
-                      <div className="text-sm text-neutral-500">
-                        {room.patients.length} {t('rooms.patients')}
-                      </div>
-                    </div>
-                    <div className="flex justify-between items-center mt-2 text-sm">
-                      <div className="flex items-center">
-                        <Thermometer className="h-4 w-4 text-yellow-500 mr-1" />
-                        <span>{room.currentTemp ? room.currentTemp.toFixed(1) : "N/A"}°C</span>
-                      </div>
-                      <div className="flex items-center">
-                        <Droplets className="h-4 w-4 text-blue-500 mr-1" />
-                        <span>{room.currentHumidity ? room.currentHumidity.toFixed(0) : "N/A"}%</span>
-                      </div>
-                      {room.status ? getRoomStatusBadge(room.status) : null}
-                    </div>
-                  </div>
+                    {floor}층
+                  </Button>
                 ))}
               </div>
-            )}
+              <div className="flex justify-between items-center mt-2">
+                <Button 
+                  variant="destructive" 
+                  size="sm"
+                  disabled={floors.length <= 1}
+                  onClick={() => {
+                    if (floors.length > 1) {
+                      const updatedFloors = floors.filter(f => f !== selectedFloor);
+                      setFloors(updatedFloors);
+                      setSelectedFloor(updatedFloors[0]);
+                      toast({
+                        title: "층 제거됨",
+                        description: `${selectedFloor}층이 제거되었습니다.`,
+                      });
+                    }
+                  }}
+                >
+                  현재 층 제거
+                </Button>
+              </div>
+            </div>
+
+            <div className="border-t pt-4">
+              <h3 className="text-sm font-medium mb-2">{selectedFloor}층 병실 목록</h3>
+              
+              {roomsLoading ? (
+                <div className="flex justify-center items-center p-8">
+                  <div className="animate-spin h-8 w-8 border-4 border-primary border-t-transparent rounded-full"></div>
+                </div>
+              ) : (
+                <div className="divide-y border rounded">
+                  {/* 여기서는 모든 방을 보여주지만, 실제로는 선택된 층에 해당하는 방만 필터링해서 보여줘야 함 */}
+                  {/* 실제 구현 시 방 번호의 첫 자리가 층을 나타낸다고 가정 */}
+                  {roomsWithPatients?.filter(room => {
+                    // 방 이름에서 첫 번째 숫자가 층 번호를 나타낸다고 가정 (예: 101호, 102호는 1층)
+                    const floorNumber = parseInt(room.name.charAt(0));
+                    return floorNumber === selectedFloor;
+                  }).map((room) => (
+                    <div 
+                      key={room.id}
+                      className={`p-3 cursor-pointer transition-colors ${selectedRoomId === room.id ? 'bg-blue-50' : 'hover:bg-neutral-50'}`}
+                      onClick={() => selectRoom(room.id)}
+                    >
+                      <div className="flex justify-between items-center">
+                        <h3 className="font-medium">{room.name}</h3>
+                        <div className="text-sm text-neutral-500">
+                          {room.patients.length} {t('rooms.patients')}
+                        </div>
+                      </div>
+                      <div className="flex justify-between items-center mt-2 text-sm">
+                        <div className="flex items-center">
+                          <Thermometer className="h-4 w-4 text-yellow-500 mr-1" />
+                          <span>{room.currentTemp ? room.currentTemp.toFixed(1) : "N/A"}°C</span>
+                        </div>
+                        <div className="flex items-center">
+                          <Droplets className="h-4 w-4 text-blue-500 mr-1" />
+                          <span>{room.currentHumidity ? room.currentHumidity.toFixed(0) : "N/A"}%</span>
+                        </div>
+                        {room.status ? getRoomStatusBadge(room.status) : null}
+                      </div>
+                    </div>
+                  ))}
+                  
+                  {roomsWithPatients?.filter(room => {
+                    const floorNumber = parseInt(room.name.charAt(0));
+                    return floorNumber === selectedFloor;
+                  }).length === 0 && (
+                    <div className="p-4 text-center text-gray-500">
+                      이 층에 등록된 병실이 없습니다.
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
           </CardContent>
         </Card>
         
@@ -912,7 +983,7 @@ export default function RoomManagementPage() {
                   <FormItem>
                     <FormLabel>{t('cctv.roomName')}</FormLabel>
                     <FormControl>
-                      <Input placeholder="101호" {...field} />
+                      <Input placeholder={`${selectedFloor}01호`} {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -970,6 +1041,80 @@ export default function RoomManagementPage() {
               </DialogFooter>
             </form>
           </Form>
+        </DialogContent>
+      </Dialog>
+      
+      {/* Add Floor Dialog */}
+      <Dialog open={isAddingFloor} onOpenChange={(open) => {
+        if (!open) {
+          setIsAddingFloor(false);
+          setFloorInput("");
+        }
+      }}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>층 추가</DialogTitle>
+            <DialogDescription>
+              새로운 층을 병원에 추가합니다. 층 번호를 입력하세요.
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="grid gap-4 py-4">
+            <div className="grid gap-2">
+              <Label htmlFor="floor-number">층 번호</Label>
+              <Input
+                id="floor-number"
+                type="number"
+                min="1"
+                max="99"
+                placeholder="층 번호를 입력하세요"
+                value={floorInput}
+                onChange={(e) => setFloorInput(e.target.value)}
+              />
+            </div>
+          </div>
+          
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsAddingFloor(false)}>
+              취소
+            </Button>
+            <Button
+              onClick={() => {
+                const floorNum = parseInt(floorInput);
+                if (!isNaN(floorNum) && floorNum > 0) {
+                  // 중복 확인
+                  if (floors.includes(floorNum)) {
+                    toast({
+                      title: "이미 존재하는 층",
+                      description: `${floorNum}층은 이미 존재합니다.`,
+                      variant: "destructive"
+                    });
+                    return;
+                  }
+                  
+                  // 층 추가
+                  const updatedFloors = [...floors, floorNum].sort((a, b) => a - b);
+                  setFloors(updatedFloors);
+                  setSelectedFloor(floorNum);
+                  setIsAddingFloor(false);
+                  setFloorInput("");
+                  
+                  toast({
+                    title: "층 추가됨",
+                    description: `${floorNum}층이 추가되었습니다.`,
+                  });
+                } else {
+                  toast({
+                    title: "잘못된 입력",
+                    description: "유효한 층 번호를 입력하세요.",
+                    variant: "destructive"
+                  });
+                }
+              }}
+            >
+              추가
+            </Button>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
     </div>

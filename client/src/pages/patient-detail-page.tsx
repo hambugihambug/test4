@@ -1193,11 +1193,32 @@ export default function PatientDetailPage() {
           {patient.condition}
         </span>
         <div className="ml-auto flex gap-2">
+          {canEdit && (
+            <Button 
+              variant="default" 
+              size="sm" 
+              onClick={() => setEditDialogOpen(true)}
+              className="mr-2"
+            >
+              <Edit className="h-4 w-4 mr-1" />
+              환자 정보 수정
+            </Button>
+          )}
           <Button variant="outline" size="sm" onClick={() => setMessageDialogOpen(true)}>
             <MessageCircle className="h-4 w-4 mr-1" /> 메시지
           </Button>
         </div>
       </div>
+      
+      {canEdit && (
+        <Alert className="mb-6">
+          <AlertCircle className="h-4 w-4" />
+          <AlertTitle>환자 정보 수정 가능</AlertTitle>
+          <AlertDescription>
+            병원장 또는 담당 간호사로 로그인하여 환자 정보를 수정할 수 있습니다. 상단의 '환자 정보 수정' 버튼을 클릭하여 환자 기본 정보를 수정하세요.
+          </AlertDescription>
+        </Alert>
+      )}
       
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div className="lg:col-span-1 space-y-6">
