@@ -144,6 +144,24 @@ export default function PatientDetailPage() {
     contact: ''
   });
   
+  // 모니터링 설정을 위한 상태
+  const [monitoringSettings, setMonitoringSettings] = useState({
+    fallDetection: false,
+    bedExit: false,
+    environmental: false,
+    guardianNotify: false
+  });
+  
+  // 모니터링 설정 다이얼로그 상태
+  const [fallDetectionDialogOpen, setFallDetectionDialogOpen] = useState(false);
+  const [bedExitDialogOpen, setBedExitDialogOpen] = useState(false);
+  const [environmentalDialogOpen, setEnvironmentalDialogOpen] = useState(false);
+  const [guardianNotifyDialogOpen, setGuardianNotifyDialogOpen] = useState(false);
+  
+  // 메시지 다이얼로그 상태
+  const [messageDialogOpen, setMessageDialogOpen] = useState(false);
+  const [messageContent, setMessageContent] = useState('');
+  
   // 수정 권한 확인 (병원장 또는 담당 간호사만 수정 가능)
   // 데이터에 assignedNurseId가 없으므로 현재는 병원장만 수정 가능하도록 설정
   const canEdit = user && (
@@ -243,6 +261,73 @@ export default function PatientDetailPage() {
       toast({
         title: "오류 발생",
         description: "보호자 정보 업데이트 중 문제가 발생했습니다.",
+        variant: "destructive"
+      });
+    }
+  };
+  
+  // 메시지 전송 처리
+  const handleSendMessage = () => {
+    try {
+      if (messageContent.trim() === '') {
+        toast({
+          title: "경고",
+          description: "메시지 내용을 입력해주세요.",
+          variant: "destructive"
+        });
+        return;
+      }
+      
+      // 실제 API 호출 대신 상태 업데이트로 시뮬레이션
+      setTimeout(() => {
+        toast({
+          title: "메시지 전송 완료",
+          description: "메시지가 성공적으로 전송되었습니다.",
+        });
+        setMessageDialogOpen(false);
+        setMessageContent('');
+      }, 500);
+    } catch (error) {
+      toast({
+        title: "오류 발생",
+        description: "메시지 전송 중 문제가 발생했습니다.",
+        variant: "destructive"
+      });
+    }
+  };
+  
+  // 모니터링 설정 저장 처리
+  const handleSaveMonitoringSettings = (type: 'fall' | 'bedExit' | 'environmental' | 'guardian') => {
+    try {
+      const settingName = 
+        type === 'fall' ? '낙상 감지' : 
+        type === 'bedExit' ? '침대 이탈 감지' : 
+        type === 'environmental' ? '환경 모니터링' : '보호자 알림';
+      
+      // 실제 API 호출 대신 상태 업데이트로 시뮬레이션
+      setTimeout(() => {
+        setMonitoringSettings(prev => ({
+          ...prev,
+          [type === 'fall' ? 'fallDetection' : 
+           type === 'bedExit' ? 'bedExit' : 
+           type === 'environmental' ? 'environmental' : 'guardianNotify']: true
+        }));
+        
+        toast({
+          title: "설정 저장 완료",
+          description: `${settingName} 설정이 성공적으로 저장되었습니다.`,
+        });
+        
+        // 다이얼로그 닫기
+        if (type === 'fall') setFallDetectionDialogOpen(false);
+        else if (type === 'bedExit') setBedExitDialogOpen(false);
+        else if (type === 'environmental') setEnvironmentalDialogOpen(false);
+        else setGuardianNotifyDialogOpen(false);
+      }, 500);
+    } catch (error) {
+      toast({
+        title: "오류 발생",
+        description: "설정 저장 중 문제가 발생했습니다.",
         variant: "destructive"
       });
     }
@@ -463,6 +548,197 @@ export default function PatientDetailPage() {
         </DialogContent>
       </Dialog>
       
+      {/* 메시지 전송 다이얼로그 */}
+      <Dialog open={messageDialogOpen} onOpenChange={setMessageDialogOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>메시지 전송</DialogTitle>
+            <DialogDescription>보호자 및 의료진과 메시지를 주고받습니다.</DialogDescription>
+          </DialogHeader>
+          <div className="grid gap-4 py-4">
+            <div className="grid grid-cols-1 items-center gap-4">
+              <label htmlFor="message" className="text-sm font-medium">메시지 내용</label>
+              <Textarea
+                id="message"
+                placeholder="메시지 내용을 입력하세요"
+                value={messageContent}
+                onChange={(e) => setMessageContent(e.target.value)}
+                className="resize-none"
+                rows={4}
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setMessageDialogOpen(false)}>취소</Button>
+            <Button onClick={handleSendMessage}>전송</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+      
+      {/* 낙상 감지 설정 다이얼로그 */}
+      <Dialog open={fallDetectionDialogOpen} onOpenChange={setFallDetectionDialogOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>낙상 감지 설정</DialogTitle>
+            <DialogDescription>낙상 감지 알림 설정을 구성합니다.</DialogDescription>
+          </DialogHeader>
+          <div className="grid gap-4 py-4">
+            <div className="flex items-center justify-between border-b pb-3">
+              <div>
+                <h3 className="font-medium">낙상 감지 알림 활성화</h3>
+                <p className="text-sm text-gray-500">낙상 감지 시 알림을 받습니다.</p>
+              </div>
+              <Switch checked={monitoringSettings.fallDetection} />
+            </div>
+            <div className="flex items-center justify-between border-b pb-3">
+              <div>
+                <h3 className="font-medium">알림 수신자 설정</h3>
+                <p className="text-sm text-gray-500">알림을 받을 사람을 선택합니다.</p>
+              </div>
+              <Select defaultValue="all">
+                <SelectTrigger className="w-32">
+                  <SelectValue placeholder="수신자 선택" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">모든 의료진</SelectItem>
+                  <SelectItem value="nurse">담당 간호사</SelectItem>
+                  <SelectItem value="guardian">보호자</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setFallDetectionDialogOpen(false)}>취소</Button>
+            <Button onClick={() => handleSaveMonitoringSettings('fall')}>저장</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+      
+      {/* 침대 이탈 감지 설정 다이얼로그 */}
+      <Dialog open={bedExitDialogOpen} onOpenChange={setBedExitDialogOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>침대 이탈 감지 설정</DialogTitle>
+            <DialogDescription>침대 이탈 감지 알림 설정을 구성합니다.</DialogDescription>
+          </DialogHeader>
+          <div className="grid gap-4 py-4">
+            <div className="flex items-center justify-between border-b pb-3">
+              <div>
+                <h3 className="font-medium">침대 이탈 감지 알림 활성화</h3>
+                <p className="text-sm text-gray-500">침대 이탈 시 알림을 받습니다.</p>
+              </div>
+              <Switch checked={monitoringSettings.bedExit} />
+            </div>
+            <div className="flex items-center justify-between border-b pb-3">
+              <div>
+                <h3 className="font-medium">감지 시간 설정</h3>
+                <p className="text-sm text-gray-500">몇 분 이상 이탈 시 알림을 보낼지 설정합니다.</p>
+              </div>
+              <Select defaultValue="1">
+                <SelectTrigger className="w-24">
+                  <SelectValue placeholder="시간 선택" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="1">1분</SelectItem>
+                  <SelectItem value="3">3분</SelectItem>
+                  <SelectItem value="5">5분</SelectItem>
+                  <SelectItem value="10">10분</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setBedExitDialogOpen(false)}>취소</Button>
+            <Button onClick={() => handleSaveMonitoringSettings('bedExit')}>저장</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+      
+      {/* 환경 모니터링 설정 다이얼로그 */}
+      <Dialog open={environmentalDialogOpen} onOpenChange={setEnvironmentalDialogOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>환경 모니터링 설정</DialogTitle>
+            <DialogDescription>실내 환경 모니터링 설정을 구성합니다.</DialogDescription>
+          </DialogHeader>
+          <div className="grid gap-4 py-4">
+            <div className="flex items-center justify-between border-b pb-3">
+              <div>
+                <h3 className="font-medium">환경 모니터링 활성화</h3>
+                <p className="text-sm text-gray-500">환경 조건이 설정값을 벗어날 경우 알림을 받습니다.</p>
+              </div>
+              <Switch checked={monitoringSettings.environmental} />
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="text-sm font-medium">온도 범위 설정 (°C)</label>
+                <div className="flex items-center space-x-2 mt-2">
+                  <Input type="number" placeholder="최소" className="w-20" defaultValue="20" />
+                  <span className="text-sm">~</span>
+                  <Input type="number" placeholder="최대" className="w-20" defaultValue="26" />
+                </div>
+              </div>
+              <div>
+                <label className="text-sm font-medium">습도 범위 설정 (%)</label>
+                <div className="flex items-center space-x-2 mt-2">
+                  <Input type="number" placeholder="최소" className="w-20" defaultValue="40" />
+                  <span className="text-sm">~</span>
+                  <Input type="number" placeholder="최대" className="w-20" defaultValue="60" />
+                </div>
+              </div>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setEnvironmentalDialogOpen(false)}>취소</Button>
+            <Button onClick={() => handleSaveMonitoringSettings('environmental')}>저장</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+      
+      {/* 보호자 알림 설정 다이얼로그 */}
+      <Dialog open={guardianNotifyDialogOpen} onOpenChange={setGuardianNotifyDialogOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>보호자 알림 설정</DialogTitle>
+            <DialogDescription>보호자에게 전송되는 알림을 설정합니다.</DialogDescription>
+          </DialogHeader>
+          <div className="grid gap-4 py-4">
+            <div className="flex items-center justify-between border-b pb-3">
+              <div>
+                <h3 className="font-medium">보호자 알림 활성화</h3>
+                <p className="text-sm text-gray-500">선택한 이벤트 발생 시 보호자에게 알림을 보냅니다.</p>
+              </div>
+              <Switch checked={monitoringSettings.guardianNotify} />
+            </div>
+            <div className="space-y-2">
+              <label className="text-sm font-medium">알림 이벤트 선택</label>
+              <div className="space-y-1.5">
+                <div className="flex items-center space-x-2">
+                  <Checkbox id="notify-fall" defaultChecked />
+                  <label htmlFor="notify-fall" className="text-sm">낙상 감지</label>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <Checkbox id="notify-bed" defaultChecked />
+                  <label htmlFor="notify-bed" className="text-sm">침대 이탈</label>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <Checkbox id="notify-env" />
+                  <label htmlFor="notify-env" className="text-sm">환경 조건 이상</label>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <Checkbox id="notify-medication" />
+                  <label htmlFor="notify-medication" className="text-sm">투약 알림</label>
+                </div>
+              </div>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setGuardianNotifyDialogOpen(false)}>취소</Button>
+            <Button onClick={() => handleSaveMonitoringSettings('guardian')}>저장</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+      
       <div className="flex items-center mb-6">
         <a href="/" className="mr-4">
           <Button variant="ghost" size="sm">
@@ -478,6 +754,11 @@ export default function PatientDetailPage() {
         }`}>
           {patient.condition}
         </span>
+        <div className="ml-auto flex gap-2">
+          <Button variant="outline" size="sm" onClick={() => setMessageDialogOpen(true)}>
+            <MessageCircle className="h-4 w-4 mr-1" /> 메시지
+          </Button>
+        </div>
       </div>
       
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -759,7 +1040,12 @@ export default function PatientDetailPage() {
                         <h3 className="font-medium">낙상 감지 알림</h3>
                         <p className="text-sm text-gray-500">낙상 감지 시 알림을 설정합니다.</p>
                       </div>
-                      <Button size="sm">설정</Button>
+                      <div className="flex items-center gap-2">
+                        <span className={`px-2 py-1 text-xs rounded-full ${monitoringSettings.fallDetection ? "bg-green-100 text-green-800" : "bg-gray-100 text-gray-800"}`}>
+                          {monitoringSettings.fallDetection ? "활성화" : "비활성화"}
+                        </span>
+                        <Button size="sm" onClick={() => setFallDetectionDialogOpen(true)}>설정</Button>
+                      </div>
                     </div>
                     
                     <div className="flex items-center justify-between p-3 rounded-md border">
@@ -767,7 +1053,12 @@ export default function PatientDetailPage() {
                         <h3 className="font-medium">침대 이탈 감지</h3>
                         <p className="text-sm text-gray-500">침대 이탈 시 알림을 설정합니다.</p>
                       </div>
-                      <Button size="sm">설정</Button>
+                      <div className="flex items-center gap-2">
+                        <span className={`px-2 py-1 text-xs rounded-full ${monitoringSettings.bedExit ? "bg-green-100 text-green-800" : "bg-gray-100 text-gray-800"}`}>
+                          {monitoringSettings.bedExit ? "활성화" : "비활성화"}
+                        </span>
+                        <Button size="sm" onClick={() => setBedExitDialogOpen(true)}>설정</Button>
+                      </div>
                     </div>
                     
                     <div className="flex items-center justify-between p-3 rounded-md border">
@@ -775,7 +1066,12 @@ export default function PatientDetailPage() {
                         <h3 className="font-medium">환경 모니터링</h3>
                         <p className="text-sm text-gray-500">온도, 습도 등 환경 조건 알림을 설정합니다.</p>
                       </div>
-                      <Button size="sm">설정</Button>
+                      <div className="flex items-center gap-2">
+                        <span className={`px-2 py-1 text-xs rounded-full ${monitoringSettings.environmental ? "bg-green-100 text-green-800" : "bg-gray-100 text-gray-800"}`}>
+                          {monitoringSettings.environmental ? "활성화" : "비활성화"}
+                        </span>
+                        <Button size="sm" onClick={() => setEnvironmentalDialogOpen(true)}>설정</Button>
+                      </div>
                     </div>
                     
                     <div className="flex items-center justify-between p-3 rounded-md border">
@@ -783,7 +1079,12 @@ export default function PatientDetailPage() {
                         <h3 className="font-medium">보호자 알림 설정</h3>
                         <p className="text-sm text-gray-500">보호자에게 특정 상황 발생 시 알림을 설정합니다.</p>
                       </div>
-                      <Button size="sm">설정</Button>
+                      <div className="flex items-center gap-2">
+                        <span className={`px-2 py-1 text-xs rounded-full ${monitoringSettings.guardianNotify ? "bg-green-100 text-green-800" : "bg-gray-100 text-gray-800"}`}>
+                          {monitoringSettings.guardianNotify ? "활성화" : "비활성화"}
+                        </span>
+                        <Button size="sm" onClick={() => setGuardianNotifyDialogOpen(true)}>설정</Button>
+                      </div>
                     </div>
                   </div>
                 </CardContent>
