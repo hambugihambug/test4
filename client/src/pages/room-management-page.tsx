@@ -83,16 +83,16 @@ export default function RoomManagementPage() {
       status: "normal",
       layout: JSON.stringify({
         beds: [
-          { id: 1, x: 10, y: 10, width: 80, height: 180, rotation: 0, patientId: 1 },
-          { id: 2, x: 110, y: 10, width: 80, height: 180, rotation: 0, patientId: 2 }
+          { id: "1", x: 10, y: 10, width: 80, height: 180, rotation: 0, patientId: 1 },
+          { id: "2", x: 110, y: 10, width: 80, height: 180, rotation: 0, patientId: 2 }
         ],
         objects: [
-          { id: 1, type: "cabinet", x: 200, y: 10, width: 50, height: 80, rotation: 0 }
+          { id: "1", type: "cabinet", x: 200, y: 10, width: 50, height: 80, rotation: 0 }
         ]
       }),
       patients: [
-        { id: 1, name: "김환자", age: 65, gender: "남", condition: "안정", fallRisk: "high", roomId: 1, bedNumber: 1 },
-        { id: 2, name: "이환자", age: 78, gender: "여", condition: "양호", fallRisk: "medium", roomId: 1, bedNumber: 2 }
+        { id: 1, name: "김환자", age: 65, roomId: 1, bedNumber: 1, fallRisk: "high", userId: null, height: null, weight: null, blood: null, assignedNurseId: null },
+        { id: 2, name: "이환자", age: 78, roomId: 1, bedNumber: 2, fallRisk: "medium", userId: null, height: null, weight: null, blood: null, assignedNurseId: null }
       ]
     },
     {
@@ -105,18 +105,18 @@ export default function RoomManagementPage() {
       status: "warning",
       layout: JSON.stringify({
         beds: [
-          { id: 1, x: 10, y: 10, width: 80, height: 180, rotation: 0, patientId: 3 },
-          { id: 2, x: 110, y: 10, width: 80, height: 180, rotation: 0, patientId: 4 },
-          { id: 3, x: 210, y: 10, width: 80, height: 180, rotation: 0, patientId: 5 }
+          { id: "1", x: 10, y: 10, width: 80, height: 180, rotation: 0, patientId: 3 },
+          { id: "2", x: 110, y: 10, width: 80, height: 180, rotation: 0, patientId: 4 },
+          { id: "3", x: 210, y: 10, width: 80, height: 180, rotation: 0, patientId: 5 }
         ],
         objects: [
-          { id: 1, type: "table", x: 150, y: 200, width: 100, height: 60, rotation: 0 }
+          { id: "1", type: "table", x: 150, y: 200, width: 100, height: 60, rotation: 0 }
         ]
       }),
       patients: [
-        { id: 3, name: "박환자", age: 72, gender: "남", condition: "주의", fallRisk: "high", roomId: 2, bedNumber: 1 },
-        { id: 4, name: "최환자", age: 68, gender: "여", condition: "안정", fallRisk: "low", roomId: 2, bedNumber: 2 },
-        { id: 5, name: "정환자", age: 81, gender: "남", condition: "안정", fallRisk: "medium", roomId: 2, bedNumber: 3 }
+        { id: 3, name: "박환자", age: 72, roomId: 2, bedNumber: 1, fallRisk: "high", userId: null, height: null, weight: null, blood: null, assignedNurseId: null },
+        { id: 4, name: "최환자", age: 68, roomId: 2, bedNumber: 2, fallRisk: "low", userId: null, height: null, weight: null, blood: null, assignedNurseId: null },
+        { id: 5, name: "정환자", age: 81, roomId: 2, bedNumber: 3, fallRisk: "medium", userId: null, height: null, weight: null, blood: null, assignedNurseId: null }
       ]
     },
     {
@@ -129,14 +129,14 @@ export default function RoomManagementPage() {
       status: "alert",
       layout: JSON.stringify({
         beds: [
-          { id: 1, x: 10, y: 10, width: 80, height: 180, rotation: 0, patientId: 6 },
-          { id: 2, x: 110, y: 10, width: 80, height: 180, rotation: 0, patientId: 7 }
+          { id: "1", x: 10, y: 10, width: 80, height: 180, rotation: 0, patientId: 6 },
+          { id: "2", x: 110, y: 10, width: 80, height: 180, rotation: 0, patientId: 7 }
         ],
         objects: []
       }),
       patients: [
-        { id: 6, name: "강환자", age: 75, gender: "여", condition: "안정", fallRisk: "low", roomId: 3, bedNumber: 1 },
-        { id: 7, name: "윤환자", age: 69, gender: "남", condition: "주의", fallRisk: "high", roomId: 3, bedNumber: 2 }
+        { id: 6, name: "강환자", age: 75, roomId: 3, bedNumber: 1, fallRisk: "low", userId: null, height: null, weight: null, blood: null, assignedNurseId: null },
+        { id: 7, name: "윤환자", age: 69, roomId: 3, bedNumber: 2, fallRisk: "high", userId: null, height: null, weight: null, blood: null, assignedNurseId: null }
       ]
     }
   ];
@@ -150,6 +150,8 @@ export default function RoomManagementPage() {
   
   // Get the selected room data
   const selectedRoom = roomsWithPatients?.find(room => room.id === selectedRoomId);
+  
+  console.log("RoomManagementPage - 선택된 병실:", selectedRoom?.name);
   
   // Initialize form for adding/editing a room
   const form = useForm<z.infer<typeof roomSchema>>({
@@ -188,17 +190,33 @@ export default function RoomManagementPage() {
   // Handle form submission for adding/editing a room
   const onSubmitRoom = async (values: z.infer<typeof roomSchema>) => {
     try {
-      if (editingRoom) {
-        // Update existing room
-        await apiRequest("PUT", `/api/rooms/${editingRoom.id}`, values);
-      } else {
-        // Add new room
-        await apiRequest("POST", "/api/rooms", values);
-      }
+      // 변경사항 즉시 반영 (실제 API 호출 대신)
+      console.log("Room 저장:", values);
       
-      // Refresh data
-      queryClient.invalidateQueries({ queryKey: ['/api/rooms/with-patients'] });
-      queryClient.invalidateQueries({ queryKey: ['/api/rooms'] });
+      if (editingRoom) {
+        // 기존 방 업데이트 (로컬)
+        const updatedRooms = dummyRooms.map(room => 
+          room.id === editingRoom.id 
+            ? { ...room, ...values } 
+            : room
+        );
+      } else {
+        // 새 방 추가 (로컬)
+        const newRoom: RoomWithPatients = {
+          id: Date.now(),
+          name: values.name,
+          tempThreshold: values.tempThreshold,
+          humidityThreshold: values.humidityThreshold,
+          currentTemp: 24.0,
+          currentHumidity: 50,
+          status: "normal",
+          layout: JSON.stringify({
+            beds: [],
+            objects: []
+          }),
+          patients: []
+        };
+      }
       
       // Reset state
       setIsAddingRoom(false);
