@@ -7,6 +7,7 @@ import { Label } from '@/components/ui/label';
 // import { useI18n } from '@/contexts/I18nContext';
 import { translations } from '@/lib/translations';
 import { Patient } from '@shared/schema';
+import { useToast } from '@/hooks/use-toast';
 import { 
   RotateCw, Plus, Minus, Move, Save, Trash2, 
   BedDouble, PencilRuler, User, UserX 
@@ -38,7 +39,7 @@ interface RoomLayoutProps {
 
 const DEFAULT_LAYOUT = {
   beds: [],
-  roomWidth: 600,
+  roomWidth: 800,
   roomHeight: 400
 };
 
@@ -50,6 +51,8 @@ interface PatientWithAssignmentStatus {
 }
 
 export function RoomLayout({ roomId, layout, onSave, editable }: RoomLayoutProps) {
+  const { toast } = useToast();
+  
   // 직접 간단한 번역 함수 구현
   const language = 'ko'; // 기본적으로 한국어 사용
   const t = (key: string): string => {
@@ -132,6 +135,11 @@ export function RoomLayout({ roomId, layout, onSave, editable }: RoomLayoutProps
   // 병실 레이아웃 저장
   const saveLayout = () => {
     onSave(currentLayout);
+    toast({
+      title: t('common.savedMessage'),
+      variant: "default",
+      duration: 3000,
+    });
   };
   
   // 새 침대 추가
@@ -399,7 +407,7 @@ export function RoomLayout({ roomId, layout, onSave, editable }: RoomLayoutProps
                   </div>
                 ) : (
                   <div className="text-xs text-gray-500">
-                    {t('rooms.emptyBed')}
+                    {currentLayout.beds.indexOf(bed) + 1}번
                   </div>
                 )}
               </div>
