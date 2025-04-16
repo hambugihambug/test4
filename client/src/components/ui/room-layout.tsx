@@ -4,7 +4,8 @@ import { Button } from '@/components/ui/button';
 import { Toggle } from '@/components/ui/toggle';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { useI18n } from '@/contexts/I18nContext';
+// import { useI18n } from '@/contexts/I18nContext';
+import { translations } from '@/lib/translations';
 import { Patient } from '@shared/schema';
 import { 
   RotateCw, Plus, Minus, Move, Save, Trash2, 
@@ -49,7 +50,27 @@ interface PatientWithAssignmentStatus {
 }
 
 export function RoomLayout({ roomId, layout, onSave, editable }: RoomLayoutProps) {
-  const { t } = useI18n();
+  // 직접 간단한 번역 함수 구현
+  const language = 'ko'; // 기본적으로 한국어 사용
+  const t = (key: string): string => {
+    try {
+      const keys = key.split('.');
+      let result: any = translations[language];
+      
+      for (const k of keys) {
+        if (result && typeof result === 'object' && k in result) {
+          result = result[k];
+        } else {
+          return key; // 번역이 없으면 키 자체를 반환
+        }
+      }
+      
+      return typeof result === 'string' ? result : key;
+    } catch (err) {
+      console.error("번역 오류:", err);
+      return key;
+    }
+  };
   const [currentLayout, setCurrentLayout] = useState(layout || DEFAULT_LAYOUT);
   const [selectedBedId, setSelectedBedId] = useState<string | null>(null);
   const [editMode, setEditMode] = useState<'select' | 'add' | 'move' | 'resize' | 'rotate'>('select');

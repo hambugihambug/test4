@@ -3,7 +3,9 @@ import { useQuery } from "@tanstack/react-query";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { useI18n } from "@/contexts/I18nContext";
+// I18n 관련 기능을 직접 구현하여 useI18n 의존성 제거
+// import { useI18n } from "@/contexts/I18nContext";
+import { translations } from "@/lib/translations";
 import { useAuth } from "@/hooks/use-auth";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -30,8 +32,28 @@ export default function RoomManagementPage() {
   
   try {
     console.log("RoomManagementPage에서 try 블록 시작");
-    const { t } = useI18n();
-    console.log("useI18n 호출 완료");
+    // 직접 간단한 번역 함수 구현
+    const language = 'ko'; // 기본적으로 한국어 사용
+    const t = (key: string): string => {
+      try {
+        const keys = key.split('.');
+        let result: any = translations[language];
+        
+        for (const k of keys) {
+          if (result && typeof result === 'object' && k in result) {
+            result = result[k];
+          } else {
+            return key; // 번역이 없으면 키 자체를 반환
+          }
+        }
+        
+        return typeof result === 'string' ? result : key;
+      } catch (err) {
+        console.error("번역 오류:", err);
+        return key;
+      }
+    };
+    console.log("번역 함수 생성 완료");
     const { user } = useAuth();
     
     console.log("RoomManagementPage 상태 초기화 중, 사용자:", user?.username);
