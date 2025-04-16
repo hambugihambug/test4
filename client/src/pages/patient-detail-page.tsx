@@ -543,10 +543,22 @@ export default function PatientDetailPage() {
                   <span className="text-sm font-medium mr-2">연락처:</span>
                   <span className="text-sm">{patient.contact}</span>
                 </div>
-                <div className="flex items-center">
-                  <Users className="h-4 w-4 mr-2 text-gray-500" />
-                  <span className="text-sm font-medium mr-2">보호자:</span>
-                  <span className="text-sm">{patient.guardian.name} ({patient.guardian.relation})</span>
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center">
+                    <Users className="h-4 w-4 mr-2 text-gray-500" />
+                    <span className="text-sm font-medium mr-2">보호자:</span>
+                    <span className="text-sm">{patient.guardian.name} ({patient.guardian.relation})</span>
+                  </div>
+                  {canEdit && (
+                    <Button 
+                      variant="ghost" 
+                      size="xs" 
+                      onClick={() => setEditGuardianDialogOpen(true)}
+                      className="h-6 px-2"
+                    >
+                      <Edit className="h-3 w-3 mr-1" /> 수정
+                    </Button>
+                  )}
                 </div>
                 <div className="flex items-center">
                   <Phone className="h-4 w-4 mr-2 text-gray-500" />
