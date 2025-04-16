@@ -149,36 +149,53 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const loginMutation = useMutation({
     mutationFn: async (credentials: LoginData) => {
-      const res = await apiRequest("POST", "/api/login", credentials);
-      const userData = await res.json();
-      
-      // 서버에서 받은 토큰을 로컬 스토리지에 저장
-      if (userData.token) {
-        localStorage.setItem('token', userData.token);
-        // 응답에서 token 필드 제거 (사용자 객체에 불필요한 정보)
-        const { token, ...userWithoutToken } = userData;
-        return userWithoutToken;
+      try {
+        const res = await apiRequest("POST", "/api/login", credentials);
+        const userData = await res.json();
+        
+        // 서버에서 받은 토큰을 로컬 스토리지에 저장
+        if (userData && userData.token) {
+          console.log("토큰 저장 중");
+          localStorage.setItem('token', userData.token);
+          
+          // 이전 리디렉션 시도 횟수 초기화
+          sessionStorage.removeItem('redirectAttempt');
+          
+          // 응답에서 token 필드 제거 (사용자 객체에 불필요한 정보)
+          const { token, ...userWithoutToken } = userData;
+          return userWithoutToken;
+        } else {
+          console.error("서버 응답에 토큰이 없음:", userData);
+        }
+        
+        return userData;
+      } catch (error) {
+        console.error("로그인 중 오류 발생:", error);
+        throw error;
       }
-      
-      return userData;
     },
     onSuccess: (user: User) => {
+      console.log("로그인 성공, 사용자 정보:", user.username);
+      
+      // 명시적으로 쿼리 캐시 업데이트
       queryClient.setQueryData(["/api/user"], user);
+      
       toast({
         title: "로그인 성공",
         description: `${user.name}님 환영합니다!`,
       });
+      
       console.log("로그인 성공 후 사용자 역할:", user.role);
-      console.log("페이지 이동: /");
       
       // 토큰이 정상적으로 저장되었는지 확인
       const savedToken = localStorage.getItem('token');
       console.log("저장된 토큰 유효: ", savedToken ? "예" : "아니오");
       
+      // 지연을 주어 상태 업데이트가 완료된 후 페이지 이동
       setTimeout(() => {
-        // 약간의 지연을 주어 토큰이 확실히 저장되도록 함
+        console.log("메인 페이지로 이동합니다");
         window.location.href = "/";
-      }, 500);
+      }, 1000);
     },
     onError: (error: Error) => {
       let errorMessage = "로그인에 실패했습니다";
