@@ -103,297 +103,236 @@ const getStatusColor = (status: EventStatus) => {
   }
 };
 
-// 간단한 에러 표시 컴포넌트
-const ErrorDisplay = ({ error, details }: { error: string, details?: string }) => (
-  <div className="container mx-auto p-6 bg-red-50 border border-red-300 rounded-lg">
-    <h1 className="text-2xl font-bold mb-4 text-red-600">에러 발생</h1>
-    <div className="bg-white p-4 rounded shadow mb-4">
-      <p className="font-semibold mb-2">에러 메시지:</p>
-      <pre className="bg-red-50 p-3 rounded text-red-800 whitespace-pre-wrap">{error}</pre>
-    </div>
-
-    {details && (
-      <div className="bg-white p-4 rounded shadow">
-        <p className="font-semibold mb-2">디버깅 정보:</p>
-        <pre className="bg-gray-50 p-3 rounded whitespace-pre-wrap text-xs">{details}</pre>
-      </div>
-    )}
-
-    <button
-      onClick={() => window.location.reload()}
-      className="mt-4 px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
-    >
-      페이지 새로고침
-    </button>
-  </div>
-);
-
-// 메인 컴포넌트
+// 이벤트 페이지 컴포넌트
 const EventsPage: React.FC = () => {
-  // 기본 상태 관리
-  const [eventData, setEventData] = useState<Event[]>([]);
-  const [searchTerm, setSearchTerm] = useState("");
-  const [filterType, setFilterType] = useState<string | null>(null);
-  const [filterStatus, setFilterStatus] = useState<string | null>(null);
-  const [filterDate, setFilterDate] = useState<Date | null>(null);
-  const [isCalendarOpen, setIsCalendarOpen] = useState(false);
-  
-  // 에러 상태 관리
-  const [error, setError] = useState<string | null>(null);
-  const [debugInfo, setDebugInfo] = useState<any>({});
-  
-  // 인증 정보 가져오기
   const { user } = useAuth();
-
-  // 컴포넌트 마운트 시 데이터 로드
-  useEffect(() => {
-    try {
-      console.log("이벤트 데이터 로드 중...");
-      // 목업 데이터 사용
-      setEventData(mockEvents || []);
-      
-      // 디버깅 정보 수집
-      const debugData = {
-        mockEventsLength: mockEvents?.length || 0,
-        user: user ? { 
-          id: user.id, 
-          username: user.username,
-          role: user.role 
-        } : 'not authenticated',
-        path: window.location.pathname
-      };
-      setDebugInfo(debugData);
-      console.log("디버깅 정보:", debugData);
-      
-    } catch (err) {
-      console.error("이벤트 데이터 로드 중 오류:", err);
-      setError(err instanceof Error ? err.message : String(err));
-    }
-  }, [user]);
-
-  // 에러가 있으면 에러 표시
-  if (error) {
-    return <ErrorDisplay error={error} details={JSON.stringify(debugInfo, null, 2)} />;
-  }
-
-  // 데이터가 없으면 로딩 표시
-  if (!eventData || eventData.length === 0) {
-    return (
-      <div className="flex flex-col items-center justify-center min-h-[50vh]">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mb-4"></div>
-        <p className="text-gray-500">데이터를 불러오는 중입니다...</p>
-        <pre className="mt-4 p-4 bg-gray-100 rounded text-xs overflow-auto max-w-full">
-          {JSON.stringify(debugInfo, null, 2)}
-        </pre>
-      </div>
-    );
-  }
-
-  // 이벤트 필터링
-  const filteredEvents = eventData.filter(event => {
+  const [searchTerm, setSearchTerm] = useState("");
+  const [selectedType, setSelectedType] = useState<string | undefined>();
+  const [selectedStatus, setSelectedStatus] = useState<string | undefined>();
+  const [selectedDate, setSelectedDate] = useState<Date | undefined>();
+  const [activeTab, setActiveTab] = useState("recent");
+  
+  // 필터링된 이벤트 목록
+  const filteredEvents = events.filter(event => {
     // 검색어 필터링
-    const matchesSearch = 
-      event.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      event.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      (event.patient?.name && event.patient.name.toLowerCase().includes(searchTerm.toLowerCase())) ||
-      (event.patient?.roomNumber && event.patient.roomNumber.toLowerCase().includes(searchTerm.toLowerCase()));
+    const matchesSearch = searchTerm ? 
+      event.title.toLowerCase().includes(searchTerm.toLowerCase()) || 
+      (event.patientName && event.patientName.toLowerCase().includes(searchTerm.toLowerCase())) ||
+      event.roomNumber.includes(searchTerm) : true;
     
-    // 이벤트 타입 필터링
-    const matchesType = !filterType || event.type === filterType;
+    // 유형 필터링
+    const matchesType = selectedType ? event.type === selectedType : true;
     
     // 상태 필터링
-    const matchesStatus = !filterStatus || event.status === filterStatus;
+    const matchesStatus = selectedStatus ? event.status === selectedStatus : true;
     
     // 날짜 필터링
-    const matchesDate = !filterDate || (
-      event.date.getDate() === filterDate.getDate() &&
-      event.date.getMonth() === filterDate.getMonth() &&
-      event.date.getFullYear() === filterDate.getFullYear()
-    );
+    const matchesDate = selectedDate ? 
+      event.datetime.includes(format(selectedDate, 'yyyy-MM-dd')) : true;
     
     return matchesSearch && matchesType && matchesStatus && matchesDate;
   });
-
-  // 필터 초기화
-  const resetFilters = () => {
-    setSearchTerm("");
-    setFilterType(null);
-    setFilterStatus(null);
-    setFilterDate(null);
-  };
-
-  // 사용자 권한에 따른 접근 제어
-  const canViewAllEvents = user && (
-    user.role === UserRole.DIRECTOR || 
-    user.role === UserRole.NURSE
-  );
   
-  // 환자일 경우 해당 환자의 이벤트만 표시 (가정: 환자 ID와 이벤트의 환자 ID가 동일)
-  const patientId = user?.id.toString();
-  const patientFilteredEvents = user?.role === UserRole.PATIENT
-    ? filteredEvents.filter(event => event.patient?.id === `p${patientId}`)
-    : filteredEvents;
-
-  // 보호자일 경우 담당 환자의 이벤트만 표시 (실제 구현에서는 환자와 보호자 간의 관계를 DB에서 확인해야 함)
-  const guardianPatientId = "p1"; // 임시로 보호자가 관리하는 환자 ID를 설정
-  const guardianFilteredEvents = user?.role === UserRole.GUARDIAN
-    ? filteredEvents.filter(event => event.patient?.id === guardianPatientId)
-    : patientFilteredEvents;
-
-  // 최종 표시될 이벤트 목록
-  const displayEvents = canViewAllEvents
-    ? filteredEvents
-    : guardianFilteredEvents;
-
+  // 최근 이벤트 (최대 5개)
+  const recentEvents = [...events]
+    .sort((a, b) => new Date(b.datetime).getTime() - new Date(a.datetime).getTime())
+    .slice(0, 5);
+  
   return (
     <div className="container mx-auto p-6">
-      <div className="mb-6">
-        <h1 className="text-2xl font-bold mb-2">모든 이벤트 보기</h1>
-        <p className="text-gray-600">병원 내 발생한 모든 이벤트와 예정된 일정을 확인합니다.</p>
-      </div>
-
-      {/* 필터 및 검색 영역 */}
-      <div className="bg-white p-4 rounded-lg shadow mb-6">
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-          <div className="md:col-span-2">
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
-              <Input
-                placeholder="이벤트 검색..."
-                className="pl-10"
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-              />
-            </div>
-          </div>
-          
-          <Select value={filterType || ""} onValueChange={(value) => setFilterType(value || null)}>
-            <SelectTrigger>
-              <SelectValue placeholder="이벤트 유형" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="">모든 유형</SelectItem>
-              <SelectItem value="낙상">낙상</SelectItem>
-              <SelectItem value="약물투여">약물투여</SelectItem>
-              <SelectItem value="환경알림">환경알림</SelectItem>
-              <SelectItem value="치료">치료</SelectItem>
-              <SelectItem value="검진">검진</SelectItem>
-              <SelectItem value="방문">방문</SelectItem>
-              <SelectItem value="기타">기타</SelectItem>
-            </SelectContent>
-          </Select>
-          
-          <Select value={filterStatus || ""} onValueChange={(value) => setFilterStatus(value || null)}>
-            <SelectTrigger>
-              <SelectValue placeholder="상태" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="">모든 상태</SelectItem>
-              <SelectItem value="완료">완료</SelectItem>
-              <SelectItem value="진행중">진행중</SelectItem>
-              <SelectItem value="예정">예정</SelectItem>
-              <SelectItem value="취소">취소</SelectItem>
-            </SelectContent>
-          </Select>
-          
-          <div className="md:col-span-3">
-            <Popover open={isCalendarOpen} onOpenChange={setIsCalendarOpen}>
-              <PopoverTrigger asChild>
-                <Button 
-                  variant="outline" 
-                  className="w-full justify-start"
-                  onClick={() => setIsCalendarOpen(!isCalendarOpen)}
-                >
-                  <Calendar className="mr-2 h-4 w-4" />
-                  {filterDate ? format(filterDate, 'yyyy년 MM월 dd일', { locale: ko }) : "날짜 선택"}
-                </Button>
-              </PopoverTrigger>
-              <PopoverContent className="w-auto p-0" align="start">
-                <CalendarComponent
-                  mode="single"
-                  selected={filterDate || undefined}
-                  onSelect={(date) => {
-                    setFilterDate(date || null); // null 처리 추가
-                    setIsCalendarOpen(false);
-                  }}
-                  locale={ko}
-                  initialFocus
-                />
-              </PopoverContent>
-            </Popover>
-          </div>
-          
-          <Button variant="outline" onClick={resetFilters} className="flex items-center">
-            <Filter className="mr-2 h-4 w-4" />
-            필터 초기화
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6">
+        <div>
+          <h1 className="text-3xl font-bold">이벤트 관리</h1>
+          <p className="text-gray-600 mt-1">병원 내 발생한 모든 이벤트와 예정된 일정을 확인합니다.</p>
+        </div>
+        <div className="mt-4 md:mt-0">
+          <Button className="flex items-center gap-1">
+            <Filter className="h-4 w-4" />
+            내 담당 환자만
           </Button>
         </div>
       </div>
-
-      {/* 디버깅 정보 */}
-      <div className="mb-6 bg-yellow-50 p-4 rounded-lg shadow text-xs">
-        <h3 className="font-bold mb-2">디버깅 정보:</h3>
-        <pre className="whitespace-pre-wrap">{JSON.stringify(debugInfo, null, 2)}</pre>
-      </div>
-
-      {/* 이벤트 목록 */}
-      <div className="bg-white rounded-lg shadow">
-        <div className="p-4 border-b">
-          <h2 className="text-lg font-semibold">이벤트 목록</h2>
-          <p className="text-sm text-gray-500">{displayEvents.length}개의 이벤트가 있습니다.</p>
-        </div>
-
-        {displayEvents.length > 0 ? (
-          <div className="divide-y">
-            {displayEvents.map((event) => (
-              <div key={event.id} className="p-4 hover:bg-gray-50">
-                <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-2">
-                  <h3 className="font-medium">{event.title}</h3>
-                  <div className="flex items-center space-x-2 mt-2 md:mt-0">
-                    <Badge className={cn("text-white", getEventTypeColor(event.type as EventType))}>
-                      {event.type}
-                    </Badge>
-                    <Badge className={getEventStatusColor(event.status)}>
-                      {event.status}
-                    </Badge>
-                  </div>
-                </div>
-                
-                <div className="text-sm text-gray-600 mb-3">{event.description}</div>
-                
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
-                  <div className="flex items-center text-gray-500">
-                    <Calendar className="h-4 w-4 mr-2" />
-                    <span>{format(event.date, 'yyyy년 MM월 dd일', { locale: ko })}</span>
-                  </div>
-                  <div className="flex items-center text-gray-500">
-                    <Clock className="h-4 w-4 mr-2" />
-                    <span>{event.time}</span>
-                  </div>
-                </div>
-                
-                {event.patient && (
-                  <div className="mt-3 text-sm">
-                    <span className="text-gray-500">환자:</span> {event.patient.name} ({event.patient.roomNumber}호)
-                  </div>
-                )}
-                
-                {event.assignedTo && event.assignedTo.length > 0 && (
-                  <div className="mt-2 flex items-center text-sm text-gray-500">
-                    <Users className="h-4 w-4 mr-2" />
-                    <span>담당자: {event.assignedTo.join(', ')}</span>
+      
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
+        <div className="lg:col-span-2">
+          <Card>
+            <CardHeader className="pb-3">
+              <CardTitle>이벤트 타임라인</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <Tabs defaultValue="all" className="mb-4">
+                <TabsList className="grid w-full grid-cols-3">
+                  <TabsTrigger value="all">전체</TabsTrigger>
+                  <TabsTrigger value="today">오늘</TabsTrigger>
+                  <TabsTrigger value="upcoming">예정</TabsTrigger>
+                </TabsList>
+              </Tabs>
+              
+              <div className="space-y-4">
+                {filteredEvents.length > 0 ? (
+                  filteredEvents.map(event => {
+                    const { icon, color } = getEventTypeIcon(event.type as EventType);
+                    return (
+                      <div 
+                        key={event.id} 
+                        className="flex items-start p-3 rounded-lg border hover:bg-gray-50 transition-colors"
+                      >
+                        <div className={`flex items-center justify-center h-10 w-10 rounded-full ${color.split(' ')[0]} mr-3 shrink-0`}>
+                          {icon}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center justify-between mb-1">
+                            <h3 className="text-sm font-medium truncate">{event.title}</h3>
+                            <Badge variant="outline" className={getStatusColor(event.status as EventStatus)}>
+                              {event.status}
+                            </Badge>
+                          </div>
+                          <div className="flex items-center text-sm text-gray-500 mb-1">
+                            <Clock className="h-3.5 w-3.5 mr-1" />
+                            {event.datetime}
+                            <span className="mx-2">•</span>
+                            {event.roomNumber}호실
+                            {event.patientName && (
+                              <>
+                                <span className="mx-2">•</span>
+                                {event.patientName}
+                              </>
+                            )}
+                          </div>
+                          {event.description && (
+                            <p className="text-xs text-gray-600 mt-1">{event.description}</p>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })
+                ) : (
+                  <div className="text-center py-6 text-gray-500">
+                    표시할 이벤트가 없습니다
                   </div>
                 )}
               </div>
-            ))}
-          </div>
-        ) : (
-          <div className="p-8 text-center text-gray-500">
-            {searchTerm || filterType || filterStatus || filterDate
-              ? "검색 조건에 일치하는 이벤트가 없습니다."
-              : "이벤트가 없습니다."}
-          </div>
-        )}
+            </CardContent>
+          </Card>
+        </div>
+        
+        <div>
+          <Card className="mb-6">
+            <CardHeader className="pb-3">
+              <CardTitle>필터</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="relative">
+                <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-gray-500" />
+                <Input
+                  type="search"
+                  placeholder="이벤트 검색..."
+                  className="pl-9"
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                />
+              </div>
+              
+              <div>
+                <label className="text-sm font-medium block mb-2">이벤트 유형</label>
+                <Select value={selectedType} onValueChange={setSelectedType}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="모든 유형" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="">모든 유형</SelectItem>
+                    <SelectItem value="낙상">낙상</SelectItem>
+                    <SelectItem value="약물투여">약물투여</SelectItem>
+                    <SelectItem value="환경알림">환경알림</SelectItem>
+                    <SelectItem value="치료">치료</SelectItem>
+                    <SelectItem value="검진">검진</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              
+              <div>
+                <label className="text-sm font-medium block mb-2">상태</label>
+                <Select value={selectedStatus} onValueChange={setSelectedStatus}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="모든 상태" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="">모든 상태</SelectItem>
+                    <SelectItem value="완료">완료</SelectItem>
+                    <SelectItem value="진행중">진행중</SelectItem>
+                    <SelectItem value="예정">예정</SelectItem>
+                    <SelectItem value="취소">취소</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              
+              <div>
+                <label className="text-sm font-medium block mb-2">날짜</label>
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant="outline"
+                      className="w-full justify-start text-left font-normal"
+                    >
+                      <CalendarIcon className="mr-2 h-4 w-4" />
+                      {selectedDate ? (
+                        format(selectedDate, 'PPP', { locale: ko })
+                      ) : (
+                        <span>날짜 선택</span>
+                      )}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0" align="start">
+                    <CalendarComponent
+                      mode="single"
+                      selected={selectedDate}
+                      onSelect={setSelectedDate}
+                      initialFocus
+                    />
+                  </PopoverContent>
+                </Popover>
+              </div>
+              
+              <Button 
+                className="w-full" 
+                onClick={() => {
+                  setSelectedType(undefined);
+                  setSelectedStatus(undefined);
+                  setSelectedDate(undefined);
+                  setSearchTerm("");
+                }}
+              >
+                필터 초기화
+              </Button>
+            </CardContent>
+          </Card>
+          
+          <Card>
+            <CardHeader className="pb-3">
+              <CardTitle>이벤트 요약</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="p-3 bg-red-50 rounded-lg border border-red-200 text-center">
+                  <p className="text-2xl font-bold text-red-600 mb-1">3</p>
+                  <p className="text-sm">오늘 발생</p>
+                </div>
+                <div className="p-3 bg-blue-50 rounded-lg border border-blue-200 text-center">
+                  <p className="text-2xl font-bold text-blue-600 mb-1">12</p>
+                  <p className="text-sm">이번 주</p>
+                </div>
+                <div className="p-3 bg-green-50 rounded-lg border border-green-200 text-center">
+                  <p className="text-2xl font-bold text-green-600 mb-1">5</p>
+                  <p className="text-sm">완료됨</p>
+                </div>
+                <div className="p-3 bg-purple-50 rounded-lg border border-purple-200 text-center">
+                  <p className="text-2xl font-bold text-purple-600 mb-1">7</p>
+                  <p className="text-sm">예정됨</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
       </div>
     </div>
   );
