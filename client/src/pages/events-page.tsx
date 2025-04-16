@@ -1,141 +1,105 @@
-import React, { useState, useEffect } from "react";
-import { Calendar, Clock, Filter, Search, Users } from "lucide-react";
-import { Badge } from "@/components/ui/badge";
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
-import { Calendar as CalendarComponent } from "@/components/ui/calendar";
-import { format } from "date-fns";
-import { ko } from "date-fns/locale";
-import { cn } from "@/lib/utils";
-import { useAuth } from "@/hooks/use-auth";
-import { UserRole } from "@shared/schema";
+import React, { useState } from 'react';
+import { useAuth } from '@/hooks/use-auth';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Badge } from '@/components/ui/badge';
+import { Calendar as CalendarIcon, Clock, Search, Filter, AlertCircle, Pill, Thermometer, Stethoscope, Calendar } from 'lucide-react';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Calendar as CalendarComponent } from '@/components/ui/calendar';
+import { format } from 'date-fns';
+import { ko } from 'date-fns/locale';
+import { cn } from '@/lib/utils';
 
-// 이벤트 타입 정의
-type EventType = "낙상" | "약물투여" | "환경알림" | "치료" | "검진" | "방문" | "기타";
+// 이벤트 데이터 타입
+type EventType = '낙상' | '약물투여' | '환경알림' | '치료' | '검진';
+type EventStatus = '완료' | '진행중' | '예정' | '취소';
 
-// 이벤트 인터페이스
 interface Event {
   id: string;
   title: string;
   type: EventType;
-  date: Date;
-  time: string;
-  description: string;
-  patient?: {
-    id: string;
-    name: string;
-    roomNumber: string;
-  };
-  status: "완료" | "진행중" | "예정" | "취소";
-  assignedTo?: string[];
+  datetime: string;
+  status: EventStatus;
+  roomNumber: string;
+  patientName?: string;
+  description?: string;
 }
 
-// 임시 이벤트 데이터
-const mockEvents: Event[] = [
+// 이벤트 데이터
+const events: Event[] = [
   {
-    id: "1",
-    title: "낙상 감지 알림",
-    type: "낙상",
-    date: new Date(2025, 3, 10, 14, 30),
-    time: "14:30",
-    description: "304호 3번 침대 환자가 낙상 감지됨",
-    patient: {
-      id: "p1",
-      name: "이환자",
-      roomNumber: "304"
-    },
-    status: "완료",
-    assignedTo: ["김간호사", "박의사"]
+    id: '1',
+    title: '낙상 감지 알림',
+    type: '낙상',
+    datetime: '2025-04-10 14:30',
+    status: '완료',
+    roomNumber: '304',
+    patientName: '김환자',
+    description: '침대에서 내려오다 미끄러짐'
   },
   {
-    id: "2",
-    title: "약물 투여",
-    type: "약물투여",
-    date: new Date(2025, 3, 15, 9, 0),
-    time: "09:00",
-    description: "항생제 투여",
-    patient: {
-      id: "p2",
-      name: "정환자",
-      roomNumber: "302"
-    },
-    status: "예정",
-    assignedTo: ["김간호사"]
+    id: '2',
+    title: '약물 투여',
+    type: '약물투여',
+    datetime: '2025-04-15 09:00',
+    status: '예정',
+    roomNumber: '302',
+    patientName: '이환자',
+    description: '혈압약 투여'
   },
   {
-    id: "3",
-    title: "실내 온도 이상 알림",
-    type: "환경알림",
-    date: new Date(2025, 3, 12, 16, 45),
-    time: "16:45",
-    description: "305호 온도가 30도 이상으로 상승",
-    status: "완료"
+    id: '3',
+    title: '실내 온도 이상 알림',
+    type: '환경알림',
+    datetime: '2025-04-12 16:45',
+    status: '완료',
+    roomNumber: '305',
+    description: '실내 온도 과열 (30°C 초과)'
   },
   {
-    id: "4",
-    title: "정기 건강 검진",
-    type: "검진",
-    date: new Date(2025, 3, 18, 10, 30),
-    time: "10:30",
-    description: "월간 정기 건강 검진",
-    patient: {
-      id: "p3",
-      name: "최환자",
-      roomNumber: "301"
-    },
-    status: "예정",
-    assignedTo: ["박의사"]
+    id: '4',
+    title: '정기 건강 검진',
+    type: '검진',
+    datetime: '2025-04-18 10:30',
+    status: '예정',
+    roomNumber: '301',
+    patientName: '박환자'
   },
   {
-    id: "5",
-    title: "물리 치료",
-    type: "치료",
-    date: new Date(2025, 3, 14, 13, 0),
-    time: "13:00",
-    description: "재활 물리 치료",
-    patient: {
-      id: "p1",
-      name: "이환자",
-      roomNumber: "304"
-    },
-    status: "완료",
-    assignedTo: ["김물리치료사"]
+    id: '5',
+    title: '물리 치료',
+    type: '치료',
+    datetime: '2025-04-14 13:00',
+    status: '완료',
+    roomNumber: '304',
+    patientName: '김환자',
+    description: '어깨 물리치료'
   }
 ];
 
-// 이벤트 타입별 색상 지정
-const getEventTypeColor = (type: EventType) => {
+// 이벤트 타입별 아이콘 및 색상
+const getEventTypeIcon = (type: EventType) => {
   switch (type) {
-    case "낙상": return "bg-red-500";
-    case "약물투여": return "bg-blue-500";
-    case "환경알림": return "bg-orange-500";
-    case "치료": return "bg-green-500";
-    case "검진": return "bg-purple-500";
-    case "방문": return "bg-yellow-500";
-    default: return "bg-gray-500";
+    case '낙상': return { icon: <AlertCircle className="h-4 w-4" />, color: 'bg-red-100 text-red-800 border-red-200' };
+    case '약물투여': return { icon: <Pill className="h-4 w-4" />, color: 'bg-blue-100 text-blue-800 border-blue-200' };
+    case '환경알림': return { icon: <Thermometer className="h-4 w-4" />, color: 'bg-orange-100 text-orange-800 border-orange-200' };
+    case '치료': return { icon: <Stethoscope className="h-4 w-4" />, color: 'bg-green-100 text-green-800 border-green-200' };
+    case '검진': return { icon: <Stethoscope className="h-4 w-4" />, color: 'bg-purple-100 text-purple-800 border-purple-200' };
+    default: return { icon: <AlertCircle className="h-4 w-4" />, color: 'bg-gray-100 text-gray-800 border-gray-200' };
   }
 };
 
-// 이벤트 상태별 색상 지정
-const getEventStatusColor = (status: string) => {
+// 이벤트 상태별 색상
+const getStatusColor = (status: EventStatus) => {
   switch (status) {
-    case "완료": return "bg-green-100 text-green-800";
-    case "진행중": return "bg-blue-100 text-blue-800";
-    case "예정": return "bg-purple-100 text-purple-800";
-    case "취소": return "bg-red-100 text-red-800";
-    default: return "bg-gray-100 text-gray-800";
+    case '완료': return 'bg-green-100 text-green-800';
+    case '진행중': return 'bg-blue-100 text-blue-800';
+    case '예정': return 'bg-purple-100 text-purple-800';
+    case '취소': return 'bg-gray-100 text-gray-800';
+    default: return 'bg-gray-100 text-gray-800';
   }
 };
 
