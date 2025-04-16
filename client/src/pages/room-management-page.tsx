@@ -90,6 +90,14 @@ export default function RoomManagementPage() {
   // 사용자 정보는 위에서 이미 가져옴
   console.log("RoomManagementPage - 현재 사용자:", user?.username, "역할:", user?.role);
   
+  // 임시 환자 사용자 데이터 (API가 구현될 때까지 사용)
+  const dummyPatients = [
+    { id: 1, name: "박진환", age: 68, gender: "남" },
+    { id: 2, name: "이미숙", age: 72, gender: "여" },
+    { id: 3, name: "최건우", age: 56, gender: "남" },
+    { id: 4, name: "장서연", age: 83, gender: "여" }
+  ];
+  
   // 임시 병실 데이터 (API가 구현될 때까지 사용)
   const dummyRooms: RoomWithPatients[] = [
     {

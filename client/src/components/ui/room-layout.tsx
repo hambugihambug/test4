@@ -79,6 +79,8 @@ export function RoomLayout({ roomId, layout, onSave, editable }: RoomLayoutProps
   const [editMode, setEditMode] = useState<'select' | 'add' | 'move' | 'resize' | 'rotate'>('select');
   const [showPatientAssignment, setShowPatientAssignment] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
+  const [draggedBedId, setDraggedBedId] = useState<string | null>(null);
+  const [dragStartPos, setDragStartPos] = useState<{x: number, y: number} | null>(null);
   
   // 임시 환자 데이터 (타입 오류 해결을 위해 필드 제거)
   const dummyPatients: Patient[] = [
@@ -138,14 +140,64 @@ export function RoomLayout({ roomId, layout, onSave, editable }: RoomLayoutProps
     console.log("현재 레이아웃 상태:", currentLayout);
   }, [currentLayout]);
   
+  // 침대 위치에 따라 번호 재정렬
+  const reorderBedNumbers = () => {
+    // 침대들을 X축 기준으로 정렬 (왼쪽에서 오른쪽으로)
+    const sortedBedsX = [...currentLayout.beds].sort((a, b) => a.x - b.x);
+    
+    // 각 행 기준으로 침대 그룹화 (Y축 유사한 위치에 있는 침대들)
+    const rows: Bed[][] = [];
+    sortedBedsX.forEach(bed => {
+      // Y축으로 유사한 위치의 행 찾기 (50px 이내 차이는 같은 행으로 간주)
+      const existingRow = rows.find(row => 
+        row.some(b => Math.abs(b.y - bed.y) < 50)
+      );
+      
+      if (existingRow) {
+        existingRow.push(bed);
+      } else {
+        rows.push([bed]);
+      }
+    });
+    
+    // 각 행을 X축으로 정렬
+    rows.forEach(row => row.sort((a, b) => a.x - b.x));
+    
+    // 모든 침대를 순서대로 펼침
+    const reorderedBeds = rows.sort((a, b) => a[0].y - b[0].y).flat();
+    
+    // 환자 데이터 매핑하여 유지 (기존 침대 번호와 환자 정보 유지)
+    const updatedBeds = reorderedBeds.map((bed, index) => {
+      const existingBed = currentLayout.beds.find(b => b.id === bed.id);
+      return {
+        ...bed,
+        patientId: existingBed?.patientId,
+        patientName: existingBed?.patientName,
+      };
+    });
+    
+    return updatedBeds;
+  };
+  
   // 병실 레이아웃 저장
   const saveLayout = () => {
+    // 저장 전에 침대 번호 재정렬
+    const updatedBeds = reorderBedNumbers();
+    
     const saveData = {
-      beds: currentLayout.beds
+      beds: updatedBeds
     };
+    
+    // 현재 레이아웃 업데이트
+    setCurrentLayout({
+      ...currentLayout,
+      beds: updatedBeds
+    });
+    
     onSave(saveData);
     toast({
       title: t('common.savedMessage') || '저장되었습니다',
+      description: '침대 번호가 위치에 따라 재정렬되었습니다.',
       variant: "default",
       duration: 3000,
     });
@@ -353,9 +405,60 @@ export function RoomLayout({ roomId, layout, onSave, editable }: RoomLayoutProps
             margin: '0 auto'
           }}
           onClick={addBed}
-          onMouseMove={moveBed}
-          onMouseUp={endMove}
-          onMouseLeave={endMove}
+          onMouseMove={(e) => {
+            // 드래그 중이면 침대 이동 처리
+            if (draggedBedId && dragStartPos) {
+              e.stopPropagation();
+              const rect = containerRef.current?.getBoundingClientRect();
+              if (!rect) return;
+              
+              const currentX = e.clientX - rect.left;
+              const currentY = e.clientY - rect.top;
+              
+              // 현재 드래그 중인 침대 찾기
+              const bed = currentLayout.beds.find(b => b.id === draggedBedId);
+              if (!bed) return;
+              
+              // 침대가 화면 밖으로 나가지 않도록 경계 설정
+              const minX = bed.width / 2;
+              const maxX = ROOM_WIDTH - (bed.width / 2);
+              const minY = bed.height / 2;
+              const maxY = ROOM_HEIGHT - (bed.height / 2);
+              
+              // 경계 내로 제한
+              const x = Math.min(maxX, Math.max(minX, currentX));
+              const y = Math.min(maxY, Math.max(minY, currentY));
+              
+              // 침대 위치 업데이트
+              setCurrentLayout(prev => ({
+                ...prev,
+                beds: prev.beds.map(b => 
+                  b.id === draggedBedId
+                    ? { ...b, x, y }
+                    : b
+                )
+              }));
+            } else {
+              // 일반 이동 모드에서의 처리
+              moveBed(e);
+            }
+          }}
+          onMouseUp={(e) => {
+            // 드래그 중이었다면 드래그 종료
+            if (draggedBedId) {
+              setDraggedBedId(null);
+              setDragStartPos(null);
+            }
+            endMove();
+          }}
+          onMouseLeave={(e) => {
+            // 마우스가 영역을 벗어나면 드래그 종료
+            if (draggedBedId) {
+              setDraggedBedId(null);
+              setDragStartPos(null);
+            }
+            endMove();
+          }}
         >
           {/* 벽 테두리 */}
           <div className="absolute inset-0 border-8 border-gray-200 pointer-events-none"></div>
@@ -382,6 +485,21 @@ export function RoomLayout({ roomId, layout, onSave, editable }: RoomLayoutProps
               onClick={(e) => {
                 e.stopPropagation();
                 selectBed(bed.id);
+              }}
+              onMouseDown={(e) => {
+                if (editable) {
+                  e.stopPropagation();
+                  // 드래그 시작
+                  setDraggedBedId(bed.id);
+                  setSelectedBedId(bed.id);
+                  const rect = containerRef.current?.getBoundingClientRect();
+                  if (rect) {
+                    setDragStartPos({
+                      x: e.clientX - rect.left,
+                      y: e.clientY - rect.top
+                    });
+                  }
+                }
               }}
             >
               <div className="h-full flex flex-col items-center justify-center p-1">
