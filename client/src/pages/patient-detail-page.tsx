@@ -162,6 +162,39 @@ export default function PatientDetailPage() {
     guardianNotify: false
   });
   
+  // 낙상 감지 설정 상태
+  const [fallDetectionSettings, setFallDetectionSettings] = useState({
+    enabled: false,
+    sensitivity: "medium",
+    alertDelay: 5,
+    notifyRecipient: "all"
+  });
+  
+  // 침대 이탈 감지 설정 상태
+  const [bedExitSettings, setBedExitSettings] = useState({
+    enabled: false,
+    sensitivity: "medium",
+    delayMinutes: 1
+  });
+  
+  // 환경 모니터링 설정 상태
+  const [environmentalSettings, setEnvironmentalSettings] = useState({
+    enabled: false,
+    tempMin: 20,
+    tempMax: 26,
+    humidityMin: 40,
+    humidityMax: 60
+  });
+  
+  // 보호자 알림 설정 상태
+  const [guardianNotifySettings, setGuardianNotifySettings] = useState({
+    enabled: false,
+    notifyFallDetection: true,
+    notifyBedExit: true,
+    notifyEnvironmental: false,
+    notifyMedication: false
+  });
+  
   // 모니터링 설정 다이얼로그 상태
   const [fallDetectionDialogOpen, setFallDetectionDialogOpen] = useState(false);
   const [bedExitDialogOpen, setBedExitDialogOpen] = useState(false);
@@ -171,6 +204,9 @@ export default function PatientDetailPage() {
   // 메시지 다이얼로그 상태
   const [messageDialogOpen, setMessageDialogOpen] = useState(false);
   const [messageContent, setMessageContent] = useState('');
+  
+  // 메시지 수신자 상태
+  const [messageRecipient, setMessageRecipient] = useState("nurse"); // 기본값: 담당 간호사
   
   // 수정 권한 확인 (병원장 또는 담당 간호사만 수정 가능)
   // 데이터에 assignedNurseId가 없으므로 현재는 병원장만 수정 가능하도록 설정
@@ -313,14 +349,68 @@ export default function PatientDetailPage() {
         type === 'fall' ? '낙상 감지' : 
         type === 'bedExit' ? '침대 이탈 감지' : 
         type === 'environmental' ? '환경 모니터링' : '보호자 알림';
+
+      // 설정 데이터 준비
+      let patientId = patient.id;
+      let settingsData: any = {};
+
+      if (type === 'fall') {
+        settingsData = {
+          type: 'fallDetection',
+          enabled: fallDetectionSettings.enabled,
+          settings: {
+            sensitivity: fallDetectionSettings.sensitivity,
+            alertDelay: fallDetectionSettings.alertDelay,
+            notifyRecipient: fallDetectionSettings.notifyRecipient
+          }
+        };
+      } else if (type === 'bedExit') {
+        settingsData = {
+          type: 'bedExit',
+          enabled: bedExitSettings.enabled,
+          settings: {
+            sensitivity: bedExitSettings.sensitivity,
+            delayMinutes: bedExitSettings.delayMinutes
+          }
+        };
+      } else if (type === 'environmental') {
+        settingsData = {
+          type: 'environmental',
+          enabled: environmentalSettings.enabled,
+          settings: {
+            tempMin: environmentalSettings.tempMin,
+            tempMax: environmentalSettings.tempMax,
+            humidityMin: environmentalSettings.humidityMin,
+            humidityMax: environmentalSettings.humidityMax
+          }
+        };
+      } else {
+        settingsData = {
+          type: 'guardianNotify',
+          enabled: guardianNotifySettings.enabled,
+          settings: {
+            notifyFallDetection: guardianNotifySettings.notifyFallDetection,
+            notifyBedExit: guardianNotifySettings.notifyBedExit,
+            notifyEnvironmental: guardianNotifySettings.notifyEnvironmental,
+            notifyMedication: guardianNotifySettings.notifyMedication
+          }
+        };
+      }
       
-      // 실제 API 호출 대신 상태 업데이트로 시뮬레이션
+      // 실제 API 호출 (이 부분은 실제 API가 구현되면 수정)
       setTimeout(() => {
+        // console.log(`${type} 설정 저장 API 호출:`, settingsData);
+        
+        // 상태 업데이트
         setMonitoringSettings(prev => ({
           ...prev,
           [type === 'fall' ? 'fallDetection' : 
            type === 'bedExit' ? 'bedExit' : 
-           type === 'environmental' ? 'environmental' : 'guardianNotify']: true
+           type === 'environmental' ? 'environmental' : 'guardianNotify']: 
+           type === 'fall' ? fallDetectionSettings.enabled : 
+           type === 'bedExit' ? bedExitSettings.enabled : 
+           type === 'environmental' ? environmentalSettings.enabled : 
+           guardianNotifySettings.enabled
         }));
         
         toast({
@@ -598,24 +688,84 @@ export default function PatientDetailPage() {
                 <h3 className="font-medium">낙상 감지 알림 활성화</h3>
                 <p className="text-sm text-gray-500">낙상 감지 시 알림을 받습니다.</p>
               </div>
-              <Switch checked={monitoringSettings.fallDetection} />
+              <Switch 
+                checked={fallDetectionSettings.enabled} 
+                onCheckedChange={(checked) => 
+                  setFallDetectionSettings(prev => ({...prev, enabled: checked}))
+                }
+              />
             </div>
-            <div className="flex items-center justify-between border-b pb-3">
-              <div>
-                <h3 className="font-medium">알림 수신자 설정</h3>
-                <p className="text-sm text-gray-500">알림을 받을 사람을 선택합니다.</p>
-              </div>
-              <Select defaultValue="all">
-                <SelectTrigger className="w-32">
-                  <SelectValue placeholder="수신자 선택" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">모든 의료진</SelectItem>
-                  <SelectItem value="nurse">담당 간호사</SelectItem>
-                  <SelectItem value="guardian">보호자</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
+            
+            {fallDetectionSettings.enabled && (
+              <>
+                <div className="flex items-center justify-between border-b pb-3">
+                  <div>
+                    <h3 className="font-medium">감지 민감도</h3>
+                    <p className="text-sm text-gray-500">감지 민감도를 설정합니다.</p>
+                  </div>
+                  <Select 
+                    defaultValue={fallDetectionSettings.sensitivity}
+                    onValueChange={(value) => 
+                      setFallDetectionSettings(prev => ({...prev, sensitivity: value}))
+                    }
+                  >
+                    <SelectTrigger className="w-32">
+                      <SelectValue placeholder="민감도 선택" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="low">낮음</SelectItem>
+                      <SelectItem value="medium">중간</SelectItem>
+                      <SelectItem value="high">높음</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              
+                <div className="flex items-center justify-between border-b pb-3">
+                  <div>
+                    <h3 className="font-medium">알림 지연 시간(초)</h3>
+                    <p className="text-sm text-gray-500">감지 후 알림 전송까지의 지연 시간입니다.</p>
+                  </div>
+                  <Select 
+                    defaultValue={fallDetectionSettings.alertDelay.toString()}
+                    onValueChange={(value) => 
+                      setFallDetectionSettings(prev => ({...prev, alertDelay: Number(value)}))
+                    }
+                  >
+                    <SelectTrigger className="w-24">
+                      <SelectValue placeholder="시간 선택" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="0">즉시</SelectItem>
+                      <SelectItem value="5">5초</SelectItem>
+                      <SelectItem value="10">10초</SelectItem>
+                      <SelectItem value="15">15초</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                
+                <div className="flex items-center justify-between border-b pb-3">
+                  <div>
+                    <h3 className="font-medium">알림 수신자 설정</h3>
+                    <p className="text-sm text-gray-500">알림을 받을 사람을 선택합니다.</p>
+                  </div>
+                  <Select 
+                    defaultValue={fallDetectionSettings.notifyRecipient}
+                    onValueChange={(value) => 
+                      setFallDetectionSettings(prev => ({...prev, notifyRecipient: value}))
+                    }
+                  >
+                    <SelectTrigger className="w-32">
+                      <SelectValue placeholder="수신자 선택" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">모든 의료진</SelectItem>
+                      <SelectItem value="nurse">담당 간호사</SelectItem>
+                      <SelectItem value="guardian">보호자</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </>
+            )}
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setFallDetectionDialogOpen(false)}>취소</Button>
