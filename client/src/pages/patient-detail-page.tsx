@@ -701,7 +701,7 @@ export default function PatientDetailPage() {
           <div>
             <h1 className="text-2xl font-bold">{patient.name} 환자</h1>
             <p className="text-muted-foreground">
-              {patient.age}세 · {patient.gender} · {patient.diagnosis} · {patient.roomNumber}호 {patient.bedNumber}번 침대
+              {patient.age}세 · {patient.gender} · {patient.diagnosis} · {patient.roomNumber}호 {patient.bedNumber}번 침대 · 담당간호사: {patient.assignedNurseId}번
             </p>
           </div>
         </div>
@@ -876,6 +876,10 @@ export default function PatientDetailPage() {
                 <div className="flex justify-between">
                   <dt className="text-sm font-medium text-muted-foreground">퇴원 예정일</dt>
                   <dd className="text-sm font-medium">{patient.expectedDischargeDate}</dd>
+                </div>
+                <div className="flex justify-between">
+                  <dt className="text-sm font-medium text-muted-foreground">담당 간호사</dt>
+                  <dd className="text-sm font-medium">{patient.assignedNurseId}번</dd>
                 </div>
               </dl>
             </CardContent>
@@ -1346,6 +1350,16 @@ export default function PatientDetailPage() {
                 id="address"
                 value={formData.address}
                 onChange={(e) => setFormData({...formData, address: e.target.value})}
+                className="col-span-3"
+              />
+            </div>
+            <div className="grid grid-cols-4 items-center gap-4">
+              <label htmlFor="assignedNurseId" className="text-right text-sm">담당 간호사</label>
+              <Input
+                id="assignedNurseId"
+                type="number"
+                value={formData.assignedNurseId}
+                onChange={(e) => setFormData({...formData, assignedNurseId: parseInt(e.target.value)})}
                 className="col-span-3"
               />
             </div>
