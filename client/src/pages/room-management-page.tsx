@@ -724,7 +724,12 @@ export default function RoomManagementPage() {
                             className="hover:bg-gray-50"
                           >
                             <TableCell className="font-medium">{patient.name}</TableCell>
-                            <TableCell>{patient.age}</TableCell>
+                            <TableCell>
+                              {/* 환자 ID가 있는 경우 PATIENT_DETAILS에서 나이 정보 가져오기 */}
+                              {patient.userId && PATIENT_DETAILS[patient.userId] 
+                                ? PATIENT_DETAILS[patient.userId].age 
+                                : (patient.age || "-")}
+                            </TableCell>
                             <TableCell>
                               <span className={`px-2 py-1 rounded-full text-xs ${
                                 patient.fallRisk === 'high' ? 'bg-red-100 text-red-800' :
