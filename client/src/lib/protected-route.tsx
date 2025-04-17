@@ -1,9 +1,7 @@
 import { useAuth } from "@/hooks/use-auth";
 import { Loader2 } from "lucide-react";
 import { Route, Redirect } from "wouter";
-import { ReactNode, useEffect } from "react";
 import { UserRole } from "@shared/schema";
-import { queryClient } from "@/lib/queryClient";
 
 interface ProtectedRouteProps {
   path: string;
@@ -18,32 +16,12 @@ export function ProtectedRoute({
 }: ProtectedRouteProps) {
   const { user, isLoading } = useAuth();
   
-  // 토큰 확인 로직 추가
-  const token = localStorage.getItem('token');
-  
-  // 디버깅용 로그 추가
   console.log(`ProtectedRoute(${path}) - 인증 상태:`, {
     isLoading,
     userExists: !!user,
     userRole: user?.role,
-    tokenExists: !!token
   });
   
-  // 토큰이 있지만 user가 없는 경우 직접 리턴해서 useEffect에서 처리하도록 함
-  if (token && !user && !isLoading) {
-    console.log("토큰은 있지만 user 객체가 없음. 리디렉션 중...");
-    
-    // AuthProvider에서 토큰 처리가 중요하므로, 여기서는 일단 로딩 화면만 노출
-    return (
-      <Route path={path}>
-        <div className="flex items-center justify-center min-h-screen flex-col">
-          <Loader2 className="h-8 w-8 animate-spin text-border mb-4" />
-          <p className="text-gray-500">계정 정보를 확인 중입니다...</p>
-        </div>
-      </Route>
-    );
-  }
-
   if (isLoading) {
     return (
       <Route path={path}>
@@ -56,7 +34,7 @@ export function ProtectedRoute({
 
   // 사용자가 로그인하지 않은 경우
   if (!user) {
-    console.log(`ProtectedRoute(${path}) - 미인증 사용자 감지, 로그인 페이지로 리디렉션`);
+    console.log(`ProtectedRoute(${path}) - 미인증 사용자, 로그인 페이지로 이동`);
     return (
       <Route path={path}>
         <Redirect to="/auth" />

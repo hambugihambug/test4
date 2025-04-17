@@ -30,9 +30,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setIsLoading(true);
         const token = localStorage.getItem('token');
         
+        console.log("토큰 확인:", !!token);
+        
         if (token) {
           // 서버에서 사용자 정보 가져오기
           try {
+            // 토큰으로 사용자 정보 조회
             const response = await fetch('/api/user', {
               headers: {
                 'Authorization': `Bearer ${token}`
@@ -41,16 +44,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             
             if (response.ok) {
               const userData = await response.json();
+              console.log("사용자 정보 로드 성공:", userData);
               setUser(userData);
               
               // 인증 페이지에 있다면 홈으로 리디렉션
               if (window.location.pathname === '/auth') {
+                console.log("로그인 상태에서 인증 페이지 방문 - 홈으로 리디렉션");
                 setLocation('/');
               }
             } else {
               // 토큰이 유효하지 않은 경우
+              console.error("토큰이 유효하지 않음:", response.status);
               localStorage.removeItem('token');
               if (window.location.pathname !== '/auth') {
+                console.log("유효하지 않은 토큰 - 로그인 페이지로 리디렉션");
                 setLocation('/auth');
               }
             }
@@ -58,13 +65,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             console.error("사용자 정보 로드 오류:", error);
             localStorage.removeItem('token');
             if (window.location.pathname !== '/auth') {
+              console.log("사용자 정보 로드 오류 - 로그인 페이지로 리디렉션");
               setLocation('/auth');
             }
           }
         } else {
           // 토큰이 없고 로그인 페이지가 아니면 로그인 페이지로 리디렉션
           if (window.location.pathname !== '/auth') {
+            console.log("토큰 없음 - 로그인 페이지로 리디렉션");
             setLocation('/auth');
+          } else {
+            console.log("토큰 없음, 이미 로그인 페이지에 있음");
           }
         }
       } catch (error) {

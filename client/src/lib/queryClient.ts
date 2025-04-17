@@ -50,25 +50,32 @@ export async function apiRequest(
   method: string,
   url: string,
   data?: unknown | undefined,
+  options?: RequestInit
 ): Promise<Response> {
   // 기본 헤더 설정
   const headers: HeadersInit = {
     ...(data ? { "Content-Type": "application/json" } : {}),
+    ...(options?.headers || {})
   };
   
-  // 인증 토큰이 있으면 헤더에 추가
-  const token = getAuthToken();
-  if (token) {
-    headers["Authorization"] = `Bearer ${token}`;
-    console.log("요청에 인증 헤더 추가됨:", url);
-  } else {
-    console.log("요청에 인증 헤더 없음:", url);
-    
-    // 디버깅: 토큰 직접 가져오기 시도
-    const directToken = localStorage.getItem('token');
-    if (directToken) {
-      console.log("localStorage에서 직접 토큰 가져옴");
-      headers["Authorization"] = `Bearer ${directToken}`;
+  // 인증 토큰이 있으면 헤더에 추가 (options.headers 에 없는 경우에만)
+  // @ts-ignore: 헤더 타입 무시
+  if (!headers.Authorization) {
+    const token = getAuthToken();
+    if (token) {
+      // @ts-ignore: 헤더 타입 무시
+      headers.Authorization = `Bearer ${token}`;
+      console.log("요청에 인증 헤더 추가됨:", url);
+    } else {
+      console.log("요청에 인증 헤더 없음:", url);
+      
+      // 디버깅: 토큰 직접 가져오기 시도
+      const directToken = localStorage.getItem('token');
+      if (directToken) {
+        console.log("localStorage에서 직접 토큰 가져옴");
+        // @ts-ignore: 헤더 타입 무시
+        headers.Authorization = `Bearer ${directToken}`;
+      }
     }
   }
 
@@ -79,6 +86,7 @@ export async function apiRequest(
     headers,
     body: data ? JSON.stringify(data) : undefined,
     credentials: "include", // 쿠키도 함께 사용
+    ...options
   });
 
   if (!res.ok) {
