@@ -17,6 +17,15 @@ import { UserRole } from '@shared/schema';
  * 역할 기반 액세스 제어를 위한 미들웨어
  * 인증된 사용자가 특정 역할을 가지고 있는지 확인합니다.
  */
+// Express에 사용자 정보 타입 추가
+declare global {
+  namespace Express {
+    interface Request {
+      user?: { id: number; role: UserRole; [key: string]: any };
+    }
+  }
+}
+
 const hasRole = (roles: UserRole[]) => (req: Request, res: Response, next: NextFunction) => {
   if (!req.user) {
     return res.status(401).json({ message: '인증이 필요합니다' });
