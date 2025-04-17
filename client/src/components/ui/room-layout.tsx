@@ -337,31 +337,29 @@ export function RoomLayout({ roomId, layout, onSave, editable }: RoomLayoutProps
   const assignPatient = (patientId: number, patientName: string) => {
     if (!selectedBedId) return;
     
-    setCurrentLayout(prev => {
-      // 환자가 이미 다른 침대에 배정되어 있는지 확인
-      const existingBedWithPatient = prev.beds.find(bed => 
-        bed.id !== selectedBedId && bed.patientId === patientId
-      );
-      
-      // 환자를 모든 침대에서 제거하고, 선택된 침대에만 배정
-      return {
-        ...prev,
-        beds: prev.beds.map(bed => {
-          if (bed.id === selectedBedId) {
-            // 선택된 침대에 환자 배정
-            return { ...bed, patientId, patientName };
-          } else if (bed.patientId === patientId) {
-            // 다른 침대에서 이 환자 제거
-            return { ...bed, patientId: undefined, patientName: undefined };
-          } else {
-            // 그 외 침대는 변경 없음
-            return bed;
-          }
-        })
-      };
+    // 변경 사항을 임시로 저장
+    const updatedBeds = currentLayout.beds.map(bed => {
+      if (bed.id === selectedBedId) {
+        // 선택된 침대에 환자 배정
+        return { ...bed, patientId, patientName };
+      } else if (bed.patientId === patientId) {
+        // 다른 침대에서 이 환자 제거
+        return { ...bed, patientId: undefined, patientName: undefined };
+      }
+      // 그 외 침대는 변경 없음
+      return bed;
     });
     
-    // 환자가 재배정되었다면 토스트 메시지 표시
+    // 레이아웃 업데이트
+    setCurrentLayout({
+      ...currentLayout,
+      beds: updatedBeds
+    });
+    
+    // 병실 레이아웃 자동 저장
+    onSave({ beds: updatedBeds });
+    
+    // 토스트 메시지 표시
     toast({
       title: "환자 배정 완료",
       description: `${patientName} 환자가 침대에 배정되었습니다.`,
@@ -374,14 +372,27 @@ export function RoomLayout({ roomId, layout, onSave, editable }: RoomLayoutProps
   const unassignPatient = () => {
     if (!selectedBedId) return;
     
-    setCurrentLayout(prev => ({
-      ...prev,
-      beds: prev.beds.map(bed => 
-        bed.id === selectedBedId
-          ? { ...bed, patientId: undefined, patientName: undefined }
-          : bed
-      )
-    }));
+    // 변경 사항 임시 저장
+    const updatedBeds = currentLayout.beds.map(bed => 
+      bed.id === selectedBedId
+        ? { ...bed, patientId: undefined, patientName: undefined }
+        : bed
+    );
+    
+    // 레이아웃 업데이트
+    setCurrentLayout({
+      ...currentLayout,
+      beds: updatedBeds
+    });
+    
+    // 병실 레이아웃 자동 저장
+    onSave({ beds: updatedBeds });
+    
+    // 토스트 메시지 표시
+    toast({
+      title: "환자 배정 해제",
+      description: "침대에서 환자가 해제되었습니다."
+    });
   };
   
   // 병실 크기는 800x400으로 고정되어 있습니다
