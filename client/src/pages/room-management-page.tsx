@@ -108,19 +108,8 @@ export default function RoomManagementPage() {
     { id: 4, name: "장서연", age: 83, gender: "여" }
   ];
   
-  // 로컬 스토리지에서 병실 데이터 가져오기 또는 초기값 사용
-  const getRoomsFromStorage = () => {
-    try {
-      const savedRooms = localStorage.getItem('hospitalRooms');
-      return savedRooms ? JSON.parse(savedRooms) : null;
-    } catch (error) {
-      console.error("로컬 스토리지에서 병실 데이터를 가져오는 중 오류 발생:", error);
-      return null;
-    }
-  };
-  
   // 임시 병실 데이터 (API가 구현될 때까지 사용)
-  const initialRooms = getRoomsFromStorage() || [
+  const initialRooms = [
     {
       id: 1,
       name: "101호",
@@ -191,16 +180,6 @@ export default function RoomManagementPage() {
   
   // 상태로 관리하도록 변경
   const [dummyRooms, setDummyRooms] = useState<RoomWithPatients[]>(initialRooms);
-  
-  // dummyRooms가 변경될 때마다 로컬 스토리지에 저장
-  useEffect(() => {
-    try {
-      localStorage.setItem('hospitalRooms', JSON.stringify(dummyRooms));
-      console.log('병실 데이터가 로컬 스토리지에 저장되었습니다.', dummyRooms.length);
-    } catch (error) {
-      console.error('로컬 스토리지에 병실 데이터 저장 실패:', error);
-    }
-  }, [dummyRooms]);
   
   // UI에서 참조하는 데이터로 dummyRooms 상태를 직접 사용합니다.
   const roomsWithPatients = dummyRooms;
