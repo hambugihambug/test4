@@ -117,6 +117,108 @@ export async function registerRoutes(app: Express): Promise<Server> {
     });
   });
   
+  // 인증 관련 API 엔드포인트
+  app.post('/api/login', async (req, res) => {
+    try {
+      const { username, password } = req.body;
+      
+      if (!username || !password) {
+        return res.status(400).json({ message: '사용자명과 비밀번호를 입력해주세요' });
+      }
+      
+      const user = await storage.getUserByUsername(username);
+      
+      if (!user) {
+        return res.status(401).json({ message: '사용자를 찾을 수 없습니다' });
+      }
+      
+      // 실제 환경에서는 비밀번호 해싱 필요
+      if (user.password !== password) {
+        return res.status(401).json({ message: '비밀번호가 일치하지 않습니다' });
+      }
+      
+      // 비밀번호 필드 제거
+      const { password: _, ...userWithoutPassword } = user;
+      
+      res.json(userWithoutPassword);
+    } catch (error) {
+      log(`로그인 오류: ${error}`, 'api');
+      res.status(500).json({ message: '서버 오류가 발생했습니다' });
+    }
+  });
+  
+  app.post('/api/register', async (req, res) => {
+    try {
+      const userData = req.body;
+      
+      // 필수 필드 확인
+      if (!userData.username || !userData.password || !userData.email || !userData.name || !userData.role) {
+        return res.status(400).json({ message: '모든 필수 정보를 입력해주세요' });
+      }
+      
+      // 사용자명 중복 확인
+      const existingUsername = await storage.getUserByUsername(userData.username);
+      if (existingUsername) {
+        return res.status(400).json({ message: '이미 사용 중인 사용자명입니다' });
+      }
+      
+      // 이메일 중복 확인
+      const existingEmail = await storage.getUserByEmail(userData.email);
+      if (existingEmail) {
+        return res.status(400).json({ message: '이미 사용 중인 이메일입니다' });
+      }
+      
+      // 사용자 생성
+      const newUser = await storage.createUser(userData);
+      
+      // 비밀번호 필드 제거
+      const { password: _, ...userWithoutPassword } = newUser;
+      
+      res.status(201).json(userWithoutPassword);
+    } catch (error) {
+      log(`회원가입 오류: ${error}`, 'api');
+      res.status(500).json({ message: '서버 오류가 발생했습니다' });
+    }
+  });
+  
+  app.post('/api/logout', (req, res) => {
+    // 실제 세션 기반 인증에서는 세션 제거 필요
+    res.status(200).json({ message: '로그아웃 되었습니다' });
+  });
+  
+  app.get('/api/user', async (req, res) => {
+    try {
+      // 실제 세션 인증에서는 세션에서 사용자 ID 확인 필요
+      // 여기서는 Authorization 헤더에서 사용자 ID 확인
+      const authHeader = req.headers.authorization;
+      
+      if (!authHeader) {
+        return res.status(401).json({ message: '인증 정보가 없습니다' });
+      }
+      
+      // 'Bearer {userId}' 형식에서 userId 추출
+      const userId = authHeader.split(' ')[1];
+      
+      if (!userId) {
+        return res.status(401).json({ message: '유효하지 않은 인증 정보입니다' });
+      }
+      
+      const user = await storage.getUser(parseInt(userId));
+      
+      if (!user) {
+        return res.status(401).json({ message: '사용자 정보를 찾을 수 없습니다' });
+      }
+      
+      // 비밀번호 필드 제거
+      const { password: _, ...userWithoutPassword } = user;
+      
+      res.json(userWithoutPassword);
+    } catch (error) {
+      log(`사용자 정보 조회 오류: ${error}`, 'api');
+      res.status(500).json({ message: '서버 오류가 발생했습니다' });
+    }
+  });
+  
   // 사용자 관련 API 엔드포인트
   app.get('/api/users', async (req, res) => {
     try {

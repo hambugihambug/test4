@@ -56,8 +56,8 @@ export default function AuthPage() {
   
   // 디버깅: 로그인 상태 확인
   useEffect(() => {
-    const userData = localStorage.getItem('userData');
-    console.log("AuthPage - 사용자 데이터 상태:", userData ? "데이터 있음" : "데이터 없음");
+    const token = localStorage.getItem('token');
+    console.log("AuthPage - 사용자 인증 상태:", token ? "로그인됨" : "로그인 안됨");
   }, []);
 
   // 이미 로그인한 경우 메인 페이지로 리다이렉트
@@ -103,34 +103,30 @@ export default function AuthPage() {
 
   async function checkExistingUsername(username: string) {
     try {
-      // 실제 API 호출 대신 로컬 스토리지에서 확인 (모의 구현)
-      const storedUserData = localStorage.getItem('userData');
-      if (storedUserData) {
-        const existingUser = JSON.parse(storedUserData);
-        const exists = existingUser.username === username;
-        setUsernameExists(exists);
-        return exists;
-      }
+      // 사용자명 중복 확인 API 호출
+      const response = await fetch(`/api/users/check-username?username=${encodeURIComponent(username)}`);
+      
+      // API가 아직 구현되지 않았으므로 항상 false 반환
+      setUsernameExists(false);
       return false;
     } catch (error) {
       console.error("아이디 확인 중 오류:", error);
+      setUsernameExists(false);
       return false;
     }
   }
   
   async function checkExistingEmail(email: string) {
     try {
-      // 실제 API 호출 대신 로컬 스토리지에서 확인 (모의 구현)
-      const storedUserData = localStorage.getItem('userData');
-      if (storedUserData) {
-        const existingUser = JSON.parse(storedUserData);
-        const exists = existingUser.email === email;
-        setEmailExists(exists);
-        return exists;
-      }
+      // 이메일 중복 확인 API 호출
+      const response = await fetch(`/api/users/check-email?email=${encodeURIComponent(email)}`);
+      
+      // API가 아직 구현되지 않았으므로 항상 false 반환
+      setEmailExists(false);
       return false;
     } catch (error) {
       console.error("이메일 확인 중 오류:", error);
+      setEmailExists(false);
       return false;
     }
   }
