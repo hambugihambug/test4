@@ -1,6 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import Draggable from 'react-draggable';
 import { Button } from '@/components/ui/button';
 import { Toggle } from '@/components/ui/toggle';
 import { Input } from '@/components/ui/input';
@@ -9,6 +8,7 @@ import { Label } from '@/components/ui/label';
 import { translations } from '@/lib/translations';
 import { Patient } from '@shared/schema';
 import { useToast } from '@/hooks/use-toast';
+import { DraggableBed } from '@/components/ui/draggable-bed';
 import { 
   RotateCw, Plus, Minus, Move, Save, Trash2, 
   BedDouble, PencilRuler, User, UserX 
@@ -479,47 +479,32 @@ export function RoomLayout({ roomId, layout, onSave, editable }: RoomLayoutProps
           
           {/* 침대 */}
           {currentLayout.beds.map(bed => (
-            <Draggable
+            <DraggableBed
               key={bed.id}
-              disabled={!editable || editMode !== 'move'}
-              defaultPosition={{x: bed.x - bed.width/2, y: bed.y - bed.height/2}}
-              bounds={{
-                left: 0,
-                top: 0,
-                right: ROOM_WIDTH - bed.width,
-                bottom: ROOM_HEIGHT - bed.height
-              }}
-              onDrag={(e, data) => {
-                // 드래그 중 위치 업데이트
-                const centerX = data.x + bed.width/2;
-                const centerY = data.y + bed.height/2;
+              id={bed.id}
+              x={bed.x}
+              y={bed.y}
+              width={bed.width}
+              height={bed.height}
+              rotation={bed.rotation}
+              patientId={bed.patientId}
+              patientName={bed.patientName}
+              selected={selectedBedId === bed.id}
+              editable={editable}
+              editMode={editMode}
+              containerWidth={ROOM_WIDTH}
+              containerHeight={ROOM_HEIGHT}
+              onSelect={selectBed}
+              onPositionChange={(id, newX, newY) => {
                 setCurrentLayout(prev => ({
                   ...prev,
                   beds: prev.beds.map(b => 
-                    b.id === bed.id
-                      ? { ...b, x: centerX, y: centerY }
+                    b.id === id
+                      ? { ...b, x: newX, y: newY }
                       : b
                   )
                 }));
               }}
-              onStop={(e, data) => {
-                // 드래그 종료 시 final 위치 업데이트
-                const centerX = data.x + bed.width/2;
-                const centerY = data.y + bed.height/2;
-                setCurrentLayout(prev => ({
-                  ...prev,
-                  beds: prev.beds.map(b => 
-                    b.id === bed.id
-                      ? { ...b, x: centerX, y: centerY }
-                      : b
-                  )
-                }));
-                
-                // 드래그 종료 알림
-                toast({
-                  title: "침대 이동 완료",
-                  description: "침대 위치가 업데이트되었습니다.",
-                });
               }}
             >
               <div
@@ -527,37 +512,32 @@ export function RoomLayout({ roomId, layout, onSave, editable }: RoomLayoutProps
                   selectedBedId === bed.id 
                     ? 'border-primary shadow-md' 
                     : 'border-gray-300'
-                } rounded-md overflow-hidden ${editMode === 'move' ? 'cursor-move' : editMode === 'select' ? 'cursor-pointer' : 'cursor-default'}`}
+                } rounded-md overflow-hidden ${editMode === 'move' ? 'cursor-move' : 'cursor-pointer'}`}
                 style={{
                   width: `${bed.width}px`,
                   height: `${bed.height}px`,
                   transform: `rotate(${bed.rotation}deg)`,
-                  transition: 'box-shadow 0.2s',
                 }}
                 onClick={(e) => {
-                  e.stopPropagation();
-                  selectBed(bed.id);
-                }}
-                onMouseDown={(e) => {
-                  if (editable && editMode !== 'move') {
+                  if (editMode !== 'move') {
                     e.stopPropagation();
-                    // 다른 편집 모드일 때 선택만 하기
-                    setSelectedBedId(bed.id);
+                    selectBed(bed.id);
                   }
                 }}
-            >
-              <div className="h-full flex flex-col items-center justify-center p-1">
-                <BedDouble className="text-gray-600 h-8 w-8 mb-1" />
-                
-                {bed.patientName ? (
-                  <div className="text-xs text-center font-medium bg-blue-100 text-blue-800 px-1 py-0.5 rounded-sm w-full truncate">
-                    {bed.patientName}
-                  </div>
-                ) : (
-                  <div className="text-xs text-gray-500">
-                    {currentLayout.beds.indexOf(bed) + 1}번
-                  </div>
-                )}
+              >
+                <div className="h-full flex flex-col items-center justify-center p-1">
+                  <BedDouble className="text-gray-600 h-8 w-8 mb-1" />
+                  
+                  {bed.patientName ? (
+                    <div className="text-xs text-center font-medium bg-blue-100 text-blue-800 px-1 py-0.5 rounded-sm w-full truncate">
+                      {bed.patientName}
+                    </div>
+                  ) : (
+                    <div className="text-xs text-gray-500">
+                      {currentLayout.beds.indexOf(bed) + 1}번
+                    </div>
+                  )}
+                </div>
               </div>
             </Draggable>
           ))}
