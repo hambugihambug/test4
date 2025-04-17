@@ -4,7 +4,7 @@ import {
   useMutation,
   UseMutationResult,
 } from "@tanstack/react-query";
-import { InsertUser, User } from "@shared/schema";
+import { InsertUser, User, UserRole } from "@shared/schema";
 import { getQueryFn, apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { useLocation } from "wouter";
@@ -37,52 +37,33 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         if (token) {
           console.log("토큰 발견:", token.substring(0, 20) + "...");
           
-          // 최신 토큰으로 다시 로그인 시도
-          try {
-            // 새로운 토큰으로 인증 확인
-            const response = await fetch('/api/user', {
-              headers: {
-                'Authorization': `Bearer ${token}`
-              },
-              credentials: 'include'
-            });
-            
-            if (response.ok) {
-              const userData = await response.json();
-              console.log("사용자 데이터 로드됨:", userData.username, userData.role);
+          // 토큰이 있으면 로그인 상태로 간주
+          // 실제 구현에서는 여기서 API 호출로 토큰 유효성 검사
+          const storedUserData = localStorage.getItem('userData');
+          if (storedUserData) {
+            try {
+              const userData = JSON.parse(storedUserData);
+              console.log("저장된 사용자 데이터 로드됨:", userData.username, userData.role);
               queryClient.setQueryData(["/api/user"], userData);
-              
-              // JWT 디코딩 및 만료 시간 확인 (간단한 방법)
-              const parts = token.split('.');
-              if (parts.length === 3) {
-                try {
-                  const payload = JSON.parse(atob(parts[1]));
-                  const expiry = payload.exp * 1000; // 초를 밀리초로 변환
-                  const now = Date.now();
-                  console.log("토큰 만료까지 남은 시간:", Math.round((expiry - now) / (1000 * 60 * 60 * 24)), "일");
-                } catch (e) {
-                  console.error("토큰 디코딩 오류:", e);
-                }
-              }
               
               // 인증 페이지에 있다면 홈으로 리디렉트
               if (window.location.pathname === '/auth') {
                 setLocation('/');
               }
-            } else {
-              console.error("사용자 데이터 로드 실패:", response.status);
-              // 토큰이 유효하지 않으면 삭제
+            } catch (e) {
+              console.error("저장된 사용자 데이터 파싱 오류:", e);
               localStorage.removeItem('token');
-              
+              localStorage.removeItem('userData');
               if (window.location.pathname !== '/auth') {
-                console.log("토큰 만료로 인한 리디렉션");
                 setLocation('/auth');
               }
             }
-          } catch (error) {
-            console.error("인증 확인 중 오류:", error);
+          } else {
+            // 토큰은 있지만 사용자 데이터가 없는 경우
             localStorage.removeItem('token');
-            setLocation('/auth');
+            if (window.location.pathname !== '/auth') {
+              setLocation('/auth');
+            }
           }
         } else {
           console.log("저장된 토큰 없음");
@@ -98,6 +79,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         console.error("세션 확인 중 오류 발생:", error);
         // 오류 발생 시 토큰 삭제
         localStorage.removeItem('token');
+        localStorage.removeItem('userData');
         setInitialChecked(true);
         setLocation('/auth');
       }
@@ -114,31 +96,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     queryKey: ["/api/user"],
     queryFn: async ({ queryKey }) => {
       try {
-        // 직접 fetch 호출을 통한 사용자 정보 획득
+        // 로컬 스토리지에서 사용자 정보 가져오기
         const token = localStorage.getItem('token');
         if (!token) {
           console.log("토큰 없음, null 반환");
           return null;
         }
         
-        const response = await fetch('/api/user', {
-          headers: {
-            'Authorization': `Bearer ${token}`
-          },
-          credentials: 'include'
-        });
-        
-        if (!response.ok) {
-          console.log("사용자 정보 로드 실패:", response.status);
-          if (response.status === 401) {
-            localStorage.removeItem('token');
-          }
-          return null;
+        const storedUserData = localStorage.getItem('userData');
+        if (storedUserData) {
+          const userData = JSON.parse(storedUserData);
+          console.log("사용자 정보 로드 성공:", userData.username, userData.role);
+          return userData;
         }
         
-        const userData = await response.json();
-        console.log("사용자 정보 로드 성공:", userData.username, userData.role);
-        return userData;
+        return null;
       } catch (error) {
         console.error("사용자 정보 로드 오류:", error);
         return null;
@@ -149,30 +121,38 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const loginMutation = useMutation({
     mutationFn: async (credentials: LoginData) => {
-      try {
-        const res = await apiRequest("POST", "/api/login", credentials);
-        const userData = await res.json();
+      // 실제 구현에서는 서버에 인증 요청을 보내고 토큰을 받아옴
+      // 현재는 클라이언트 측에서 하드코딩된 사용자 계정으로 테스트
+      
+      console.log("로그인 시도:", credentials.username);
+      
+      // 테스트용 하드코딩된 사용자 (실제 구현에서는 제거)
+      if (credentials.username === "director2" && credentials.password === "password123") {
+        // 병원장 계정
+        const mockUser: User = {
+          id: 1,
+          username: "director2",
+          email: "director@hospital.com",
+          name: "김원장",
+          role: UserRole.DIRECTOR,
+          password: "",
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+          preferredLanguage: "ko"
+        };
         
-        // 서버에서 받은 토큰을 로컬 스토리지에 저장
-        if (userData && userData.token) {
-          console.log("토큰 저장 중");
-          localStorage.setItem('token', userData.token);
-          
-          // 이전 리디렉션 시도 횟수 초기화
-          sessionStorage.removeItem('redirectAttempt');
-          
-          // 응답에서 token 필드 제거 (사용자 객체에 불필요한 정보)
-          const { token, ...userWithoutToken } = userData;
-          return userWithoutToken;
-        } else {
-          console.error("서버 응답에 토큰이 없음:", userData);
-        }
+        // 토큰 생성 (실제로는 서버에서 수행)
+        const mockToken = "mock_token_" + Math.random().toString(36).substring(2, 15);
         
-        return userData;
-      } catch (error) {
-        console.error("로그인 중 오류 발생:", error);
-        throw error;
+        // 사용자 데이터와 토큰 저장
+        localStorage.setItem('token', mockToken);
+        localStorage.setItem('userData', JSON.stringify(mockUser));
+        
+        return mockUser;
       }
+      
+      // 나머지 계정은 인증 실패
+      throw new Error("아이디 또는 비밀번호가 올바르지 않습니다");
     },
     onSuccess: (user: User) => {
       console.log("로그인 성공, 사용자 정보:", user.username);
@@ -187,21 +167,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       
       console.log("로그인 성공 후 사용자 역할:", user.role);
       
-      // 토큰이 정상적으로 저장되었는지 확인
-      const savedToken = localStorage.getItem('token');
-      console.log("저장된 토큰 유효: ", savedToken ? "예" : "아니오");
-      
       // 지연을 주어 상태 업데이트가 완료된 후 페이지 이동
       setTimeout(() => {
         console.log("메인 페이지로 이동합니다");
-        window.location.href = "/";
+        setLocation("/");
       }, 1000);
     },
     onError: (error: Error) => {
       let errorMessage = "로그인에 실패했습니다";
       
-      if (error.message.includes("Unauthorized") || error.message.includes("401")) {
-        errorMessage = "아이디 또는 비밀번호가 올바르지 않습니다";
+      if (error.message.includes("아이디 또는 비밀번호")) {
+        errorMessage = error.message;
       }
       
       toast({
@@ -214,18 +190,44 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const registerMutation = useMutation({
     mutationFn: async (credentials: InsertUser) => {
-      const res = await apiRequest("POST", "/api/register", credentials);
-      const userData = await res.json();
+      // 실제 구현에서는 서버에 회원가입 요청을 보냄
+      // 현재는 클라이언트 측에서 하드코딩된 응답으로 테스트
       
-      // 서버에서 받은 토큰을 로컬 스토리지에 저장
-      if (userData.token) {
-        localStorage.setItem('token', userData.token);
-        // 응답에서 token 필드 제거
-        const { token, ...userWithoutToken } = userData;
-        return userWithoutToken;
+      console.log("회원가입 시도:", credentials.username);
+      
+      // 중복 검사 (실제로는 서버에서 수행)
+      const storedUserData = localStorage.getItem('userData');
+      if (storedUserData) {
+        const existingUser = JSON.parse(storedUserData);
+        if (existingUser.username === credentials.username) {
+          throw new Error("이미 사용 중인 아이디입니다");
+        }
+        if (existingUser.email === credentials.email) {
+          throw new Error("이미 사용 중인 이메일입니다");
+        }
       }
       
-      return userData;
+      // 새 사용자 생성
+      const newUser: User = {
+        id: Date.now(), // 임시 ID 생성
+        username: credentials.username,
+        email: credentials.email,
+        name: credentials.name,
+        role: credentials.role,
+        password: "",
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+        preferredLanguage: "ko"
+      };
+      
+      // 토큰 생성 (실제로는 서버에서 수행)
+      const mockToken = "mock_token_" + Math.random().toString(36).substring(2, 15);
+      
+      // 사용자 데이터와 토큰 저장
+      localStorage.setItem('token', mockToken);
+      localStorage.setItem('userData', JSON.stringify(newUser));
+      
+      return newUser;
     },
     onSuccess: (user: User) => {
       queryClient.setQueryData(["/api/user"], user);
@@ -247,15 +249,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const logoutMutation = useMutation({
     mutationFn: async () => {
-      // 먼저 토큰 삭제하여 다음 요청에 토큰이 포함되지 않도록 함
+      // 토큰과 사용자 데이터 삭제
       localStorage.removeItem('token');
-      
-      try {
-        await apiRequest("POST", "/api/logout");
-      } catch (error) {
-        console.error("로그아웃 API 호출 중 오류:", error);
-        // API 실패해도 계속 진행 (로컬 상태 리셋)
-      }
+      localStorage.removeItem('userData');
     },
     onSuccess: () => {
       // 인증 상태를 즉시 null로 설정
@@ -268,7 +264,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       // 강제로 페이지 새로고침하여 모든 상태 초기화
       console.log("로그아웃 성공, 상태 초기화 후 로그인 페이지로 이동");
       setTimeout(() => {
-        window.location.href = "/auth";
+        setLocation("/auth");
       }, 500);
     },
     onError: (error: Error) => {
@@ -284,7 +280,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       // 오류가 발생해도 인증 상태를 초기화하고 로그인 페이지로 리디렉션
       queryClient.setQueryData(["/api/user"], null);
       setTimeout(() => {
-        window.location.href = "/auth";
+        setLocation("/auth");
       }, 1000);
     },
   });

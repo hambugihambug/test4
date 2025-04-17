@@ -99,10 +99,15 @@ export default function AuthPage() {
 
   async function checkExistingUsername(username: string) {
     try {
-      const response = await fetch(`/api/check-user?username=${encodeURIComponent(username)}`);
-      const data = await response.json();
-      setUsernameExists(data.exists);
-      return data.exists;
+      // 실제 API 호출 대신 로컬 스토리지에서 확인 (모의 구현)
+      const storedUserData = localStorage.getItem('userData');
+      if (storedUserData) {
+        const existingUser = JSON.parse(storedUserData);
+        const exists = existingUser.username === username;
+        setUsernameExists(exists);
+        return exists;
+      }
+      return false;
     } catch (error) {
       console.error("아이디 확인 중 오류:", error);
       return false;
@@ -111,10 +116,15 @@ export default function AuthPage() {
   
   async function checkExistingEmail(email: string) {
     try {
-      const response = await fetch(`/api/check-user?email=${encodeURIComponent(email)}`);
-      const data = await response.json();
-      setEmailExists(data.exists);
-      return data.exists;
+      // 실제 API 호출 대신 로컬 스토리지에서 확인 (모의 구현)
+      const storedUserData = localStorage.getItem('userData');
+      if (storedUserData) {
+        const existingUser = JSON.parse(storedUserData);
+        const exists = existingUser.email === email;
+        setEmailExists(exists);
+        return exists;
+      }
+      return false;
     } catch (error) {
       console.error("이메일 확인 중 오류:", error);
       return false;
