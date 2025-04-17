@@ -14,6 +14,7 @@ import {
   TrendingUp, 
   TrendingDown, 
   AlertTriangle, 
+  AlertCircle,
   ShieldCheck, 
   Thermometer, 
   Calendar, 
