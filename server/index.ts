@@ -149,7 +149,7 @@ app.use((req, res, next) => {
   const port = 5000;
   server.listen({
     port,
-    host: "localhost", // localhost에서만 접근 가능하도록 변경
+    host: process.platform === 'win32' ? '127.0.0.1' : 'localhost',
   }, () => {
     log(`${port}번 포트에서 서버 실행 중`);
   });
