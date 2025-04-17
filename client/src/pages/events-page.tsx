@@ -19,7 +19,8 @@ import {
   PlusCircle,
   Edit,
   Trash2,
-  User
+  User,
+  Loader2
 } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
@@ -29,6 +30,8 @@ import { ko } from 'date-fns/locale';
 import { cn } from '@/lib/utils';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { useToast } from '@/hooks/use-toast';
+import { useQuery, useMutation } from '@tanstack/react-query';
+import { apiRequest, queryClient } from '@/lib/queryClient';
 
 // 이벤트 데이터 타입
 type EventType = '낙상' | '약물투여' | '환경알림' | '치료' | '검진';
@@ -47,8 +50,7 @@ interface Event {
   createdAt?: string; // 생성 날짜/시간
 }
 
-// 이벤트 데이터 (서버에서 가져올 예정)
-let events: Event[] = [];
+// 서버에서 가져온 이벤트 데이터는 useQuery를 통해 관리됩니다.
 
 // 이벤트 타입별 아이콘 및 색상
 const getEventTypeIcon = (type: EventType) => {
@@ -92,78 +94,115 @@ const EventsPage: React.FC = () => {
   // 권한 확인 (관리자, 간호사, 의사만 수정 가능)
   const canEdit = user?.role === 'director' || user?.role === 'nurse';
   
+  // 이벤트 데이터 가져오기
+  const { data: events = [], isLoading, error } = useQuery({
+    queryKey: ['/api/events'],
+    queryFn: getQueryFn({ on401: "returnNull" })
+  });
+  
+  console.log('이벤트 데이터:', events); // 디버그용
+
+  // 이벤트 추가 mutation
+  const createEventMutation = useMutation({
+    mutationFn: async (newEventData: Omit<Event, 'id'>) => {
+      const res = await apiRequest('POST', '/api/events', newEventData);
+      return await res.json();
+    },
+    onSuccess: () => {
+      // 캐시를 갱신하여 새로운 이벤트 목록을 표시
+      queryClient.invalidateQueries({ queryKey: ['/api/events'] });
+      
+      // 다이얼로그 닫기
+      setShowAddEventDialog(false);
+      
+      // 성공 메시지
+      toast({
+        title: "이벤트 추가 완료",
+        description: "새 이벤트가 성공적으로 추가되었습니다.",
+      });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "이벤트 추가 실패",
+        description: error.message,
+        variant: "destructive",
+      });
+    }
+  });
+  
+  // 이벤트 수정 mutation
+  const updateEventMutation = useMutation({
+    mutationFn: async (updatedEvent: Event) => {
+      const res = await apiRequest('PATCH', `/api/events/${updatedEvent.id}`, updatedEvent);
+      return await res.json();
+    },
+    onSuccess: () => {
+      // 캐시를 갱신하여 수정된 이벤트 목록을 표시
+      queryClient.invalidateQueries({ queryKey: ['/api/events'] });
+      
+      // 다이얼로그 닫기
+      setShowEditEventDialog(false);
+      
+      // 성공 메시지
+      toast({
+        title: "이벤트 수정 완료",
+        description: "이벤트가 성공적으로 수정되었습니다.",
+      });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "이벤트 수정 실패",
+        description: error.message,
+        variant: "destructive",
+      });
+    }
+  });
+  
+  // 이벤트 삭제 mutation
+  const deleteEventMutation = useMutation({
+    mutationFn: async (id: string) => {
+      await apiRequest('DELETE', `/api/events/${id}`);
+    },
+    onSuccess: () => {
+      // 캐시를 갱신하여 삭제된 이벤트가 반영된 목록을 표시
+      queryClient.invalidateQueries({ queryKey: ['/api/events'] });
+      
+      // 다이얼로그 닫기
+      setShowDeleteDialog(false);
+      
+      // 성공 메시지
+      toast({
+        title: "이벤트 삭제 완료",
+        description: "이벤트가 성공적으로 삭제되었습니다.",
+      });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "이벤트 삭제 실패",
+        description: error.message,
+        variant: "destructive",
+      });
+    }
+  });
+  
   // 이벤트 추가 처리
   const handleAddEvent = (newEventData: Omit<Event, 'id'>) => {
-    // 실제 구현에서는 API 호출로 서버에 데이터 저장
-    // 현재는 임시 로컬 데이터로 구현
-    
-    // 새 ID 생성 (실제로는 서버에서 할당)
-    const newId = (parseInt(events[events.length - 1].id) + 1).toString();
-    
-    // 이벤트 추가
-    const newEvent = {
-      id: newId,
-      ...newEventData
-    };
-    
-    events = [newEvent, ...events];
-    
-    // 다이얼로그 닫기
-    setShowAddEventDialog(false);
-    
-    // 성공 메시지
-    toast({
-      title: "이벤트 추가 완료",
-      description: "새 이벤트가 성공적으로 추가되었습니다.",
-    });
+    createEventMutation.mutate(newEventData);
   };
   
   // 이벤트 수정 처리
   const handleEditEvent = (updatedEvent: Event) => {
-    // 실제 구현에서는 API 호출로 서버에 데이터 업데이트
-    // 현재는 임시 로컬 데이터로 구현
-    
-    // 이벤트 업데이트
-    const eventIndex = events.findIndex(e => e.id === updatedEvent.id);
-    if (eventIndex !== -1) {
-      events[eventIndex] = updatedEvent;
-    }
-    
-    // 다이얼로그 닫기
-    setShowEditEventDialog(false);
-    
-    // 성공 메시지
-    toast({
-      title: "이벤트 수정 완료",
-      description: "이벤트가 성공적으로 수정되었습니다.",
-    });
+    updateEventMutation.mutate(updatedEvent);
   };
   
   // 이벤트 삭제 처리
   const handleDeleteEvent = () => {
     if (!selectedEvent) return;
-    
-    // 실제 구현에서는 API 호출로 서버에서 데이터 삭제
-    // 현재는 임시 로컬 데이터로 구현
-    
-    // 이벤트 삭제
-    const eventIndex = events.findIndex(e => e.id === selectedEvent.id);
-    if (eventIndex !== -1) {
-      events.splice(eventIndex, 1);
-    }
-    
-    // 다이얼로그 닫기
-    setShowDeleteDialog(false);
-    
-    // 성공 메시지
-    toast({
-      title: "이벤트 삭제 완료",
-      description: "이벤트가 성공적으로 삭제되었습니다.",
-    });
+    deleteEventMutation.mutate(selectedEvent.id);
   };
   
   // 필터링된 이벤트 목록
-  const filteredEvents = events.filter(event => {
+  const filteredEvents = events.filter((event: Event) => {
     // 검색어 필터링
     const matchesSearch = searchTerm ? 
       event.title.toLowerCase().includes(searchTerm.toLowerCase()) || 
@@ -185,7 +224,7 @@ const EventsPage: React.FC = () => {
   
   // 최근 이벤트 (최대 5개)
   const recentEvents = [...events]
-    .sort((a, b) => new Date(b.datetime).getTime() - new Date(a.datetime).getTime())
+    .sort((a: Event, b: Event) => new Date(b.datetime).getTime() - new Date(a.datetime).getTime())
     .slice(0, 5);
   
   return (
