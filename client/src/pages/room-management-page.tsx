@@ -731,15 +731,28 @@ export default function RoomManagementPage() {
                                 : (patient.age || "-")}
                             </TableCell>
                             <TableCell>
-                              <span className={`px-2 py-1 rounded-full text-xs ${
-                                patient.fallRisk === 'high' ? 'bg-red-100 text-red-800' :
-                                patient.fallRisk === 'medium' ? 'bg-yellow-100 text-yellow-800' :
-                                'bg-green-100 text-green-800'
-                              }`}>
-                                {patient.fallRisk === 'high' ? t('dashboard.highRisk') :
-                                 patient.fallRisk === 'medium' ? t('dashboard.mediumRisk') :
-                                 t('dashboard.lowRisk')}
-                              </span>
+                              {/* 환자 ID가 있는 경우 PATIENT_DETAILS에서 낙상위험도 정보 가져오기 */}
+                              {patient.userId && PATIENT_DETAILS[patient.userId] ? (
+                                <span className={`px-2 py-1 rounded-full text-xs ${
+                                  PATIENT_DETAILS[patient.userId].fallRisk === 'high' ? 'bg-red-100 text-red-800' :
+                                  PATIENT_DETAILS[patient.userId].fallRisk === 'medium' ? 'bg-yellow-100 text-yellow-800' :
+                                  'bg-green-100 text-green-800'
+                                }`}>
+                                  {PATIENT_DETAILS[patient.userId].fallRisk === 'high' ? t('dashboard.highRisk') :
+                                   PATIENT_DETAILS[patient.userId].fallRisk === 'medium' ? t('dashboard.mediumRisk') :
+                                   t('dashboard.lowRisk')}
+                                </span>
+                              ) : (
+                                <span className={`px-2 py-1 rounded-full text-xs ${
+                                  patient.fallRisk === 'high' ? 'bg-red-100 text-red-800' :
+                                  patient.fallRisk === 'medium' ? 'bg-yellow-100 text-yellow-800' :
+                                  'bg-green-100 text-green-800'
+                                }`}>
+                                  {patient.fallRisk === 'high' ? t('dashboard.highRisk') :
+                                   patient.fallRisk === 'medium' ? t('dashboard.mediumRisk') :
+                                   t('dashboard.lowRisk')}
+                                </span>
+                              )}
                             </TableCell>
                             <TableCell>{patient.bedNumber}</TableCell>
                             <TableCell>
