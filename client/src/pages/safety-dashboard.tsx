@@ -23,7 +23,8 @@ import {
   Activity,
   Heart,
   BarChart3,
-  UserCheck
+  UserCheck,
+  Check
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useToast } from '@/hooks/use-toast';
