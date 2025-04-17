@@ -192,6 +192,16 @@ export default function RoomManagementPage() {
   // 상태로 관리하도록 변경
   const [dummyRooms, setDummyRooms] = useState<RoomWithPatients[]>(initialRooms);
   
+  // dummyRooms가 변경될 때마다 로컬 스토리지에 저장
+  useEffect(() => {
+    try {
+      localStorage.setItem('hospitalRooms', JSON.stringify(dummyRooms));
+      console.log('병실 데이터가 로컬 스토리지에 저장되었습니다.', dummyRooms.length);
+    } catch (error) {
+      console.error('로컬 스토리지에 병실 데이터 저장 실패:', error);
+    }
+  }, [dummyRooms]);
+  
   // UI에서 참조하는 데이터로 dummyRooms 상태를 직접 사용합니다.
   const roomsWithPatients = dummyRooms;
   const roomsLoading = false;
