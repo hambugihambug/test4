@@ -69,40 +69,6 @@ interface DashboardData {
 }
 
 /**
- * 임시 대시보드 데이터
- * 
- * 실제 API 연동 전까지 사용할 더미 데이터입니다.
- * 실제 시스템 구현 시 서버 API에서 데이터를 가져와야 합니다.
- */
-const mockDashboardData: DashboardData = {
-  safetyScore: 78,
-  patientCount: 42,
-  roomCount: 15,
-  incidentCount: 3,
-  todayVisits: 8,
-  avgTemperature: 24.5,
-  avgHumidity: 45,
-  fallPreventionRate: 85,
-  nightIncidentRate: 35,
-  statistics: {
-    incidents: [3, 2, 4, 1, 3, 2, 3],
-    temperatures: [23.5, 24, 24.5, 25, 24.8, 24.3, 24.5]
-  },
-  safestRooms: [
-    { roomNumber: '301', score: 92 },
-    { roomNumber: '302', score: 87 },
-    { roomNumber: '305', score: 84 }
-  ],
-  patients: [
-    { id: 1, name: '김환자', room: '301', safetyScore: 90, activityLevel: 2, fallRisk: 15 },
-    { id: 2, name: '이환자', room: '302', safetyScore: 75, activityLevel: 3, fallRisk: 35 },
-    { id: 3, name: '박환자', room: '303', safetyScore: 60, activityLevel: 4, fallRisk: 52 },
-    { id: 4, name: '정환자', room: '304', safetyScore: 85, activityLevel: 1, fallRisk: 22 },
-    { id: 5, name: '최환자', room: '305', safetyScore: 45, activityLevel: 5, fallRisk: 78 }
-  ]
-};
-
-/**
  * 안전 대시보드 페이지 컴포넌트
  * 실시간 환자 및 병원 안전 정보를 시각화하여 제공
  */
@@ -127,15 +93,15 @@ const SafetyDashboardPage: React.FC = () => {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        // 실제 API 호출 대신 목업 데이터 사용 (임시)
-        // 실제 구현 시 아래 코드를 API 호출로 대체해야 함
-        // 예: const response = await fetch('/api/dashboard');
-        //     const responseData = await response.json();
-        //     setData(responseData);
-        setTimeout(() => {
-          setData(mockDashboardData);
-          setLoading(false);
-        }, 1000);
+        // 백엔드 개발자가 구현할 API 호출 부분
+        // const response = await fetch('/api/dashboard');
+        // const responseData = await response.json();
+        // setData(responseData);
+        
+        // 백엔드 연결 전까지는 로딩 상태 유지
+        // 백엔드 연결하기 전까지 로딩 상태를 true로 유지합니다
+        setLoading(true);
+        setData(null); // 데이터를 초기화하여 로딩 메시지 표시
       } catch (error) {
         console.error('대시보드 데이터 로드 중 오류:', error);
         toast({
