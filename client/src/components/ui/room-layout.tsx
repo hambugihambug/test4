@@ -337,14 +337,35 @@ export function RoomLayout({ roomId, layout, onSave, editable }: RoomLayoutProps
   const assignPatient = (patientId: number, patientName: string) => {
     if (!selectedBedId) return;
     
-    setCurrentLayout(prev => ({
-      ...prev,
-      beds: prev.beds.map(bed => 
-        bed.id === selectedBedId
-          ? { ...bed, patientId, patientName }
-          : bed
-      )
-    }));
+    setCurrentLayout(prev => {
+      // 환자가 이미 다른 침대에 배정되어 있는지 확인
+      const existingBedWithPatient = prev.beds.find(bed => 
+        bed.id !== selectedBedId && bed.patientId === patientId
+      );
+      
+      // 환자를 모든 침대에서 제거하고, 선택된 침대에만 배정
+      return {
+        ...prev,
+        beds: prev.beds.map(bed => {
+          if (bed.id === selectedBedId) {
+            // 선택된 침대에 환자 배정
+            return { ...bed, patientId, patientName };
+          } else if (bed.patientId === patientId) {
+            // 다른 침대에서 이 환자 제거
+            return { ...bed, patientId: undefined, patientName: undefined };
+          } else {
+            // 그 외 침대는 변경 없음
+            return bed;
+          }
+        })
+      };
+    });
+    
+    // 환자가 재배정되었다면 토스트 메시지 표시
+    toast({
+      title: "환자 배정 완료",
+      description: `${patientName} 환자가 침대에 배정되었습니다.`,
+    });
     
     setShowPatientAssignment(false);
   };
