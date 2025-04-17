@@ -44,18 +44,20 @@ const registerSchema = insertUserSchema.pick({
 
 export default function AuthPage() {
   const [, setLocation] = useLocation();
-  const { user, loginMutation, registerMutation } = useAuth();
+  const { user, login, register, isLoading } = useAuth();
   const [activeTab, setActiveTab] = useState<string>("login");
   const [usernameExists, setUsernameExists] = useState<boolean>(false);
   const [emailExists, setEmailExists] = useState<boolean>(false);
+  const [loginPending, setLoginPending] = useState<boolean>(false);
+  const [registerPending, setRegisterPending] = useState<boolean>(false);
   
   // 임시 번역 함수
   const t = (text: string) => text;
   
   // 디버깅: 로그인 상태 확인
   useEffect(() => {
-    const token = localStorage.getItem('token');
-    console.log("AuthPage - 토큰 상태:", token ? "토큰 있음" : "토큰 없음");
+    const userData = localStorage.getItem('userData');
+    console.log("AuthPage - 사용자 데이터 상태:", userData ? "데이터 있음" : "데이터 없음");
   }, []);
 
   // 이미 로그인한 경우 메인 페이지로 리다이렉트
@@ -87,13 +89,15 @@ export default function AuthPage() {
 
   async function onLoginSubmit(values: z.infer<typeof loginSchema>) {
     try {
-      console.log("로그인 시도 (loginMutation 사용):", values.username);
+      console.log("로그인 시도:", values.username);
+      setLoginPending(true);
       
-      // 직접 fetch 대신 useAuth의 loginMutation 사용
-      loginMutation.mutate(values);
+      // 직접 login 함수 호출
+      await login(values.username, values.password);
     } catch (error) {
       console.error("로그인 오류:", error);
-      alert(error instanceof Error ? error.message : '로그인에 실패했습니다');
+    } finally {
+      setLoginPending(false);
     }
   }
 
@@ -132,27 +136,32 @@ export default function AuthPage() {
   }
   
   async function onRegisterSubmit(values: z.infer<typeof registerSchema>) {
-    // 사용자명 중복 확인
-    const usernameExists = await checkExistingUsername(values.username);
-    if (usernameExists) {
-      return;
-    }
-    
-    // 이메일 중복 확인
-    const emailExists = await checkExistingEmail(values.email);
-    if (emailExists) {
-      return;
-    }
-    
-    const { confirmPassword, ...registerData } = values;
-    registerMutation.mutate(registerData, {
-      onSuccess: () => {
-        // 회원가입 성공 시 로그인 탭으로 전환
-        setActiveTab("login");
-        // 사용자명 정보를 로그인 폼에 자동으로 채우기
-        loginForm.setValue("username", values.username);
+    try {
+      setRegisterPending(true);
+      
+      // 사용자명 중복 확인
+      const usernameExists = await checkExistingUsername(values.username);
+      if (usernameExists) {
+        return;
       }
-    });
+      
+      // 이메일 중복 확인
+      const emailExists = await checkExistingEmail(values.email);
+      if (emailExists) {
+        return;
+      }
+      
+      const { confirmPassword, ...registerData } = values;
+      await register(registerData);
+      
+      // 회원가입 성공 시 로그인 탭으로 전환 (실제로는 바로 로그인되어 홈으로 이동함)
+      setActiveTab("login");
+      loginForm.setValue("username", values.username);
+    } catch (error) {
+      console.error("회원가입 오류:", error);
+    } finally {
+      setRegisterPending(false);
+    }
   }
 
   return (
@@ -205,9 +214,9 @@ export default function AuthPage() {
                   <Button 
                     type="submit" 
                     className="w-full mt-6" 
-                    disabled={loginMutation.isPending}
+                    disabled={loginPending || isLoading}
                   >
-                    {loginMutation.isPending ? (
+                    {loginPending ? (
                       <span className="flex items-center">
                         <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                           <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
@@ -360,9 +369,9 @@ export default function AuthPage() {
                   <Button 
                     type="submit" 
                     className="w-full mt-6" 
-                    disabled={registerMutation.isPending}
+                    disabled={registerPending || isLoading}
                   >
-                    {registerMutation.isPending ? (
+                    {registerPending ? (
                       <span className="flex items-center">
                         <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                           <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
