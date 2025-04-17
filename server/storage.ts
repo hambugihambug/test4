@@ -10,7 +10,6 @@ import {
   InsertUser, InsertRoom, InsertPatient, InsertGuardian, InsertAccident, InsertEnvLog, InsertCamera, InsertMessage,
   UserRole, RoomWithPatients, PatientWithDetails
 } from "@shared/schema";
-import session from "express-session";
 
 /**
  * 저장소 인터페이스
@@ -35,7 +34,7 @@ export interface IStorage {
   createUser(user: InsertUser): Promise<User>;                            // 새 사용자 생성
   updateUser(id: number, userData: Partial<User>): Promise<User | undefined>; // 사용자 정보 수정
   deleteUser(id: number): Promise<boolean>;                               // 사용자 삭제
-  getUsersByRole(role: UserRole): Promise<User[]>;                        // 역할별 사용자 목록 조회
+  getUsersByRole(role?: UserRole): Promise<User[]>;                        // 역할별 사용자 목록 조회
   
   /**
    * 병실 관리 메서드
@@ -118,75 +117,70 @@ export interface IStorage {
   getUnreadMessageCountForUser(userId: number): Promise<number>;           // 사용자별 안 읽은 메시지 수 조회
 }
 
-/**
- * 아래 부분은 사용자가 직접 구현해야 합니다.
- * 이 인터페이스를 구현하는 실제 저장소 클래스(예: DatabaseStorage)를 생성하고,
- * 필요한 메서드를 PostgreSQL 등의 데이터베이스와 연동하여 구현해야 합니다.
- */
+// 메모리 스토어 기본 객체
+class EmptyStorage implements IStorage {
+  sessionStore = null;
+  
+  getUser = async () => undefined;
+  getUserByUsername = async () => undefined;
+  getUserByEmail = async () => undefined;
+  createUser = async () => { throw new Error("구현이 필요한 메서드입니다."); };
+  updateUser = async () => undefined;
+  deleteUser = async () => false;
+  getUsersByRole = async () => [];
+  
+  getRooms = async () => [];
+  getRoom = async () => undefined;
+  createRoom = async () => { throw new Error("구현이 필요한 메서드입니다."); };
+  updateRoom = async () => undefined;
+  deleteRoom = async () => false;
+  getRoomWithPatients = async () => undefined;
+  getAllRoomsWithPatients = async () => [];
+  
+  getPatients = async () => [];
+  getPatient = async () => undefined;
+  createPatient = async () => { throw new Error("구현이 필요한 메서드입니다."); };
+  updatePatient = async () => undefined;
+  deletePatient = async () => false;
+  getPatientsByRoomId = async () => [];
+  getPatientsByAssignedNurse = async () => [];
+  getPatientWithDetails = async () => undefined;
+  getPatientsWithDetails = async () => [];
+  
+  getGuardians = async () => [];
+  getGuardian = async () => undefined;
+  createGuardian = async () => { throw new Error("구현이 필요한 메서드입니다."); };
+  updateGuardian = async () => undefined;
+  deleteGuardian = async () => false;
+  getGuardianByPatientId = async () => undefined;
+  
+  getAccidents = async () => [];
+  getAccident = async () => undefined;
+  createAccident = async () => { throw new Error("구현이 필요한 메서드입니다."); };
+  updateAccident = async () => undefined;
+  getAccidentsByPatientId = async () => [];
+  getAccidentsByRoomId = async () => [];
+  getRecentAccidents = async () => [];
+  
+  getEnvLogs = async () => [];
+  createEnvLog = async () => { throw new Error("구현이 필요한 메서드입니다."); };
+  getEnvLogsByRoomId = async () => [];
+  getLatestEnvLogByRoomId = async () => undefined;
+  
+  getCameras = async () => [];
+  getCamera = async () => undefined;
+  createCamera = async () => { throw new Error("구현이 필요한 메서드입니다."); };
+  updateCamera = async () => undefined;
+  deleteCamera = async () => false;
+  getCamerasByRoomId = async () => [];
+  
+  getMessages = async () => [];
+  getMessage = async () => undefined;
+  createMessage = async () => { throw new Error("구현이 필요한 메서드입니다."); };
+  updateMessage = async () => undefined;
+  getMessagesBetweenUsers = async () => [];
+  getUnreadMessageCountForUser = async () => 0;
+}
 
-// 임시 저장소 객체 - 사용자가 실제 구현으로 대체할 예정
-export const storage: IStorage = {
-  // 이 부분은 향후 사용자가 직접 구현할 예정입니다.
-  sessionStore: null,
-  
-  // 주석 처리된 메서드들은 실제 구현이 필요합니다.
-  getUser: async () => undefined,
-  getUserByUsername: async () => undefined,
-  getUserByEmail: async () => undefined,
-  createUser: async () => { throw new Error("구현이 필요한 메서드입니다."); },
-  updateUser: async () => undefined,
-  deleteUser: async () => false,
-  getUsersByRole: async () => [],
-  
-  getRooms: async () => [],
-  getRoom: async () => undefined,
-  createRoom: async () => { throw new Error("구현이 필요한 메서드입니다."); },
-  updateRoom: async () => undefined,
-  deleteRoom: async () => false,
-  getRoomWithPatients: async () => undefined,
-  getAllRoomsWithPatients: async () => [],
-  
-  getPatients: async () => [],
-  getPatient: async () => undefined,
-  createPatient: async () => { throw new Error("구현이 필요한 메서드입니다."); },
-  updatePatient: async () => undefined,
-  deletePatient: async () => false,
-  getPatientsByRoomId: async () => [],
-  getPatientsByAssignedNurse: async () => [],
-  getPatientWithDetails: async () => undefined,
-  getPatientsWithDetails: async () => [],
-  
-  getGuardians: async () => [],
-  getGuardian: async () => undefined,
-  createGuardian: async () => { throw new Error("구현이 필요한 메서드입니다."); },
-  updateGuardian: async () => undefined,
-  deleteGuardian: async () => false,
-  getGuardianByPatientId: async () => undefined,
-  
-  getAccidents: async () => [],
-  getAccident: async () => undefined,
-  createAccident: async () => { throw new Error("구현이 필요한 메서드입니다."); },
-  updateAccident: async () => undefined,
-  getAccidentsByPatientId: async () => [],
-  getAccidentsByRoomId: async () => [],
-  getRecentAccidents: async () => [],
-  
-  getEnvLogs: async () => [],
-  createEnvLog: async () => { throw new Error("구현이 필요한 메서드입니다."); },
-  getEnvLogsByRoomId: async () => [],
-  getLatestEnvLogByRoomId: async () => undefined,
-  
-  getCameras: async () => [],
-  getCamera: async () => undefined,
-  createCamera: async () => { throw new Error("구현이 필요한 메서드입니다."); },
-  updateCamera: async () => undefined,
-  deleteCamera: async () => false,
-  getCamerasByRoomId: async () => [],
-  
-  getMessages: async () => [],
-  getMessage: async () => undefined,
-  createMessage: async () => { throw new Error("구현이 필요한 메서드입니다."); },
-  updateMessage: async () => undefined,
-  getMessagesBetweenUsers: async () => [],
-  getUnreadMessageCountForUser: async () => 0
-};
+// 빈 저장소 객체 생성
+export const storage = new EmptyStorage();

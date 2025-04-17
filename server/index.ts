@@ -9,8 +9,6 @@ import express, { type Request, Response, NextFunction } from "express";
 import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
 import cookieParser from "cookie-parser";
-import { storage } from "./storage";
-import { setupAuth } from "./auth";
 
 /**
  * Express 앱 인스턴스 생성
@@ -77,9 +75,6 @@ app.use((req, res, next) => {
  * 서버 구성 및 실행을 담당합니다.
  */
 (async () => {
-  // 인증 설정
-  setupAuth(app);
-  
   // API 라우트 등록
   const server = await registerRoutes(app);
 
