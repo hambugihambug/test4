@@ -13,6 +13,7 @@ import { storage } from './storage';
 import { initializeDatabase } from './db';
 import { UserRole } from '@shared/schema';
 import { registerEventRoutes } from './event-routes';
+import { setWebSocketServer } from './ws-broadcaster';
 
 /**
  * 역할 기반 액세스 제어를 위한 미들웨어
@@ -70,6 +71,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
     server: httpServer, 
     path: '/ws' 
   });
+  
+  // WebSocketBroadcaster에 WebSocketServer 인스턴스 설정
+  setWebSocketServer(wss);
 
   /**
    * WebSocket 연결 이벤트 처리

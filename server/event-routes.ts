@@ -2,6 +2,7 @@
  * 이벤트 관련 API 라우트
  * 
  * 이벤트 데이터 CRUD 작업을 위한 API 엔드포인트를 정의합니다.
+ * WebSocket을 통한 실시간 알림 기능을 포함합니다.
  */
 
 import { Express, Request, Response } from 'express';
@@ -9,6 +10,7 @@ import { z } from 'zod';
 import { storage } from './storage';
 import { insertEventSchema } from '@shared/schema';
 import { log } from './vite';
+import { WebSocketBroadcaster } from './ws-broadcaster';
 
 // 이 함수는 routes.ts 파일에서 호출할 예정입니다
 export function registerEventRoutes(app: Express) {
@@ -93,6 +95,14 @@ export function registerEventRoutes(app: Express) {
       // 이벤트 생성
       const event = await storage.createEvent(validatedData);
       
+      // WebSocket을 통해 실시간 알림 전송
+      try {
+        WebSocketBroadcaster.notifyEventCreated(event);
+      } catch (wsError) {
+        log(`WebSocket 알림 전송 오류: ${wsError}`, 'websocket');
+        // WebSocket 오류는 API 응답에 영향을 주지 않음
+      }
+      
       return res.status(201).json(event);
     } catch (error) {
       if (error instanceof z.ZodError) {
@@ -128,6 +138,14 @@ export function registerEventRoutes(app: Express) {
       // 이벤트 수정
       const updatedEvent = await storage.updateEvent(id, validatedData);
       
+      // WebSocket을 통해 실시간 알림 전송
+      try {
+        WebSocketBroadcaster.notifyEventUpdated(updatedEvent);
+      } catch (wsError) {
+        log(`WebSocket 알림 전송 오류: ${wsError}`, 'websocket');
+        // WebSocket 오류는 API 응답에 영향을 주지 않음
+      }
+      
       return res.status(200).json(updatedEvent);
     } catch (error) {
       if (error instanceof z.ZodError) {
@@ -160,6 +178,14 @@ export function registerEventRoutes(app: Express) {
       const success = await storage.deleteEvent(id);
       if (!success) {
         return res.status(500).json({ error: '이벤트 삭제에 실패했습니다.' });
+      }
+      
+      // WebSocket을 통해 실시간 알림 전송
+      try {
+        WebSocketBroadcaster.notifyEventDeleted(id, existingEvent.title);
+      } catch (wsError) {
+        log(`WebSocket 알림 전송 오류: ${wsError}`, 'websocket');
+        // WebSocket 오류는 API 응답에 영향을 주지 않음
       }
       
       return res.status(204).send();
