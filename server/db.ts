@@ -250,6 +250,32 @@ export async function initializeTables() {
       `);
       log(`${TABLE_PREFIX}messages 테이블 생성 완료`, 'db');
     }
+    
+    // 이벤트 테이블 생성
+    if (!(await tableExists('events'))) {
+      await pool.execute(`
+        CREATE TABLE ${TABLE_PREFIX}events (
+          id INT AUTO_INCREMENT PRIMARY KEY,
+          title VARCHAR(255) NOT NULL,
+          type VARCHAR(50) NOT NULL,
+          datetime TIMESTAMP NOT NULL,
+          status VARCHAR(50) NOT NULL,
+          roomNumber VARCHAR(50) NOT NULL,
+          patientName VARCHAR(100),
+          patientId INT,
+          roomId INT,
+          description TEXT,
+          createdBy VARCHAR(100),
+          createdById INT,
+          createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+          updatedAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+          FOREIGN KEY (patientId) REFERENCES ${TABLE_PREFIX}patients(id) ON DELETE SET NULL,
+          FOREIGN KEY (roomId) REFERENCES ${TABLE_PREFIX}rooms(id) ON DELETE SET NULL,
+          FOREIGN KEY (createdById) REFERENCES ${TABLE_PREFIX}users(id) ON DELETE SET NULL
+        )
+      `);
+      log(`${TABLE_PREFIX}events 테이블 생성 완료`, 'db');
+    }
 
     log('모든 임시 테이블 초기화 완료', 'db');
     return true;
