@@ -22,11 +22,22 @@ const app = express();
  */
 // CORS 설정 - 모든 출처 허용하고 credential 활성화
 app.use(cors({
-  origin: true, // 모든 출처 허용
+  origin: '*', // 모든 출처 명시적으로 허용
   credentials: true, // 인증 정보 전달 허용
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization']
 }));
+
+// CORS 프리플라이트 요청 처리를 위한 OPTIONS 핸들러 추가
+app.options('*', cors());
+
+// 추가 헤더 설정
+app.use((req, res, next) => {
+  res.header('Access-Control-Allow-Origin', '*');
+  res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept, Authorization');
+  res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, PATCH, OPTIONS');
+  next();
+});
 
 // JSON과 URL 인코딩을 가장 먼저 처리
 app.use(express.json());
