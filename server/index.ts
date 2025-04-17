@@ -9,6 +9,7 @@ import express, { type Request, Response, NextFunction } from "express";
 import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
 import cookieParser from "cookie-parser";
+import cors from 'cors';
 
 /**
  * Express 앱 인스턴스 생성
@@ -19,6 +20,9 @@ const app = express();
 /**
  * 기본 미들웨어 설정
  */
+// CORS 설정 - 모든 출처 허용 (개발 환경에서만)
+app.use(cors());
+
 // JSON과 URL 인코딩을 가장 먼저 처리
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
