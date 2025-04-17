@@ -500,33 +500,56 @@ export function RoomLayout({ roomId, layout, onSave, editable }: RoomLayoutProps
           
           {/* 침대 */}
           {currentLayout.beds.map(bed => (
-            <DraggableBed
+            <div
               key={bed.id}
-              id={bed.id}
-              x={bed.x}
-              y={bed.y}
-              width={bed.width}
-              height={bed.height}
-              rotation={bed.rotation}
-              patientId={bed.patientId}
-              patientName={bed.patientName}
-              selected={selectedBedId === bed.id}
-              editable={editable}
-              editMode={editMode}
-              containerWidth={ROOM_WIDTH}
-              containerHeight={ROOM_HEIGHT}
-              onSelect={selectBed}
-              onPositionChange={(id, newX, newY) => {
-                setCurrentLayout(prev => ({
-                  ...prev,
-                  beds: prev.beds.map(b => 
-                    b.id === id
-                      ? { ...b, x: newX, y: newY }
-                      : b
-                  )
-                }));
+              className={`absolute bg-white border-2 ${
+                selectedBedId === bed.id 
+                  ? 'border-primary shadow-md' 
+                  : 'border-gray-300'
+              } rounded-md overflow-hidden ${
+                editMode === 'move' && editable ? 'cursor-move' : 'cursor-pointer'
+              }`}
+              style={{
+                width: `${bed.width}px`,
+                height: `${bed.height}px`,
+                transform: `translate(${bed.x - bed.width/2}px, ${bed.y - bed.height/2}px) rotate(${bed.rotation}deg)`,
+                transition: editMode === 'move' ? 'none' : 'transform 0.2s',
               }}
-            />
+              onClick={() => {
+                if (editMode === 'select') {
+                  selectBed(bed.id);
+                }
+              }}
+              onMouseDown={(e) => {
+                if (editable && editMode === 'move') {
+                  e.stopPropagation();
+                  // 드래그 시작
+                  setDraggedBedId(bed.id);
+                  setSelectedBedId(bed.id);
+                  const rect = containerRef.current?.getBoundingClientRect();
+                  if (rect) {
+                    setDragStartPos({
+                      x: e.clientX - rect.left,
+                      y: e.clientY - rect.top
+                    });
+                  }
+                }
+              }}
+            >
+              <div className="h-full flex flex-col items-center justify-center p-1">
+                <BedDouble className="text-gray-600 h-8 w-8 mb-1" />
+                
+                {bed.patientName ? (
+                  <div className="text-xs text-center font-medium bg-blue-100 text-blue-800 px-1 py-0.5 rounded-sm w-full truncate">
+                    {bed.patientName}
+                  </div>
+                ) : (
+                  <div className="text-xs text-gray-500">
+                    {currentLayout.beds.indexOf(bed) + 1}번
+                  </div>
+                )}
+              </div>
+            </div>
           ))}
         </div>
         
