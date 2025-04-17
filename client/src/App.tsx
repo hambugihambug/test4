@@ -14,6 +14,7 @@ import MessagesPage from "@/pages/messages-page";
 import SettingsPage from "@/pages/settings-page";
 import SchedulePage from "@/pages/schedule-page";
 import EventsPage from "@/pages/events-page";
+import { WebSocketNotifications } from "@/components/websocket-notifications";
 import { AuthProvider, useAuth } from "@/hooks/use-auth";
 import { ProtectedRoute } from "@/lib/protected-route";
 import { UserRole } from "@shared/schema";
@@ -365,14 +366,21 @@ function MobileSidebar() {
 function Header() {
   return (
     <header className="bg-white border-b shadow-sm p-4 md:p-6">
-      <div className="container mx-auto flex items-center">
-        <MobileSidebar />
-        <a href="/" className="flex items-center text-primary md:hidden">
-          <div className="w-8 h-8 bg-primary/10 rounded-full flex items-center justify-center mr-2">
-            <Activity className="h-4 w-4 text-primary" />
-          </div>
-          <span className="text-xl font-bold">스마트 케어</span>
-        </a>
+      <div className="container mx-auto flex items-center justify-between">
+        <div className="flex items-center">
+          <MobileSidebar />
+          <a href="/" className="flex items-center text-primary md:hidden">
+            <div className="w-8 h-8 bg-primary/10 rounded-full flex items-center justify-center mr-2">
+              <Activity className="h-4 w-4 text-primary" />
+            </div>
+            <span className="text-xl font-bold">스마트 케어</span>
+          </a>
+        </div>
+        
+        {/* 상단 우측에 WebSocket 연결 상태 표시 */}
+        <div className="flex items-center">
+          <WebSocketNotifications showStatus={true} />
+        </div>
       </div>
     </header>
   );
@@ -533,6 +541,7 @@ function App() {
           </div>
         </div>
         <Toaster />
+        <WebSocketNotifications />
       </I18nProvider>
     </AuthProvider>
   );
