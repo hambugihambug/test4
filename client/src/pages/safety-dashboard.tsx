@@ -1,3 +1,9 @@
+/**
+ * 안전 대시보드 페이지 컴포넌트
+ * 
+ * 병원의 전반적인 안전 상태, 환자 통계, 온습도 정보 등을 시각적으로 표시합니다.
+ * 관리자와 간호사를 위한 중앙 모니터링 도구로서 역할을 수행합니다.
+ */
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '@/hooks/use-auth';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -30,7 +36,10 @@ import {
 import { motion, AnimatePresence } from 'framer-motion';
 import { useToast } from '@/hooks/use-toast';
 
-// 임시 데이터 타입 정의
+/**
+ * 대시보드 데이터 인터페이스
+ * 병원 안전 상태를 나타내는 주요 지표들의 집합
+ */
 interface DashboardData {
   safetyScore: number;
   patientCount: number;
@@ -59,7 +68,12 @@ interface DashboardData {
   }[];
 }
 
-// 임시 대시보드 데이터
+/**
+ * 임시 대시보드 데이터
+ * 
+ * 실제 API 연동 전까지 사용할 더미 데이터입니다.
+ * 실제 시스템 구현 시 서버 API에서 데이터를 가져와야 합니다.
+ */
 const mockDashboardData: DashboardData = {
   safetyScore: 78,
   patientCount: 42,
@@ -88,18 +102,36 @@ const mockDashboardData: DashboardData = {
   ]
 };
 
+/**
+ * 안전 대시보드 페이지 컴포넌트
+ * 실시간 환자 및 병원 안전 정보를 시각화하여 제공
+ */
 const SafetyDashboardPage: React.FC = () => {
+  // 사용자 인증 정보 가져오기
   const { user } = useAuth();
+  // 활성화된 탭 상태 관리
   const [activeTab, setActiveTab] = useState('overview');
+  // 대시보드 데이터 상태 관리
   const [data, setData] = useState<DashboardData | null>(null);
+  // 로딩 상태 관리
   const [loading, setLoading] = useState(true);
+  // 토스트 알림 훅
   const { toast } = useToast();
 
-  // 대시보드 데이터 불러오기 (실제 구현에서는 API를 호출)
+  /**
+   * 대시보드 데이터 불러오기
+   * 
+   * 컴포넌트 마운트 시 실행되어 데이터를 가져옵니다.
+   * 실제 구현에서는 서버 API를 호출하여 실시간 데이터를 가져와야 합니다.
+   */
   useEffect(() => {
     const fetchData = async () => {
       try {
-        // 실제 API 호출 대신 목업 데이터 사용
+        // 실제 API 호출 대신 목업 데이터 사용 (임시)
+        // 실제 구현 시 아래 코드를 API 호출로 대체해야 함
+        // 예: const response = await fetch('/api/dashboard');
+        //     const responseData = await response.json();
+        //     setData(responseData);
         setTimeout(() => {
           setData(mockDashboardData);
           setLoading(false);
