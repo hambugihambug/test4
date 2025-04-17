@@ -47,67 +47,8 @@ interface Event {
   createdAt?: string; // 생성 날짜/시간
 }
 
-// 이벤트 데이터
-let events: Event[] = [
-  {
-    id: '1',
-    title: '낙상 감지 알림',
-    type: '낙상',
-    datetime: '2025-04-10 14:30',
-    status: '완료',
-    roomNumber: '304',
-    patientName: '김환자',
-    description: '침대에서 내려오다 미끄러짐',
-    createdBy: '김간호사',
-    createdAt: '2025-04-10 14:35'
-  },
-  {
-    id: '2',
-    title: '약물 투여',
-    type: '약물투여',
-    datetime: '2025-04-15 09:00',
-    status: '예정',
-    roomNumber: '302',
-    patientName: '이환자',
-    description: '혈압약 투여',
-    createdBy: '이간호사',
-    createdAt: '2025-04-14 09:15'
-  },
-  {
-    id: '3',
-    title: '실내 온도 이상 알림',
-    type: '환경알림',
-    datetime: '2025-04-12 16:45',
-    status: '완료',
-    roomNumber: '305',
-    description: '실내 온도 과열 (30°C 초과)',
-    createdBy: '시스템',
-    createdAt: '2025-04-12 16:46'
-  },
-  {
-    id: '4',
-    title: '정기 건강 검진',
-    type: '검진',
-    datetime: '2025-04-18 10:30',
-    status: '예정',
-    roomNumber: '301',
-    patientName: '박환자',
-    createdBy: '박의사',
-    createdAt: '2025-04-13 15:20'
-  },
-  {
-    id: '5',
-    title: '물리 치료',
-    type: '치료',
-    datetime: '2025-04-14 13:00',
-    status: '완료',
-    roomNumber: '304',
-    patientName: '김환자',
-    description: '어깨 물리치료',
-    createdBy: '최물리치료사',
-    createdAt: '2025-04-12 09:45'
-  }
-];
+// 이벤트 데이터 (서버에서 가져올 예정)
+let events: Event[] = [];
 
 // 이벤트 타입별 아이콘 및 색상
 const getEventTypeIcon = (type: EventType) => {
