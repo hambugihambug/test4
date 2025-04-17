@@ -1,3 +1,10 @@
+/**
+ * API 라우트 정의 파일
+ * 
+ * 모든 API 엔드포인트와, 관련 미들웨어, 웹소켓 서버를 설정합니다.
+ * 인증 및 권한 관리, 각종 CRUD 작업 처리를 담당합니다.
+ */
+
 import type { Express, Request, Response, NextFunction } from "express";
 import { createServer, type Server } from "http";
 import { setupAuth, authenticateJWT } from "./auth";
@@ -167,30 +174,46 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // 사용자 관리 API 추가
   registerUserManagementRoutes(app);
   
-  // Initialize HTTP server
+  /**
+   * HTTP 서버 초기화
+   * Express 앱을 HTTP 서버로 래핑
+   */
   const httpServer = createServer(app);
   
-  // Initialize WebSocket server for real-time updates
+  /**
+   * WebSocket 서버 초기화
+   * 실시간 업데이트 기능을 위한 양방향 통신 제공
+   * 경로는 '/ws'로 설정하여 Vite HMR 웹소켓과 충돌 방지
+   */
   const wss = new WebSocketServer({ server: httpServer, path: '/ws' });
   
+  /**
+   * WebSocket 연결 이벤트 처리
+   * 새 클라이언트 연결, 메시지 수신, 연결 종료 등의 이벤트 관리
+   */
   wss.on('connection', (ws) => {
-    console.log('New WebSocket connection established');
+    console.log('새로운 WebSocket 연결이 설정되었습니다');
     
+    // 메시지 수신 처리
     ws.on('message', (message) => {
-      console.log('Received message:', message.toString());
+      console.log('메시지 수신:', message.toString());
       
-      // Echo back for now
+      // 현재는 에코 기능만 구현 (향후 확장 예정)
       if (ws.readyState === ws.OPEN) {
         ws.send(message);
       }
     });
     
+    // 연결 종료 처리
     ws.on('close', () => {
-      console.log('WebSocket connection closed');
+      console.log('WebSocket 연결이 종료되었습니다');
     });
   });
   
-  // Function to broadcast to all connected clients
+  /**
+   * 모든 연결된 클라이언트에 메시지 브로드캐스트 함수
+   * 실시간 알림, 환자 상태 변경, 낙상 감지 등의 정보를 모든 클라이언트에 전송
+   */
   const broadcast = (data: any) => {
     wss.clients.forEach((client) => {
       if (client.readyState === client.OPEN) {
@@ -199,18 +222,38 @@ export async function registerRoutes(app: Express): Promise<Server> {
     });
   };
   
-  // 해시 비밀번호 함수 가져오기 - auth.ts에서 사용하는 것과 동일한 함수
+  /**
+   * 비밀번호 해싱 함수
+   * 안전한 암호 저장을 위해 scrypt 알고리즘 사용
+   * 
+   * @param password 해싱할 원본 비밀번호
+   * @returns 해시된 비밀번호와 솔트를 포함한 문자열
+   */
   async function hashPassword(password: string) {
+    // 16바이트 크기의 랜덤 솔트 생성
     const salt = randomBytes(16).toString("hex");
+    // scrypt 알고리즘으로 비밀번호 해싱 (64바이트 출력)
     const buf = (await scryptAsync(password, salt, 64)) as Buffer;
+    // 해시와 솔트를 결합하여 반환 (형식: 해시.솔트)
     return `${buf.toString("hex")}.${salt}`;
   }
   
-  // 비밀번호 비교 함수
+  /**
+   * 비밀번호 검증 함수
+   * 사용자가 입력한 비밀번호와 저장된 해시를 안전하게 비교
+   * 
+   * @param supplied 사용자가 입력한 비밀번호
+   * @param stored 데이터베이스에 저장된 해시+솔트 문자열
+   * @returns 비밀번호 일치 여부 (boolean)
+   */
   async function comparePasswords(supplied: string, stored: string) {
+    // 저장된 해시와 솔트 분리
     const [hashed, salt] = stored.split(".");
+    // 저장된 해시를 버퍼로 변환
     const hashedBuf = Buffer.from(hashed, "hex");
+    // 입력된 비밀번호를 동일한 솔트로 해싱
     const suppliedBuf = (await scryptAsync(supplied, salt, 64)) as Buffer;
+    // 타이밍 공격에 안전한 비교 함수 사용
     return timingSafeEqual(hashedBuf, suppliedBuf);
   }
   
