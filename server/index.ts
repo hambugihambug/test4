@@ -149,8 +149,7 @@ app.use((req, res, next) => {
   const port = 5000;
   server.listen({
     port,
-    host: "0.0.0.0", // 모든 네트워크 인터페이스에서 접근 가능
-    reusePort: true, // 포트 재사용 허용
+    host: "localhost", // localhost에서만 접근 가능하도록 변경
   }, () => {
     log(`${port}번 포트에서 서버 실행 중`);
   });

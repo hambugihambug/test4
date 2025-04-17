@@ -14,6 +14,7 @@ import { initializeDatabase } from './db';
 import { UserRole } from '@shared/schema';
 import { registerEventRoutes } from './event-routes';
 import { setWebSocketServer } from './ws-broadcaster';
+import jwt from 'jsonwebtoken';
 
 /**
  * 역할 기반 액세스 제어를 위한 미들웨어
@@ -69,7 +70,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
    */
   const wss = new WebSocketServer({ 
     server: httpServer, 
-    path: '/ws' 
+    path: '/ws'
   });
   
   // WebSocketBroadcaster에 WebSocketServer 인스턴스 설정
@@ -154,10 +155,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(401).json({ message: '비밀번호가 일치하지 않습니다' });
       }
       
-      // 비밀번호 필드 제거
+      // JWT 토큰 생성
+      const token = jwt.sign(
+        { id: user.id, role: user.role },
+        process.env.JWT_SECRET || "hospital-care-system-jwt-secret-key-2025-06",
+        { expiresIn: '7d' }
+      );
+      
+      // 비밀번호 필드 제거하고 토큰 추가해서 응답
       const { password: _, ...userWithoutPassword } = user;
       
-      res.json(userWithoutPassword);
+      res.json({
+        ...userWithoutPassword,
+        token
+      });
     } catch (error) {
       log(`로그인 오류: ${error}`, 'api');
       res.status(500).json({ message: '서버 오류가 발생했습니다' });
@@ -205,31 +216,42 @@ export async function registerRoutes(app: Express): Promise<Server> {
   
   app.get('/api/user', async (req, res) => {
     try {
-      // 실제 세션 인증에서는 세션에서 사용자 ID 확인 필요
-      // 여기서는 Authorization 헤더에서 사용자 ID 확인
       const authHeader = req.headers.authorization;
       
       if (!authHeader) {
         return res.status(401).json({ message: '인증 정보가 없습니다' });
       }
       
-      // 'Bearer {userId}' 형식에서 userId 추출
-      const userId = authHeader.split(' ')[1];
-      
-      if (!userId) {
-        return res.status(401).json({ message: '유효하지 않은 인증 정보입니다' });
+      // Bearer 토큰 형식 확인 및 토큰 추출
+      const parts = authHeader.split(' ');
+      if (parts.length !== 2 || parts[0] !== 'Bearer') {
+        return res.status(401).json({ message: '잘못된 인증 형식입니다' });
       }
       
-      const user = await storage.getUser(parseInt(userId));
+      const token = parts[1];
       
-      if (!user) {
-        return res.status(401).json({ message: '사용자 정보를 찾을 수 없습니다' });
+      try {
+        // JWT 토큰 검증
+        const decoded = jwt.verify(token, process.env.JWT_SECRET || "hospital-care-system-jwt-secret-key-2025-06") as jwt.JwtPayload;
+        
+        // 사용자 정보 조회
+        const user = await storage.getUser(decoded.id);
+        
+        if (!user) {
+          return res.status(401).json({ message: '사용자를 찾을 수 없습니다' });
+        }
+        
+        // 비밀번호 제외하고 응답
+        const { password: _, ...userWithoutPassword } = user;
+        res.json(userWithoutPassword);
+      } catch (error) {
+        if (error instanceof jwt.TokenExpiredError) {
+          return res.status(401).json({ message: '토큰이 만료되었습니다' });
+        } else if (error instanceof jwt.JsonWebTokenError) {
+          return res.status(401).json({ message: '유효하지 않은 토큰입니다' });
+        }
+        throw error;
       }
-      
-      // 비밀번호 필드 제거
-      const { password: _, ...userWithoutPassword } = user;
-      
-      res.json(userWithoutPassword);
     } catch (error) {
       log(`사용자 정보 조회 오류: ${error}`, 'api');
       res.status(500).json({ message: '서버 오류가 발생했습니다' });
