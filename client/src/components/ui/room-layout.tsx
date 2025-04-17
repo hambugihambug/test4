@@ -479,39 +479,72 @@ export function RoomLayout({ roomId, layout, onSave, editable }: RoomLayoutProps
           
           {/* 침대 */}
           {currentLayout.beds.map(bed => (
-            <div
+            <Draggable
               key={bed.id}
-              className={`absolute bg-white border-2 ${
-                selectedBedId === bed.id 
-                  ? 'border-primary shadow-md' 
-                  : 'border-gray-300'
-              } rounded-md overflow-hidden`}
-              style={{
-                width: `${bed.width}px`,
-                height: `${bed.height}px`,
-                transform: `translate(${bed.x - bed.width/2}px, ${bed.y - bed.height/2}px) rotate(${bed.rotation}deg)`,
-                transition: editMode === 'move' ? 'none' : 'transform 0.2s',
-                cursor: editMode === 'select' ? 'pointer' : 'default'
+              disabled={!editable || editMode !== 'move'}
+              defaultPosition={{x: bed.x - bed.width/2, y: bed.y - bed.height/2}}
+              bounds={{
+                left: 0,
+                top: 0,
+                right: ROOM_WIDTH - bed.width,
+                bottom: ROOM_HEIGHT - bed.height
               }}
-              onClick={(e) => {
-                e.stopPropagation();
-                selectBed(bed.id);
+              onDrag={(e, data) => {
+                // 드래그 중 위치 업데이트
+                const centerX = data.x + bed.width/2;
+                const centerY = data.y + bed.height/2;
+                setCurrentLayout(prev => ({
+                  ...prev,
+                  beds: prev.beds.map(b => 
+                    b.id === bed.id
+                      ? { ...b, x: centerX, y: centerY }
+                      : b
+                  )
+                }));
               }}
-              onMouseDown={(e) => {
-                if (editable) {
+              onStop={(e, data) => {
+                // 드래그 종료 시 final 위치 업데이트
+                const centerX = data.x + bed.width/2;
+                const centerY = data.y + bed.height/2;
+                setCurrentLayout(prev => ({
+                  ...prev,
+                  beds: prev.beds.map(b => 
+                    b.id === bed.id
+                      ? { ...b, x: centerX, y: centerY }
+                      : b
+                  )
+                }));
+                
+                // 드래그 종료 알림
+                toast({
+                  title: "침대 이동 완료",
+                  description: "침대 위치가 업데이트되었습니다.",
+                });
+              }}
+            >
+              <div
+                className={`bg-white border-2 ${
+                  selectedBedId === bed.id 
+                    ? 'border-primary shadow-md' 
+                    : 'border-gray-300'
+                } rounded-md overflow-hidden ${editMode === 'move' ? 'cursor-move' : editMode === 'select' ? 'cursor-pointer' : 'cursor-default'}`}
+                style={{
+                  width: `${bed.width}px`,
+                  height: `${bed.height}px`,
+                  transform: `rotate(${bed.rotation}deg)`,
+                  transition: 'box-shadow 0.2s',
+                }}
+                onClick={(e) => {
                   e.stopPropagation();
-                  // 드래그 시작
-                  setDraggedBedId(bed.id);
-                  setSelectedBedId(bed.id);
-                  const rect = containerRef.current?.getBoundingClientRect();
-                  if (rect) {
-                    setDragStartPos({
-                      x: e.clientX - rect.left,
-                      y: e.clientY - rect.top
-                    });
+                  selectBed(bed.id);
+                }}
+                onMouseDown={(e) => {
+                  if (editable && editMode !== 'move') {
+                    e.stopPropagation();
+                    // 다른 편집 모드일 때 선택만 하기
+                    setSelectedBedId(bed.id);
                   }
-                }
-              }}
+                }}
             >
               <div className="h-full flex flex-col items-center justify-center p-1">
                 <BedDouble className="text-gray-600 h-8 w-8 mb-1" />
@@ -526,7 +559,7 @@ export function RoomLayout({ roomId, layout, onSave, editable }: RoomLayoutProps
                   </div>
                 )}
               </div>
-            </div>
+            </Draggable>
           ))}
         </div>
         
@@ -547,7 +580,7 @@ export function RoomLayout({ roomId, layout, onSave, editable }: RoomLayoutProps
                   <Button variant="outline" size="sm" onClick={() => resizeBed(-10, 0)}>
                     <Minus className="h-3 w-3" />
                   </Button>
-                  <span className="text-xs">{selectedBed.width}px</span>
+                  <span className="text-xs">{selectedBed?.width || 0}px</span>
                   <Button variant="outline" size="sm" onClick={() => resizeBed(10, 0)}>
                     <Plus className="h-3 w-3" />
                   </Button>
@@ -557,7 +590,7 @@ export function RoomLayout({ roomId, layout, onSave, editable }: RoomLayoutProps
                   <Button variant="outline" size="sm" onClick={() => resizeBed(0, -10)}>
                     <Minus className="h-3 w-3" />
                   </Button>
-                  <span className="text-xs">{selectedBed.height}px</span>
+                  <span className="text-xs">{selectedBed?.height || 0}px</span>
                   <Button variant="outline" size="sm" onClick={() => resizeBed(0, 10)}>
                     <Plus className="h-3 w-3" />
                   </Button>
@@ -570,7 +603,7 @@ export function RoomLayout({ roomId, layout, onSave, editable }: RoomLayoutProps
                   <Button variant="outline" size="sm" onClick={() => rotateBed(-90)}>
                     <RotateCw className="h-3 w-3 -scale-x-100" />
                   </Button>
-                  <span className="text-xs">{selectedBed.rotation}°</span>
+                  <span className="text-xs">{selectedBed?.rotation || 0}°</span>
                   <Button variant="outline" size="sm" onClick={() => rotateBed(90)}>
                     <RotateCw className="h-3 w-3" />
                   </Button>
@@ -581,11 +614,11 @@ export function RoomLayout({ roomId, layout, onSave, editable }: RoomLayoutProps
             <div className="mt-4">
               <Label className="text-xs">{t('rooms.assignPatient')}</Label>
               <div className="flex items-center mt-1 space-x-2">
-                {selectedBed.patientName ? (
+                {selectedBed?.patientName ? (
                   <>
                     <div className="flex items-center bg-blue-50 px-2 py-1 rounded-md">
                       <User className="h-3 w-3 text-blue-600 mr-1" />
-                      <span className="text-xs font-medium">{selectedBed.patientName}</span>
+                      <span className="text-xs font-medium">{selectedBed?.patientName}</span>
                     </div>
                     <Button variant="outline" size="sm" onClick={unassignPatient}>
                       <UserX className="h-3 w-3 mr-1" /> {t('rooms.unassign')}
