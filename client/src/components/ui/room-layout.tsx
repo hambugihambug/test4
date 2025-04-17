@@ -505,41 +505,7 @@ export function RoomLayout({ roomId, layout, onSave, editable }: RoomLayoutProps
                   )
                 }));
               }}
-              }}
-            >
-              <div
-                className={`bg-white border-2 ${
-                  selectedBedId === bed.id 
-                    ? 'border-primary shadow-md' 
-                    : 'border-gray-300'
-                } rounded-md overflow-hidden ${editMode === 'move' ? 'cursor-move' : 'cursor-pointer'}`}
-                style={{
-                  width: `${bed.width}px`,
-                  height: `${bed.height}px`,
-                  transform: `rotate(${bed.rotation}deg)`,
-                }}
-                onClick={(e) => {
-                  if (editMode !== 'move') {
-                    e.stopPropagation();
-                    selectBed(bed.id);
-                  }
-                }}
-              >
-                <div className="h-full flex flex-col items-center justify-center p-1">
-                  <BedDouble className="text-gray-600 h-8 w-8 mb-1" />
-                  
-                  {bed.patientName ? (
-                    <div className="text-xs text-center font-medium bg-blue-100 text-blue-800 px-1 py-0.5 rounded-sm w-full truncate">
-                      {bed.patientName}
-                    </div>
-                  ) : (
-                    <div className="text-xs text-gray-500">
-                      {currentLayout.beds.indexOf(bed) + 1}번
-                    </div>
-                  )}
-                </div>
-              </div>
-            </Draggable>
+            />
           ))}
         </div>
         
