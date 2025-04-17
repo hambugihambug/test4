@@ -1285,6 +1285,296 @@ export class DatabaseStorage implements IStorage {
       return 0;
     }
   }
+
+  /**
+   * 이벤트 관리 메서드 구현
+   */
+  async getEvents(): Promise<Event[]> {
+    try {
+      const [rows] = await pool.execute<RowDataPacket[]>(
+        `SELECT * FROM ${TABLE_PREFIX}events ORDER BY datetime DESC`
+      );
+      
+      return rows.map(row => ({
+        id: row.id,
+        title: row.title,
+        type: row.type,
+        datetime: row.datetime,
+        status: row.status,
+        roomNumber: row.roomNumber,
+        patientName: row.patientName,
+        patientId: row.patientId,
+        roomId: row.roomId,
+        description: row.description,
+        createdBy: row.createdBy,
+        createdById: row.createdById,
+        createdAt: row.createdAt,
+        updatedAt: row.updatedAt
+      } as Event));
+    } catch (error) {
+      log(`이벤트 목록 조회 오류: ${error}`, 'storage');
+      return [];
+    }
+  }
+
+  async getEvent(id: number): Promise<Event | undefined> {
+    try {
+      const [rows] = await pool.execute<RowDataPacket[]>(
+        `SELECT * FROM ${TABLE_PREFIX}events WHERE id = ?`,
+        [id]
+      );
+      
+      if (rows.length === 0) return undefined;
+      
+      const row = rows[0];
+      return {
+        id: row.id,
+        title: row.title,
+        type: row.type,
+        datetime: row.datetime,
+        status: row.status,
+        roomNumber: row.roomNumber,
+        patientName: row.patientName,
+        patientId: row.patientId,
+        roomId: row.roomId,
+        description: row.description,
+        createdBy: row.createdBy,
+        createdById: row.createdById,
+        createdAt: row.createdAt,
+        updatedAt: row.updatedAt
+      } as Event;
+    } catch (error) {
+      log(`이벤트 조회 오류 (ID: ${id}): ${error}`, 'storage');
+      return undefined;
+    }
+  }
+
+  async createEvent(event: InsertEvent): Promise<Event> {
+    try {
+      const [result] = await pool.execute<ResultSetHeader>(
+        `INSERT INTO ${TABLE_PREFIX}events 
+        (title, type, datetime, status, roomNumber, patientName, patientId, roomId, description, createdBy, createdById) 
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        [
+          event.title,
+          event.type,
+          event.datetime || new Date(),
+          event.status,
+          event.roomNumber,
+          event.patientName || null,
+          event.patientId || null,
+          event.roomId || null,
+          event.description || null,
+          event.createdBy || null,
+          event.createdById || null
+        ]
+      );
+      
+      const currentDate = new Date();
+      
+      return {
+        ...event,
+        id: result.insertId,
+        createdAt: currentDate,
+        updatedAt: currentDate,
+      } as Event;
+    } catch (error) {
+      log(`이벤트 생성 오류: ${error}`, 'storage');
+      throw new Error(`이벤트 생성 실패: ${error}`);
+    }
+  }
+
+  async updateEvent(id: number, eventData: Partial<Event>): Promise<Event | undefined> {
+    try {
+      // 업데이트할 필드 동적 구성
+      const fields: string[] = [];
+      const values: any[] = [];
+      
+      for (const [key, value] of Object.entries(eventData)) {
+        if (value !== undefined && key !== 'id' && key !== 'createdAt' && key !== 'updatedAt') {
+          fields.push(`${key} = ?`);
+          values.push(value);
+        }
+      }
+      
+      if (fields.length === 0) return await this.getEvent(id);
+      
+      // updatedAt 필드 추가
+      fields.push('updatedAt = ?');
+      values.push(new Date());
+      
+      values.push(id);
+      
+      await pool.execute(
+        `UPDATE ${TABLE_PREFIX}events SET ${fields.join(', ')} WHERE id = ?`,
+        values
+      );
+      
+      return await this.getEvent(id);
+    } catch (error) {
+      log(`이벤트 수정 오류 (ID: ${id}): ${error}`, 'storage');
+      return undefined;
+    }
+  }
+
+  async deleteEvent(id: number): Promise<boolean> {
+    try {
+      const [result] = await pool.execute<ResultSetHeader>(
+        `DELETE FROM ${TABLE_PREFIX}events WHERE id = ?`,
+        [id]
+      );
+      
+      return result.affectedRows > 0;
+    } catch (error) {
+      log(`이벤트 삭제 오류 (ID: ${id}): ${error}`, 'storage');
+      return false;
+    }
+  }
+
+  async getEventsByType(type: string): Promise<Event[]> {
+    try {
+      const [rows] = await pool.execute<RowDataPacket[]>(
+        `SELECT * FROM ${TABLE_PREFIX}events WHERE type = ? ORDER BY datetime DESC`,
+        [type]
+      );
+      
+      return rows.map(row => ({
+        id: row.id,
+        title: row.title,
+        type: row.type,
+        datetime: row.datetime,
+        status: row.status,
+        roomNumber: row.roomNumber,
+        patientName: row.patientName,
+        patientId: row.patientId,
+        roomId: row.roomId,
+        description: row.description,
+        createdBy: row.createdBy,
+        createdById: row.createdById,
+        createdAt: row.createdAt,
+        updatedAt: row.updatedAt
+      } as Event));
+    } catch (error) {
+      log(`타입별 이벤트 조회 오류 (타입: ${type}): ${error}`, 'storage');
+      return [];
+    }
+  }
+
+  async getEventsByStatus(status: string): Promise<Event[]> {
+    try {
+      const [rows] = await pool.execute<RowDataPacket[]>(
+        `SELECT * FROM ${TABLE_PREFIX}events WHERE status = ? ORDER BY datetime DESC`,
+        [status]
+      );
+      
+      return rows.map(row => ({
+        id: row.id,
+        title: row.title,
+        type: row.type,
+        datetime: row.datetime,
+        status: row.status,
+        roomNumber: row.roomNumber,
+        patientName: row.patientName,
+        patientId: row.patientId,
+        roomId: row.roomId,
+        description: row.description,
+        createdBy: row.createdBy,
+        createdById: row.createdById,
+        createdAt: row.createdAt,
+        updatedAt: row.updatedAt
+      } as Event));
+    } catch (error) {
+      log(`상태별 이벤트 조회 오류 (상태: ${status}): ${error}`, 'storage');
+      return [];
+    }
+  }
+
+  async getEventsByPatientId(patientId: number): Promise<Event[]> {
+    try {
+      const [rows] = await pool.execute<RowDataPacket[]>(
+        `SELECT * FROM ${TABLE_PREFIX}events WHERE patientId = ? ORDER BY datetime DESC`,
+        [patientId]
+      );
+      
+      return rows.map(row => ({
+        id: row.id,
+        title: row.title,
+        type: row.type,
+        datetime: row.datetime,
+        status: row.status,
+        roomNumber: row.roomNumber,
+        patientName: row.patientName,
+        patientId: row.patientId,
+        roomId: row.roomId,
+        description: row.description,
+        createdBy: row.createdBy,
+        createdById: row.createdById,
+        createdAt: row.createdAt,
+        updatedAt: row.updatedAt
+      } as Event));
+    } catch (error) {
+      log(`환자별 이벤트 조회 오류 (환자 ID: ${patientId}): ${error}`, 'storage');
+      return [];
+    }
+  }
+
+  async getEventsByRoomId(roomId: number): Promise<Event[]> {
+    try {
+      const [rows] = await pool.execute<RowDataPacket[]>(
+        `SELECT * FROM ${TABLE_PREFIX}events WHERE roomId = ? ORDER BY datetime DESC`,
+        [roomId]
+      );
+      
+      return rows.map(row => ({
+        id: row.id,
+        title: row.title,
+        type: row.type,
+        datetime: row.datetime,
+        status: row.status,
+        roomNumber: row.roomNumber,
+        patientName: row.patientName,
+        patientId: row.patientId,
+        roomId: row.roomId,
+        description: row.description,
+        createdBy: row.createdBy,
+        createdById: row.createdById,
+        createdAt: row.createdAt,
+        updatedAt: row.updatedAt
+      } as Event));
+    } catch (error) {
+      log(`병실별 이벤트 조회 오류 (병실 ID: ${roomId}): ${error}`, 'storage');
+      return [];
+    }
+  }
+
+  async getRecentEvents(limit: number): Promise<Event[]> {
+    try {
+      const [rows] = await pool.execute<RowDataPacket[]>(
+        `SELECT * FROM ${TABLE_PREFIX}events ORDER BY datetime DESC LIMIT ?`,
+        [limit]
+      );
+      
+      return rows.map(row => ({
+        id: row.id,
+        title: row.title,
+        type: row.type,
+        datetime: row.datetime,
+        status: row.status,
+        roomNumber: row.roomNumber,
+        patientName: row.patientName,
+        patientId: row.patientId,
+        roomId: row.roomId,
+        description: row.description,
+        createdBy: row.createdBy,
+        createdById: row.createdById,
+        createdAt: row.createdAt,
+        updatedAt: row.updatedAt
+      } as Event));
+    } catch (error) {
+      log(`최근 이벤트 조회 오류: ${error}`, 'storage');
+      return [];
+    }
+  }
 }
 
 // 저장소 인스턴스 생성

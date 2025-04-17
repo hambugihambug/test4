@@ -12,6 +12,7 @@ import { log } from './vite';
 import { storage } from './storage';
 import { initializeDatabase } from './db';
 import { UserRole } from '@shared/schema';
+import { registerEventRoutes } from './event-routes';
 
 /**
  * 역할 기반 액세스 제어를 위한 미들웨어
@@ -116,6 +117,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   }
 
   // API 엔드포인트 정의
+  
+  // 이벤트 관련 API 엔드포인트 등록
+  registerEventRoutes(app);
   
   // 테스트 엔드포인트
   app.get('/api/status', (req, res) => {
