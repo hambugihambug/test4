@@ -20,8 +20,13 @@ const app = express();
 /**
  * 기본 미들웨어 설정
  */
-// CORS 설정 - 모든 출처 허용 (개발 환경에서만)
-app.use(cors());
+// CORS 설정 - 모든 출처 허용하고 credential 활성화
+app.use(cors({
+  origin: true, // 모든 출처 허용
+  credentials: true, // 인증 정보 전달 허용
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization']
+}));
 
 // JSON과 URL 인코딩을 가장 먼저 처리
 app.use(express.json());
