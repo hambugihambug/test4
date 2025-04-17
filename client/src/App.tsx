@@ -52,10 +52,21 @@ function SidebarMenuItem({ icon: Icon, label, active, href, onClick }: {
   href?: string,
   onClick?: () => void
 }) {
+  const [, navigate] = useLocation();
+  
+  const handleClick = (e: React.MouseEvent) => {
+    if (href) {
+      e.preventDefault();
+      navigate(href);
+    } else if (onClick) {
+      onClick();
+    }
+  };
+  
   return (
     <a 
-      href={href} 
-      onClick={onClick}
+      href={href || "#"} 
+      onClick={handleClick}
       className={cn(
         "flex items-center px-3 py-2 rounded-md text-sm font-medium transition-colors",
         active 
@@ -73,10 +84,14 @@ function SidebarMenuItem({ icon: Icon, label, active, href, onClick }: {
 
 function Sidebar() {
   const [location] = useLocation();
-  const { user, logoutMutation } = useAuth();
+  const { user, logout } = useAuth();
   
-  const handleLogout = () => {
-    logoutMutation.mutate();
+  const handleLogout = async () => {
+    try {
+      await logout();
+    } catch (error) {
+      console.error("로그아웃 중 오류:", error);
+    }
   };
   
   if (!user) return null;
@@ -209,10 +224,9 @@ function Sidebar() {
           variant="outline" 
           className="w-full justify-start text-gray-700"
           onClick={handleLogout}
-          disabled={logoutMutation.isPending}
         >
           <LogOut className="mr-2 h-4 w-4" />
-          {logoutMutation.isPending ? "로그아웃 중..." : "로그아웃"}
+          로그아웃
         </Button>
       </div>
     </div>
@@ -222,7 +236,16 @@ function Sidebar() {
 function MobileSidebar() {
   const [isOpen, setIsOpen] = useState(false);
   const [location] = useLocation();
-  const { user, logoutMutation } = useAuth();
+  const { user, logout } = useAuth();
+  
+  const handleLogout = async () => {
+    try {
+      setIsOpen(false);
+      await logout();
+    } catch (error) {
+      console.error("로그아웃 중 오류:", error);
+    }
+  };
   
   if (!user) return null;
   
@@ -326,14 +349,10 @@ function MobileSidebar() {
               <Button 
                 variant="outline" 
                 className="w-full justify-start text-gray-700"
-                onClick={() => {
-                  setIsOpen(false);
-                  logoutMutation.mutate();
-                }}
-                disabled={logoutMutation.isPending}
+                onClick={handleLogout}
               >
                 <LogOut className="mr-2 h-4 w-4" />
-                {logoutMutation.isPending ? "로그아웃 중..." : "로그아웃"}
+                로그아웃
               </Button>
             </div>
           </div>
@@ -372,7 +391,12 @@ function HomePage() {
           </div>
           <h2 className="font-bold mb-2">낙상 감지</h2>
           <p className="text-sm text-gray-600 mb-4">AI 기술을 활용한 실시간 환자 낙상 감지 시스템입니다.</p>
-          <a href="/fall-detection" className="text-sm text-primary font-medium">낙상 감지 페이지 &rarr;</a>
+          <SidebarMenuItem 
+            icon={() => <span className="sr-only">Arrow</span>}
+            label="낙상 감지 페이지 →" 
+            href="/fall-detection" 
+            active={false}
+          />
         </div>
         
         <div className="bg-white p-4 rounded shadow-sm border">
@@ -381,7 +405,12 @@ function HomePage() {
           </div>
           <h2 className="font-bold mb-2">대시보드</h2>
           <p className="text-sm text-gray-600 mb-4">병원 전체 현황과 환자 상태를 모니터링하는 대시보드입니다.</p>
-          <a href="/dashboard" className="text-sm text-primary font-medium">대시보드 확인 &rarr;</a>
+          <SidebarMenuItem 
+            icon={() => <span className="sr-only">Arrow</span>}
+            label="대시보드 확인 →" 
+            href="/dashboard" 
+            active={false}
+          />
         </div>
         
         <div className="bg-white p-4 rounded shadow-sm border">
@@ -390,7 +419,12 @@ function HomePage() {
           </div>
           <h2 className="font-bold mb-2">환자 안전 대시보드</h2>
           <p className="text-sm text-gray-600 mb-4">애니메이션 환자 안전 지표와 활동 수준을 표시합니다.</p>
-          <a href="/safety-dashboard" className="text-sm text-primary font-medium">안전 대시보드 &rarr;</a>
+          <SidebarMenuItem 
+            icon={() => <span className="sr-only">Arrow</span>}
+            label="안전 대시보드 →" 
+            href="/safety-dashboard" 
+            active={false}
+          />
         </div>
         
         <div className="bg-white p-4 rounded shadow-sm border">
@@ -399,7 +433,12 @@ function HomePage() {
           </div>
           <h2 className="font-bold mb-2">환경 모니터링</h2>
           <p className="text-sm text-gray-600 mb-4">병실 환경을 모니터링하고 이상 상황을 감지합니다.</p>
-          <a href="/environment" className="text-sm text-primary font-medium">환경 모니터링 &rarr;</a>
+          <SidebarMenuItem 
+            icon={() => <span className="sr-only">Arrow</span>}
+            label="환경 모니터링 →" 
+            href="/environment" 
+            active={false}
+          />
         </div>
       </div>
     </div>
