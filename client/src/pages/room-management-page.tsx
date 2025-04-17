@@ -108,8 +108,19 @@ export default function RoomManagementPage() {
     { id: 4, name: "장서연", age: 83, gender: "여" }
   ];
   
+  // 로컬 스토리지에서 병실 데이터 가져오기 또는 초기값 사용
+  const getRoomsFromStorage = () => {
+    try {
+      const savedRooms = localStorage.getItem('hospitalRooms');
+      return savedRooms ? JSON.parse(savedRooms) : null;
+    } catch (error) {
+      console.error("로컬 스토리지에서 병실 데이터를 가져오는 중 오류 발생:", error);
+      return null;
+    }
+  };
+  
   // 임시 병실 데이터 (API가 구현될 때까지 사용)
-  const initialRooms = [
+  const initialRooms = getRoomsFromStorage() || [
     {
       id: 1,
       name: "101호",
