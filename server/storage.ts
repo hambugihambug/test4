@@ -17,6 +17,7 @@ import {
   EnvLog, InsertEnvLog, 
   Camera, InsertCamera, 
   Message, InsertMessage,
+  Event, InsertEvent,
   UserRole,
   RoomWithPatients,
   PatientWithDetails
@@ -123,6 +124,20 @@ export interface IStorage {
   updateMessage(id: number, messageData: Partial<Message>): Promise<Message | undefined>;
   getMessagesBetweenUsers(user1Id: number, user2Id: number, limit?: number): Promise<Message[]>;
   getUnreadMessageCountForUser(userId: number): Promise<number>;
+  
+  /**
+   * 이벤트 관리 메서드
+   */
+  getEvents(): Promise<Event[]>;
+  getEvent(id: number): Promise<Event | undefined>;
+  createEvent(event: InsertEvent): Promise<Event>;
+  updateEvent(id: number, eventData: Partial<Event>): Promise<Event | undefined>;
+  deleteEvent(id: number): Promise<boolean>;
+  getEventsByType(type: string): Promise<Event[]>;
+  getEventsByStatus(status: string): Promise<Event[]>;
+  getEventsByPatientId(patientId: number): Promise<Event[]>;
+  getEventsByRoomId(roomId: number): Promise<Event[]>;
+  getRecentEvents(limit: number): Promise<Event[]>;
 }
 
 /**

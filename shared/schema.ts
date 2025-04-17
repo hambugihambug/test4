@@ -131,6 +131,26 @@ export const messages = pgTable("messages", {
 });
 
 /**
+ * 이벤트 테이블 정의
+ * 병원 내 이벤트(낙상, 약물투여, 환경알림, 치료, 검진 등) 정보 저장
+ */
+export const events = pgTable("events", {
+  id: serial("id").primaryKey(),                              // 고유 식별자
+  title: text("title").notNull(),                            // 이벤트 제목
+  type: text("type").notNull(),                              // 이벤트 유형 (낙상, 약물투여, 환경알림, 치료, 검진)
+  datetime: timestamp("datetime").notNull(),                 // 이벤트 발생/예정 일시
+  status: text("status").notNull(),                          // 이벤트 상태 (완료, 진행중, 예정, 취소)
+  roomNumber: text("room_number").notNull(),                 // 병실 번호
+  patientName: text("patient_name"),                         // 환자 이름 (없을 수도 있음)
+  patientId: integer("patient_id").references(() => patients.id), // 환자 ID (없을 수도 있음)
+  roomId: integer("room_id").references(() => rooms.id),      // 병실 ID
+  description: text("description"),                           // 이벤트 설명
+  createdBy: text("created_by"),                              // 작성자 정보
+  createdById: integer("created_by_id").references(() => users.id), // 작성자 ID
+  createdAt: timestamp("created_at").defaultNow(),            // 생성 시간
+});
+
+/**
  * Zod 스키마 정의 (데이터 유효성 검증용)
  * 각 테이블에 대한 입력 스키마를 정의하여 API 요청 데이터 검증에 사용
  */
@@ -189,6 +209,12 @@ export const insertMessageSchema = createInsertSchema(messages).omit({
   read: true       // 읽음 여부는 기본값(읽지 않음) 사용
 });
 
+// 이벤트 생성 시 사용할 스키마
+export const insertEventSchema = createInsertSchema(events).omit({
+  id: true,        // 자동 생성되는 ID 필드 제외
+  createdAt: true  // 생성 시간은 기본값 사용
+});
+
 /**
  * 타입 정의 (TypeScript 타입 안전성)
  * DB 테이블과 일치하는 타입 정의를 통해 코드의 안전성 보장
@@ -203,6 +229,7 @@ export type InsertAccident = z.infer<typeof insertAccidentSchema>;
 export type InsertEnvLog = z.infer<typeof insertEnvLogSchema>;
 export type InsertCamera = z.infer<typeof insertCameraSchema>;
 export type InsertMessage = z.infer<typeof insertMessageSchema>;
+export type InsertEvent = z.infer<typeof insertEventSchema>;
 
 // 데이터 조회(SELECT) 시 사용할 타입 정의
 export type User = typeof users.$inferSelect;
@@ -213,6 +240,7 @@ export type Accident = typeof accidents.$inferSelect;
 export type EnvLog = typeof envLogs.$inferSelect;
 export type Camera = typeof cameras.$inferSelect;
 export type Message = typeof messages.$inferSelect;
+export type Event = typeof events.$inferSelect;
 
 /**
  * 확장된 타입 정의 (관계 처리)
