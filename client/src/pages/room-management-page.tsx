@@ -1015,10 +1015,6 @@ export default function RoomManagementPage() {
                 const roomIndex = dummyRooms.findIndex(r => r.id === selectedRoomId);
                 if (roomIndex === -1) return;
                 
-                // 환자 인덱스 찾기
-                const patientIndex = dummyRooms[roomIndex].patients.findIndex(p => p.id === editingPatientId);
-                if (patientIndex === -1) return;
-                
                 // 선택된 값 가져오기
                 const nurseIdElement = document.getElementById("nurseSelect");
                 const patientIdElement = document.getElementById("patientSelect");
@@ -1045,52 +1041,53 @@ export default function RoomManagementPage() {
                 // 같은 환자가 이미 다른 침대에 배정되어 있는지 확인
                 if (assignedPatientId) {
                   // 모든 방을 검사
-                  const patientExistsInRooms = updatedRooms.map((room, roomIdx) => {
-                    const existingPatientIndex = room.patients.findIndex(p => p.userId === assignedPatientId);
-                    
-                    // 환자가 이 방에 있고 현재 편집 중인 환자가 아니라면
-                    if (existingPatientIndex !== -1 && 
-                        !(roomIdx === roomIndex && room.patients[existingPatientIndex].id === editingPatientId)) {
-                      
-                      // 환자를 새 위치로 이동시키기 위해 기존 위치에서 제거
-                      console.log(`환자 ID ${assignedPatientId}가 이미 ${room.name}의 침대 ${room.patients[existingPatientIndex].bedNumber}에 배정되어 있습니다. 이동합니다.`);
-                      
-                      // 해당 환자를 제거한 새 환자 배열 생성
-                      const updatedPatients = room.patients.filter(p => p.userId !== assignedPatientId);
-                      
-                      // 해당 방의 환자 목록 업데이트
-                      updatedRooms[roomIdx] = {
-                        ...room,
-                        patients: updatedPatients
-                      };
-                      
-                      return true;
-                    }
-                    return false;
-                  }).some(Boolean);
-                  
-                  if (patientExistsInRooms) {
-                    toast({
-                      title: "환자 이동",
-                      description: "다른 침대에 배정된 환자를 새 위치로 이동했습니다.",
+                  updatedRooms.forEach((room, roomIdx) => {
+                    // 현재 방의 모든 환자를 검사
+                    room.patients.forEach((patient, patientIdx) => {
+                      // 환자가 이 방에 있고 현재 편집 중인 환자가 아니라면
+                      if (patient.userId === assignedPatientId && 
+                          !(roomIdx === roomIndex && patient.id === editingPatientId)) {
+                        
+                        console.log(`환자 ID ${assignedPatientId}가 이미 ${room.name}의 침대 ${patient.bedNumber}에 배정되어 있습니다. 이동합니다.`);
+                        
+                        // 해당 환자의 할당 해제
+                        updatedRooms[roomIdx].patients = updatedRooms[roomIdx].patients.map(p => 
+                          p.id === patient.id
+                            ? { ...p, userId: null, name: `침대 ${p.bedNumber}` }
+                            : p
+                        );
+                        
+                        toast({
+                          title: "환자 이동",
+                          description: "다른 침대에 배정된 환자를 새 위치로 이동했습니다.",
+                        });
+                      }
                     });
-                  }
+                  });
                 }
                 
-                // 해당 환자 정보 업데이트
-                updatedRooms[roomIndex] = {
-                  ...updatedRooms[roomIndex],
-                  patients: updatedRooms[roomIndex].patients.map((p, idx) => 
-                    idx === patientIndex
-                      ? { 
-                          ...p, 
-                          assignedNurseId, 
-                          userId: assignedPatientId,
-                          name: assignedPatientId && patientName ? patientName : p.name 
-                        }
-                      : p
-                  )
-                };
+                // 환자 인덱스 찾기
+                const patientIndex = updatedRooms[roomIndex].patients.findIndex(p => p.id === editingPatientId);
+                
+                if (patientIndex !== -1) {
+                  // 환자가 존재하면 정보 업데이트
+                  updatedRooms[roomIndex] = {
+                    ...updatedRooms[roomIndex],
+                    patients: updatedRooms[roomIndex].patients.map((p, idx) => 
+                      idx === patientIndex
+                        ? { 
+                            ...p, 
+                            assignedNurseId, 
+                            userId: assignedPatientId,
+                            name: assignedPatientId && patientName ? patientName : `침대 ${p.bedNumber}`
+                          }
+                        : p
+                    )
+                  };
+                } else {
+                  // 환자가 존재하지 않으면 새로 추가 (이 경우는 발생하지 않아야 하지만 안전을 위해 추가)
+                  console.error("편집하려는 환자 ID가 병실에 존재하지 않습니다:", editingPatientId);
+                }
                 
                 // 상태 업데이트
                 setDummyRooms(updatedRooms);
