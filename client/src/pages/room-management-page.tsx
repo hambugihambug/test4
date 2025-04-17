@@ -9,6 +9,7 @@ import { translations } from "@/lib/translations";
 import { useAuth } from "@/hooks/use-auth";
 import { useToast } from "@/hooks/use-toast";
 import { useLocation } from "wouter";
+import Draggable from 'react-draggable'; // 드래그 기능을 위한 라이브러리
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -22,7 +23,7 @@ import { Progress } from "@/components/ui/progress";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { Room, RoomWithPatients, Patient, InsertRoom } from "@shared/schema";
-import { Plus, Thermometer, Droplets, CheckCircle, AlertCircle, AlertTriangle, Pencil, HeartPulse, User, CalendarClock, Users, BedDouble, MapPin, FileText, Phone, Shield, Clipboard, ArrowLeft } from "lucide-react";
+import { Plus, Thermometer, Droplets, CheckCircle, AlertCircle, AlertTriangle, Pencil, HeartPulse, User, CalendarClock, Users, BedDouble, MapPin, FileText, Phone, Shield, Clipboard, ArrowLeft, Move } from "lucide-react";
 
 // Schema for adding/editing a room
 const roomSchema = z.object({
@@ -761,7 +762,10 @@ export default function RoomManagementPage() {
                                   size="sm"
                                   onClick={(e) => {
                                     e.stopPropagation();
-                                    assignPatientToRoom(selectedRoomId, patient.id);
+                                    // null 체크 추가
+                                    if (selectedRoomId !== null) {
+                                      assignPatientToRoom(selectedRoomId, patient.id);
+                                    }
                                   }}
                                 >
                                   환자 배정
