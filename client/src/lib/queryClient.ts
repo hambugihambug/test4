@@ -7,9 +7,12 @@ async function throwIfResNotOk(res: Response) {
   }
 }
 
+// 인증 토큰 관련 상수
+const TOKEN_KEY = 'auth_token';
+
 // 로컬 스토리지에서 토큰 가져오기
 function getAuthToken(): string | null {
-  const token = localStorage.getItem('token');
+  const token = localStorage.getItem(TOKEN_KEY);
   console.log("API 호출 시 토큰 상태:", token ? "토큰 있음" : "토큰 없음");
   
   // 토큰이 있을 경우 유효성 검사
@@ -32,13 +35,13 @@ function getAuthToken(): string | null {
         // 토큰이 만료된 경우
         if (now >= expiry) {
           console.error("만료된 토큰 발견. 토큰을 삭제하고 재로그인 필요");
-          localStorage.removeItem('token');
+          localStorage.removeItem(TOKEN_KEY);
           return null;
         }
       }
     } catch (e) {
       console.error("토큰 디코딩 오류:", e);
-      localStorage.removeItem('token');
+      localStorage.removeItem(TOKEN_KEY);
       return null;
     }
   }
@@ -70,7 +73,7 @@ export async function apiRequest(
       console.log("요청에 인증 헤더 없음:", url);
       
       // 디버깅: 토큰 직접 가져오기 시도
-      const directToken = localStorage.getItem('token');
+      const directToken = localStorage.getItem(TOKEN_KEY);
       if (directToken) {
         console.log("localStorage에서 직접 토큰 가져옴");
         // @ts-ignore: 헤더 타입 무시
@@ -95,7 +98,7 @@ export async function apiRequest(
     // 401 오류 처리 (권한 없음)
     if (res.status === 401) {
       console.error("API 요청 401 오류 - 인증 실패. 토큰 삭제 및 로그인 페이지로 이동");
-      localStorage.removeItem('token');
+      localStorage.removeItem(TOKEN_KEY);
       
       // 로그인 페이지가 아닌 경우에만 리디렉션
       if (window.location.pathname !== '/auth') {
@@ -128,7 +131,7 @@ export const getQueryFn: <T>(options: {
       console.log("쿼리 요청에 인증 헤더 없음:", url);
       
       // 디버깅: 토큰 직접 가져오기 시도
-      const directToken = localStorage.getItem('token');
+      const directToken = localStorage.getItem(TOKEN_KEY);
       if (directToken) {
         console.log("localStorage에서 직접 토큰 가져옴");
         headers["Authorization"] = `Bearer ${directToken}`;

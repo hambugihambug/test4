@@ -20,26 +20,40 @@ const app = express();
 /**
  * 기본 미들웨어 설정
  */
-// CORS 설정 - 모든 출처 허용하고 credential 활성화
-app.use(cors({
-  origin: '*', // 모든 출처 명시적으로 허용
+// CORS 설정 - 개발 환경을 위한 특수 설정
+const corsOptions = {
+  origin: process.env.NODE_ENV === 'development' ? true : '*', // 개발 환경에서는 모든 출처 허용
   credentials: true, // 인증 정보 전달 허용
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept']
-}));
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept'],
+  preflightContinue: false,
+  optionsSuccessStatus: 204,
+  maxAge: 86400 // CORS 프리플라이트 요청 결과 캐싱 (24시간)
+};
+
+app.use(cors(corsOptions));
 
 // CORS 프리플라이트 요청 처리를 위한 OPTIONS 핸들러 추가
-app.options('*', cors());
+app.options('*', cors(corsOptions));
 
-// 추가 헤더 설정
+// 디버깅 및 모니터링을 위한 요청 로깅 미들웨어
 app.use((req, res, next) => {
-  res.header('Access-Control-Allow-Origin', '*');
+  console.log(`[${new Date().toISOString()}] ${req.method} ${req.url} - 클라이언트 IP: ${req.ip}`);
+  
+  // 헤더 로깅 (디버깅용)
+  if (process.env.NODE_ENV === 'development') {
+    console.log('요청 헤더:', JSON.stringify(req.headers, null, 2));
+  }
+  
+  // 헤더 일관성을 위한 추가 설정 - 필요하지 않을 수 있으나 일부 클라이언트 호환성을 위해 유지
+  res.header('Access-Control-Allow-Origin', process.env.NODE_ENV === 'development' ? '*' : req.headers.origin);
   res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept, Authorization');
   res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, PATCH, OPTIONS');
+  res.header('Access-Control-Allow-Credentials', 'true');
   
   // OPTIONS 요청은 바로 응답
   if (req.method === 'OPTIONS') {
-    return res.status(200).end();
+    return res.status(204).end(); // 204 No Content
   }
   
   next();

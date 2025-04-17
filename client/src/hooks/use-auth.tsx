@@ -4,6 +4,9 @@ import { useToast } from "@/hooks/use-toast";
 import { useLocation } from "wouter";
 import { apiRequest } from "@/lib/queryClient";
 
+// 인증 토큰 관련 상수
+const TOKEN_KEY = 'auth_token';
+
 // 인증 컨텍스트 타입
 type AuthContextType = {
   user: User | null;
@@ -12,6 +15,7 @@ type AuthContextType = {
   login: (username: string, password: string) => Promise<void>;
   logout: () => Promise<void>;
   register: (userData: InsertUser) => Promise<void>;
+  getAuthHeader: () => { Authorization?: string };
 };
 
 export const AuthContext = createContext<AuthContextType | null>(null);
@@ -23,14 +27,25 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
 
+  // JWT 토큰 관리 함수들
+  const getToken = () => localStorage.getItem(TOKEN_KEY);
+  const setToken = (token: string) => localStorage.setItem(TOKEN_KEY, token);
+  const removeToken = () => localStorage.removeItem(TOKEN_KEY);
+  
+  // 인증 헤더 생성 함수
+  const getAuthHeader = () => {
+    const token = getToken();
+    return token ? { Authorization: `Bearer ${token}` } : {};
+  };
+
   // 로컬 스토리지에서 사용자 정보 로드
   useEffect(() => {
     const loadUser = async () => {
       try {
         setIsLoading(true);
-        const token = localStorage.getItem('token');
+        const token = getToken();
         
-        console.log("토큰 확인:", !!token);
+        console.log("앱 시작 시 토큰 상태:", token ? "토큰 있음" : "토큰 없음");
         
         if (token) {
           // 서버에서 사용자 정보 가져오기
@@ -55,7 +70,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             } else {
               // 토큰이 유효하지 않은 경우
               console.error("토큰이 유효하지 않음:", response.status);
-              localStorage.removeItem('token');
+              removeToken();
               if (window.location.pathname !== '/auth') {
                 console.log("유효하지 않은 토큰 - 로그인 페이지로 리디렉션");
                 setLocation('/auth');
@@ -63,7 +78,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             }
           } catch (error) {
             console.error("사용자 정보 로드 오류:", error);
-            localStorage.removeItem('token');
+            removeToken();
             if (window.location.pathname !== '/auth') {
               console.log("사용자 정보 로드 오류 - 로그인 페이지로 리디렉션");
               setLocation('/auth');
@@ -102,10 +117,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       
       const userData = await response.json();
       
-      // 사용자 ID를 토큰으로 저장 (실제 구현에서는 JWT 등 사용 권장)
-      localStorage.setItem('token', userData.id.toString());
+      // JWT 토큰 저장
+      if (!userData.token) {
+        throw new Error('서버에서 인증 토큰을 받지 못했습니다');
+      }
       
-      setUser(userData);
+      setToken(userData.token);
+      
+      // 사용자 정보 설정 (토큰 제외)
+      const { token, ...userInfo } = userData;
+      setUser(userInfo);
       
       // 성공 메시지 표시
       toast({
@@ -136,10 +157,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     try {
       setIsLoading(true);
       
-      await apiRequest('POST', '/api/logout');
+      // JWT는 stateless이므로 실제로는 서버에 요청할 필요가 없지만,
+      // 로깅이나 추가적인 서버 측 처리를 위해 호출
+      await apiRequest('POST', '/api/logout', {}, { headers: getAuthHeader() });
       
       // 로컬 스토리지에서 토큰 삭제
-      localStorage.removeItem('token');
+      removeToken();
       setUser(null);
       
       toast({
@@ -151,9 +174,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     } catch (error) {
       console.error("로그아웃 오류:", error);
       
+      // 로그아웃은 클라이언트 측에서 토큰을 삭제하면 되므로,
+      // 서버 오류가 있더라도 로컬에서 로그아웃 처리
+      removeToken();
+      setUser(null);
+      setLocation("/auth");
+      
       toast({
-        title: "로그아웃 처리 중 문제가 발생했습니다",
-        variant: "destructive",
+        title: "로그아웃 처리 중 문제가 발생했지만, 로그아웃되었습니다",
       });
     } finally {
       setIsLoading(false);
@@ -174,10 +202,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       
       const newUser = await response.json();
       
-      // 사용자 ID를 토큰으로 저장
-      localStorage.setItem('token', newUser.id.toString());
+      // JWT 토큰 저장
+      if (!newUser.token) {
+        throw new Error('서버에서 인증 토큰을 받지 못했습니다');
+      }
       
-      setUser(newUser);
+      setToken(newUser.token);
+      
+      // 사용자 정보 설정 (토큰 제외)
+      const { token, ...userInfo } = newUser;
+      setUser(userInfo);
       
       toast({
         title: "회원가입 성공",
@@ -210,7 +244,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         error,
         login,
         logout,
-        register
+        register,
+        getAuthHeader
       }}
     >
       {children}
