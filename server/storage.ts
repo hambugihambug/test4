@@ -1,3 +1,12 @@
+/**
+ * 데이터 저장소 모듈
+ * 
+ * 데이터베이스 접근 계층을 추상화하여 애플리케이션 비즈니스 로직과 데이터 저장소를 분리합니다.
+ * 이 모듈은 메모리 저장소와 데이터베이스 저장소 두 가지 구현을 제공합니다.
+ * - MemStorage: 개발 및 테스트용 인메모리 데이터 저장
+ * - DatabaseStorage: 실제 PostgreSQL 데이터베이스 사용
+ */
+
 import { 
   users, patients, rooms, guardians, accidents, envLogs, cameras, messages,
   User, Room, Patient, Guardian, Accident, EnvLog, Camera, Message,
@@ -11,80 +20,114 @@ import connectPg from "connect-pg-simple";
 import { pool } from "./db";
 import createMemoryStore from "memorystore";
 
-const PostgresSessionStore = connectPg(session);
-const MemoryStore = createMemoryStore(session);
+// 세션 저장소 설정
+const PostgresSessionStore = connectPg(session);  // PostgreSQL 기반 세션 저장소
+const MemoryStore = createMemoryStore(session);   // 메모리 기반 세션 저장소 (개발용)
 
+/**
+ * 저장소 인터페이스
+ * 
+ * 모든 데이터 접근 메서드를 정의하는 인터페이스입니다.
+ * 이 인터페이스를 구현하는 구체적인 클래스는 다양한 저장 방식(메모리, 데이터베이스 등)을 제공할 수 있습니다.
+ */
 export interface IStorage {
-  // Session store
-  sessionStore: any; // Using any for session store type to avoid TypeScript errors
+  /** 
+   * 세션 저장소
+   * 사용자 세션 정보를 저장하는 객체 
+   */
+  sessionStore: any; // 세션 저장소 타입 (TypeScript 오류 방지를 위해 any 사용)
   
-  // User methods
-  getUser(id: number): Promise<User | undefined>;
-  getUserByUsername(username: string): Promise<User | undefined>;
-  getUserByEmail(email: string): Promise<User | undefined>;
-  createUser(user: InsertUser): Promise<User>;
-  updateUser(id: number, userData: Partial<User>): Promise<User | undefined>;
-  deleteUser(id: number): Promise<boolean>;
-  getUsersByRole(role: UserRole): Promise<User[]>;
+  /**
+   * 사용자 관리 메서드
+   * 사용자 계정과 관련된 모든 작업을 처리합니다.
+   */
+  getUser(id: number): Promise<User | undefined>;                         // ID로 사용자 조회
+  getUserByUsername(username: string): Promise<User | undefined>;         // 사용자명으로 사용자 조회
+  getUserByEmail(email: string): Promise<User | undefined>;               // 이메일로 사용자 조회
+  createUser(user: InsertUser): Promise<User>;                            // 새 사용자 생성
+  updateUser(id: number, userData: Partial<User>): Promise<User | undefined>; // 사용자 정보 수정
+  deleteUser(id: number): Promise<boolean>;                               // 사용자 삭제
+  getUsersByRole(role: UserRole): Promise<User[]>;                        // 역할별 사용자 목록 조회
   
-  // Room methods
-  getRooms(): Promise<Room[]>;
-  getRoom(id: number): Promise<Room | undefined>;
-  createRoom(room: InsertRoom): Promise<Room>;
-  updateRoom(id: number, roomData: Partial<Room>): Promise<Room | undefined>;
-  deleteRoom(id: number): Promise<boolean>;
-  getRoomWithPatients(id: number): Promise<RoomWithPatients | undefined>;
-  getAllRoomsWithPatients(): Promise<RoomWithPatients[]>;
+  /**
+   * 병실 관리 메서드
+   * 병실 정보와 관련된 모든 작업을 처리합니다.
+   */
+  getRooms(): Promise<Room[]>;                                          // 모든 병실 목록 조회
+  getRoom(id: number): Promise<Room | undefined>;                        // ID로 특정 병실 조회
+  createRoom(room: InsertRoom): Promise<Room>;                          // 새 병실 생성
+  updateRoom(id: number, roomData: Partial<Room>): Promise<Room | undefined>; // 병실 정보 수정
+  deleteRoom(id: number): Promise<boolean>;                             // 병실 삭제
+  getRoomWithPatients(id: number): Promise<RoomWithPatients | undefined>; // 환자 정보를 포함한 병실 조회
+  getAllRoomsWithPatients(): Promise<RoomWithPatients[]>;               // 환자 정보를 포함한 모든 병실 조회
   
-  // Patient methods
-  getPatients(): Promise<Patient[]>;
-  getPatient(id: number): Promise<Patient | undefined>;
-  createPatient(patient: InsertPatient): Promise<Patient>;
-  updatePatient(id: number, patientData: Partial<Patient>): Promise<Patient | undefined>;
-  deletePatient(id: number): Promise<boolean>;
-  getPatientsByRoomId(roomId: number): Promise<Patient[]>;
-  getPatientsByAssignedNurse(nurseId: number): Promise<Patient[]>;
-  getPatientWithDetails(id: number): Promise<PatientWithDetails | undefined>;
-  getPatientsWithDetails(): Promise<PatientWithDetails[]>;
+  /**
+   * 환자 관리 메서드
+   * 환자 정보와 관련된 모든 작업을 처리합니다.
+   */
+  getPatients(): Promise<Patient[]>;                                       // 모든 환자 목록 조회
+  getPatient(id: number): Promise<Patient | undefined>;                    // ID로 환자 조회
+  createPatient(patient: InsertPatient): Promise<Patient>;                 // 새 환자 등록
+  updatePatient(id: number, patientData: Partial<Patient>): Promise<Patient | undefined>; // 환자 정보 수정
+  deletePatient(id: number): Promise<boolean>;                             // 환자 삭제
+  getPatientsByRoomId(roomId: number): Promise<Patient[]>;                 // 병실별 환자 목록 조회
+  getPatientsByAssignedNurse(nurseId: number): Promise<Patient[]>;         // 담당 간호사별 환자 목록 조회
+  getPatientWithDetails(id: number): Promise<PatientWithDetails | undefined>; // 상세 정보를 포함한 환자 조회
+  getPatientsWithDetails(): Promise<PatientWithDetails[]>;                  // 상세 정보를 포함한 모든 환자 조회
   
-  // Guardian methods
-  getGuardians(): Promise<Guardian[]>;
-  getGuardian(id: number): Promise<Guardian | undefined>;
-  createGuardian(guardian: InsertGuardian): Promise<Guardian>;
-  updateGuardian(id: number, guardianData: Partial<Guardian>): Promise<Guardian | undefined>;
-  deleteGuardian(id: number): Promise<boolean>;
-  getGuardianByPatientId(patientId: number): Promise<Guardian | undefined>;
+  /**
+   * 보호자 관리 메서드
+   * 환자 보호자와 관련된 모든 작업을 처리합니다.
+   */
+  getGuardians(): Promise<Guardian[]>;                                     // 모든 보호자 목록 조회
+  getGuardian(id: number): Promise<Guardian | undefined>;                  // ID로 보호자 조회
+  createGuardian(guardian: InsertGuardian): Promise<Guardian>;             // 새 보호자 등록
+  updateGuardian(id: number, guardianData: Partial<Guardian>): Promise<Guardian | undefined>; // 보호자 정보 수정
+  deleteGuardian(id: number): Promise<boolean>;                            // 보호자 삭제
+  getGuardianByPatientId(patientId: number): Promise<Guardian | undefined>; // 환자 ID로 보호자 조회
   
-  // Accident methods
-  getAccidents(): Promise<Accident[]>;
-  getAccident(id: number): Promise<Accident | undefined>;
-  createAccident(accident: InsertAccident): Promise<Accident>;
-  updateAccident(id: number, accidentData: Partial<Accident>): Promise<Accident | undefined>;
-  getAccidentsByPatientId(patientId: number): Promise<Accident[]>;
-  getAccidentsByRoomId(roomId: number): Promise<Accident[]>;
-  getRecentAccidents(limit: number): Promise<Accident[]>;
+  /**
+   * 낙상 사고 관리 메서드
+   * 낙상 사고 기록과 관련된 모든 작업을 처리합니다.
+   */
+  getAccidents(): Promise<Accident[]>;                                     // 모든 낙상 사고 목록 조회
+  getAccident(id: number): Promise<Accident | undefined>;                  // ID로 낙상 사고 조회
+  createAccident(accident: InsertAccident): Promise<Accident>;             // 새 낙상 사고 기록 생성
+  updateAccident(id: number, accidentData: Partial<Accident>): Promise<Accident | undefined>; // 낙상 사고 정보 수정
+  getAccidentsByPatientId(patientId: number): Promise<Accident[]>;         // 환자별 낙상 사고 목록 조회
+  getAccidentsByRoomId(roomId: number): Promise<Accident[]>;               // 병실별 낙상 사고 목록 조회
+  getRecentAccidents(limit: number): Promise<Accident[]>;                  // 최근 낙상 사고 목록 조회 (개수 제한)
   
-  // Environmental logs methods
-  getEnvLogs(): Promise<EnvLog[]>;
-  createEnvLog(log: InsertEnvLog): Promise<EnvLog>;
-  getEnvLogsByRoomId(roomId: number, limit?: number): Promise<EnvLog[]>;
-  getLatestEnvLogByRoomId(roomId: number): Promise<EnvLog | undefined>;
+  /**
+   * 환경 로그 관리 메서드
+   * 병실 환경(온도, 습도 등) 측정 데이터와 관련된 모든 작업을 처리합니다.
+   */
+  getEnvLogs(): Promise<EnvLog[]>;                                         // 모든 환경 로그 조회
+  createEnvLog(log: InsertEnvLog): Promise<EnvLog>;                        // 새 환경 로그 생성
+  getEnvLogsByRoomId(roomId: number, limit?: number): Promise<EnvLog[]>;   // 병실별 환경 로그 조회 (개수 제한 가능)
+  getLatestEnvLogByRoomId(roomId: number): Promise<EnvLog | undefined>;    // 병실별 최신 환경 로그 조회
   
-  // Camera methods
-  getCameras(): Promise<Camera[]>;
-  getCamera(id: number): Promise<Camera | undefined>;
-  createCamera(camera: InsertCamera): Promise<Camera>;
-  updateCamera(id: number, cameraData: Partial<Camera>): Promise<Camera | undefined>;
-  deleteCamera(id: number): Promise<boolean>;
-  getCamerasByRoomId(roomId: number): Promise<Camera[]>;
+  /**
+   * 카메라 관리 메서드
+   * CCTV 카메라와 관련된 모든 작업을 처리합니다.
+   */
+  getCameras(): Promise<Camera[]>;                                         // 모든 카메라 목록 조회
+  getCamera(id: number): Promise<Camera | undefined>;                      // ID로 카메라 조회
+  createCamera(camera: InsertCamera): Promise<Camera>;                     // 새 카메라 등록
+  updateCamera(id: number, cameraData: Partial<Camera>): Promise<Camera | undefined>; // 카메라 정보 수정
+  deleteCamera(id: number): Promise<boolean>;                              // 카메라 삭제
+  getCamerasByRoomId(roomId: number): Promise<Camera[]>;                   // 병실별 카메라 목록 조회
   
-  // Message methods
-  getMessages(): Promise<Message[]>;
-  getMessage(id: number): Promise<Message | undefined>;
-  createMessage(message: InsertMessage): Promise<Message>;
-  updateMessage(id: number, messageData: Partial<Message>): Promise<Message | undefined>;
-  getMessagesBetweenUsers(user1Id: number, user2Id: number, limit?: number): Promise<Message[]>;
-  getUnreadMessageCountForUser(userId: number): Promise<number>;
+  /**
+   * 메시지 관리 메서드
+   * 사용자 간 메시지와 관련된 모든 작업을 처리합니다.
+   */
+  getMessages(): Promise<Message[]>;                                       // 모든 메시지 조회
+  getMessage(id: number): Promise<Message | undefined>;                    // ID로 메시지 조회
+  createMessage(message: InsertMessage): Promise<Message>;                 // 새 메시지 생성
+  updateMessage(id: number, messageData: Partial<Message>): Promise<Message | undefined>; // 메시지 정보 수정 (읽음 처리 등)
+  getMessagesBetweenUsers(user1Id: number, user2Id: number, limit?: number): Promise<Message[]>; // 두 사용자 간 주고받은 메시지 조회
+  getUnreadMessageCountForUser(userId: number): Promise<number>;           // 사용자별 안 읽은 메시지 수 조회
 }
 
 export class MemStorage implements IStorage {
@@ -131,26 +174,20 @@ export class MemStorage implements IStorage {
       preferredLanguage: "ko"
     });
     
-    // Initialize sample rooms
+    // 샘플 병실 초기화
     for (let i = 1; i <= 3; i++) {
       this.createRoom({
         name: `${100 + i}호`,
         tempThreshold: 26.0,
         humidityThreshold: 60.0,
+        // 사용자 요청에 따라 레이아웃 기반 침대 관리에서 간단한 침대 목록으로 변경
         layout: JSON.stringify({
           beds: [
-            { id: 1, x: 50, y: 50, width: 100, height: 50, label: `침대 ${i}` },
-            { id: 2, x: 50, y: 150, width: 100, height: 50, label: `침대 ${i+1}` },
-            { id: 3, x: 200, y: 50, width: 100, height: 50, label: `침대 ${i+2}` },
-            { id: 4, x: 200, y: 150, width: 100, height: 50, label: `침대 ${i+3}` }
-          ],
-          walls: [
-            { id: 1, x: 0, y: 0, width: 350, height: 10 },
-            { id: 2, x: 0, y: 0, width: 10, height: 250 },
-            { id: 3, x: 340, y: 0, width: 10, height: 250 },
-            { id: 4, x: 0, y: 240, width: 350, height: 10 }
-          ],
-          door: { id: 1, x: 150, y: 0, width: 50, height: 10 }
+            { id: 1, label: `침대 1` },
+            { id: 2, label: `침대 2` },
+            { id: 3, label: `침대 3` },
+            { id: 4, label: `침대 4` }
+          ]
         })
       });
     }
@@ -591,12 +628,20 @@ export class DatabaseStorage implements IStorage {
     return room;
   }
 
+  /**
+   * 새 병실 생성
+   * 
+   * 사용자 요청에 따라 병실 정보를 데이터베이스에 저장하고, 
+   * 임시 온도 및 습도 값을 설정합니다.
+   */
   async createRoom(insertRoom: InsertRoom): Promise<Room> {
+    // 사용자 요청에 따라 레이아웃은 이제 간단한 침대 목록만 포함합니다.
+    // 이전의 좌표 기반 레이아웃 코드는 제거되었습니다.
     const [room] = await db.insert(rooms).values({
       ...insertRoom,
-      currentTemp: Math.random() * 5 + 20, // Random temp between 20-25
-      currentHumidity: Math.random() * 20 + 40, // Random humidity between 40-60
-      status: "normal"
+      currentTemp: Math.random() * 5 + 20, // 20°C~25°C 사이의 임의의 온도
+      currentHumidity: Math.random() * 20 + 40, // 40%~60% 사이의 임의의 습도
+      status: "normal" // 정상 상태로 초기화
     }).returning();
     return room;
   }
@@ -991,25 +1036,20 @@ async function initializeData() {
   if (roomsCheck.length === 0) {
     console.log("Creating sample rooms");
     // Create sample rooms
+    // 샘플 병실 초기화
     for (let i = 1; i <= 3; i++) {
       await db.insert(rooms).values({
         name: `${100 + i}호`,
         tempThreshold: 26.0,
         humidityThreshold: 60.0,
+        // 사용자 요청에 따라 레이아웃 기반 침대 관리에서 간단한 침대 목록으로 변경
         layout: JSON.stringify({
           beds: [
-            { id: 1, x: 50, y: 50, width: 100, height: 50, label: `침대 ${i}` },
-            { id: 2, x: 50, y: 150, width: 100, height: 50, label: `침대 ${i+1}` },
-            { id: 3, x: 200, y: 50, width: 100, height: 50, label: `침대 ${i+2}` },
-            { id: 4, x: 200, y: 150, width: 100, height: 50, label: `침대 ${i+3}` }
-          ],
-          walls: [
-            { id: 1, x: 0, y: 0, width: 350, height: 10 },
-            { id: 2, x: 0, y: 0, width: 10, height: 250 },
-            { id: 3, x: 340, y: 0, width: 10, height: 250 },
-            { id: 4, x: 0, y: 240, width: 350, height: 10 }
-          ],
-          door: { id: 1, x: 150, y: 0, width: 50, height: 10 }
+            { id: 1, label: `침대 1` },
+            { id: 2, label: `침대 2` },
+            { id: 3, label: `침대 3` },
+            { id: 4, label: `침대 4` }
+          ]
         }),
         currentTemp: Math.random() * 5 + 20, // Random temp between 20-25
         currentHumidity: Math.random() * 20 + 40, // Random humidity between 40-60
